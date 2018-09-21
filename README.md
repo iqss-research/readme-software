@@ -10,7 +10,7 @@ public_master.R provides an interface to the entire testing battery performed in
 
 package_instructions.R provides some instructions for installing and using the readme package itself. 
 
-For questions about functionality, contact <cjerzak@g.harvard.edu>
+For questions about functionality, contact <connor.jerzak@gmail.com>.
 
 
 
