@@ -8,7 +8,7 @@ An Improved Method of Automated Nonparametric Content Analysis for Social Scienc
 
 public_master.R provides an interface to the entire testing battery performed in the paper. 
 
-package_instructions.R provides some instructions for installing and using the readme package. 
+package_installation.R provides some instructions for installing the readme package. 
 
 For questions about functionality, contact <connor.jerzak@gmail.com>.
 
