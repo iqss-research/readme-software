@@ -1,6 +1,13 @@
 
 f2n <- function(.){as.numeric(as.character(.))}
+colSds <- function (x, center = NULL, dim. = dim(x)){ n <- dim.[1]; x <- x * x; x <- colMeans(x); x <- (x - center^2); sqrt (  x * (n/(n - 1)) )  }
+FastScale <- function(x,cm=NULL,csd=NULL){
+  if(is.null(cm)){cm = .colMeans(x, m = nrow(x), n = ncol(x))}# Get the column means
+  if(is.null(csd)){csd = colSds(x, center = cm)}# Get the column sd
+  return( t( (t(x) - cm) / csd ) )
+} 
 
+#library2 checks to see if package is installed and installs it if not. Package is then loaded into system. 
 library2 <- function(lib_name, loadin = T){ 
   eval_value <- try(class(lib_name), T)
   if( eval_value != "character" | class(eval_value) == "try-error" ){ lib_name <- deparse(substitute(lib_name)) } 

@@ -26,6 +26,7 @@ sampling_scheme <- "Historical"
 #How many iterations to use per corpus? For stable results, try iterations setting > 25. 
 iterations <- 2 
 
+#Run battery. 
 #For users interested in speeding up this protocol, 
 #note that the "for(ijack in global_iter_seq){" loop in "./support/readme2_master_public.R"
 #can be run entirely in parallel. 

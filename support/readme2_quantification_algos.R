@@ -359,6 +359,7 @@ if(T == T){
     actual <- train_pd_init; actual[] <- 0 
     temp <- table( testMatrix[,1] )  
     actual[names(temp)] <- temp
+    actual <- prop.table(actual)
     for (trial in 1:trials){
       cvSplits<-try(cvRandomHalfSplit_QUANT(trainMatrix), T) 
       model<-try(baseClassifierModelFunction(cvSplits$cvTrain), T) 

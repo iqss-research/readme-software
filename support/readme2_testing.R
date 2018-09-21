@@ -10,8 +10,8 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
   if (verbose){ cat("Initializing...\n") }
 
   #### Initialize the data
-  categoryVec_unlabeled <- categoryVec[labeledIndicator == 0]
-  categoryVec_labeled <- categoryVec[labeledIndicator == 1]
+  categoryVec_unlabeled <- as.factor(categoryVec)[labeledIndicator == 0]
+  categoryVec_labeled <- as.factor(categoryVec)[labeledIndicator == 1]
   labeled_pd <- table(categoryVec_labeled);labeled_pd<-labeled_pd/sum(labeled_pd)
   unlabeled_pd <- table( categoryVec_unlabeled );unlabeled_pd <- unlabeled_pd/sum(unlabeled_pd)
   cat_names <- names(labeled_pd)
@@ -20,11 +20,9 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
   nCat <- length(labeled_pd)
 
   ###################
-  point_readme <- readme(dfm = dtm, labeledIndicator = labeledIndicator, 
-                       categoryVec = categoryVec, nboot = nboot, readmeVersion = "1")$point_readme
-  readme2_list <- readme(dfm = dfm, labeledIndicator = labeledIndicator, 
-                         categoryVec = categoryVec, nboot = nboot, 
-                         resample = F, resampleTrim = 3, verbose = verbose, diagnostics = T)
+  point_readme <- readme0(dtm = dtm, labeledIndicator = labeledIndicator, 
+                       categoryVec = categoryVec, nboot = 100)$point_readme
+  readme2_list <- readme(dfm = dfm, labeledIndicator = labeledIndicator, categoryVec = categoryVec, nboot = nboot, verbose = verbose, diagnostics = T)
   point_readme2 <- readme2_list$point_readme
   
   ##################
@@ -36,13 +34,13 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
   ErrorResultsEnsemble_discrete_count <- ErrorResultsEnsemble_continuous_count <- c(data.frame(ensemble_count = NA, NaiveBayes_est_count = NA, Regression_est_count = NA, 
                                                                                                SVM_est_count = NA, Forest_est_count = NA))
   if(compareClassifiers == T){ 
-    EnsembleList_discrete <- EnsembleMethod(train_cats = categoryVec_labeled, 
+    EnsembleList_discrete <- EnsembleMethod(train_cats = as.character(categoryVec_labeled), 
                                             train_feat = dtm_labeled, test_feat = dtm_unlabeled, 
                                             labeled_pd = labeled_pd)
     ErrorResultsEnsemble_discrete <- lapply(EnsembleList_discrete$final_list, function(xj){ sum(abs(xj[names(unlabeled_pd)] - unlabeled_pd))})
     ErrorResultsEnsemble_discrete_count <- lapply(EnsembleList_discrete$final_list_count, function(xj){ sum(abs(xj[names(unlabeled_pd)] - unlabeled_pd))})
   
-    EnsembleList_continuous <- EnsembleMethod(train_cats = categoryVec_labeled, labeled_pd = labeled_pd, train_feat = dfm_labeled, 
+    EnsembleList_continuous <- EnsembleMethod(train_cats = as.character(categoryVec_labeled), labeled_pd = labeled_pd, train_feat = dfm_labeled, 
                                               test_feat = dfm_unlabeled)
     ErrorResultsEnsemble_continuous <- lapply(EnsembleList_continuous$final_list, function(xj){ sum(abs(xj[names(unlabeled_pd)] - unlabeled_pd))})
     ErrorResultsEnsemble_continuous_count <- lapply(EnsembleList_continuous$final_list_count, function(xj){ sum(abs(xj[names(unlabeled_pd)] - unlabeled_pd))})
@@ -55,10 +53,12 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
   names(error_quantify) <- error_quantify_names
   va2_error <- NA
   if(compareQuantifiers == T){
-    source("./support/readme2_va2_replication.R")
-    source("./support/readme2_quantification_algos.R")
-    termMatrix_use <- cbind(1:length(labeledIndicator), categoryVec, labeledIndicator, dtm)
-    colnames(termMatrix_use)[1:3] <- c("FILENAME", "categoryLabels", "TRAININGSET")
+    source("./Readme2_SupportCode/readme2_va2_replication.R")
+    source("./Readme2_SupportCode/readme2_quantification_algos.R")
+    #termMatrix_use <- cbind(1:length(labeledIndicator), categoryVec, labeledIndicator, dtm)
+    #colnames(termMatrix_use)[1:3] <- c("FILENAME", "categoryLabels", "TRAININGSET")
+    termMatrix_use <- cbind(1:length(categoryVec), categoryVec, labeledIndicator, dtm)
+    colnames(termMatrix_use)[1:3] <- c("FILENAME",  "categoryLabels", "TRAININGSET")
     va2_results <- try(va2(termMatrix=termMatrix_use,seed=ceiling(runif(1,1,1000)), nsymps=2), T)  
     set.seed(Sys.time())
     va2_error <- try(sum(abs(va2_results[names(unlabeled_pd)]-unlabeled_pd)), T)  
@@ -71,6 +71,7 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
                                                   baseClassifierPredFunction=liblinearPredFunction,
                                                   trials=20), T)  
     error_quantify <- try(apply(QUANTIFY_ALL_RESULTS[,-1][,names(unlabeled_pd)], 1, function(x){ sum(abs(f2n(x) - unlabeled_pd)) }), T)
+    if(length(error_quantify) != length(c(QUANTIFY_ALL_RESULTS[,1]))){browser()}
     names(error_quantify) <- QUANTIFY_ALL_RESULTS[,1]
     set.seed(Sys.time())
   }
