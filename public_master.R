@@ -28,7 +28,7 @@ iterations <- 2
 
 #Run battery. 
 #For users interested in speeding up this protocol, 
-#note that the "for(ijack in global_iter_seq){" loop in "./support/readme2_master_public.R"
+#note that the ``for(ijack in global_iter_seq){''loop in "./support/readme2_master_public.R"
 #can be run entirely in parallel. 
 source("./support/readme2_master_public.R")
 
