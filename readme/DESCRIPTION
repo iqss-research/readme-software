@@ -4,14 +4,9 @@ Version: 2.0
 Authors@R: 'Gary King <king@harvard.edu> [aut], Anton Strezhnev <a.strezhnev@gmail.com> [aut], Connor Jerzak <cjerzak@g.harvard.edu> [aut, cre]'
 Description: An R package for estimating category proportions in an unlabeled set of documents by implementing the method described in Jerzak, King, and Strezhnev (2018). This method is meant to improve on the ideas in Hopkins and King (2010), which introduced a quantification algorithm that harnesses the Law of Total Expectation. We apply this law in a feature space that is now crafted to minimize the error of the resulting estimate. Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization. Other pre-processing functions are available, as well as an interface to the earlier version of the algorithm.
 Depends: R (>= 3.3.3)
-License: Creative Commons Attribution-Noncommercial-No Derivative Works
-        4.0, for academic use only.
+License: Creative Commons Attribution-Noncommercial-No Derivative Works 4.0, for academic use only.
 Encoding: UTF-8
 LazyData: true
 Maintainer: 'Connor Jerzak' <cjerzak@g.harvard.edu>
 Suggests: FNN,tensorflow, tm, data.table, optmatch,roxygen2
 RoxygenNote: 6.0.1
-Author: 'Gary King [aut],
-  Anton Strezhnev [aut],
-  Connor Jerzak' [aut, cre]
-Built: R 3.3.3; ; 2018-09-21 18:30:00 UTC; unix
