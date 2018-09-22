@@ -44,7 +44,7 @@
 #' 
 #' \item Jerzak, Connor, King, Gary, and Strezhnev, Anton. Working Paper. 
 #' \emph{An Improved Method of Automated Nonparametric Content Analysis for Social Science}. 
-#' \url{https://gking.harvard.edu/words} 
+#' \url{https://GaryKing.org/words} 
 #' }
 #' 
 #' @examples 
