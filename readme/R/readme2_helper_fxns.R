@@ -1,26 +1,39 @@
 vec2prob <- function(.){x <- table(.); x/sum(x)}
 
-#' cleanText_fxn
-#' Internal 
-#' @keywords internal
+#' cleanText
+#' 
+#' Standard preprocessing code for ASCII texts. Removes HTML tags, URLs, linebreaks. Converts standard emoticons to tokens. Removes non-informative punctuation.
+#' 
+#' @param my_text Vector of character strings containing the raw document texts.
+#' 
+#' @return A vector of character strings with the processed texts, each token is separated by a space.
+#' 
 #' @export 
-cleanText_fxn <- function(my_text){ 
-  finalEncoding <- "ASCII" #finalEncoding <- "UTF-8"
-  #finalEncoding <- "UTF-8"
+cleanText <- function(my_text){ 
+  finalEncoding <- "ASCII"
+  
+  ### Convert to ASCII encoding
   my_text <- sapply(my_text, 
                     function(x){ startingEncoding <- Encoding(x)
                       if(startingEncoding == "unknown"){ x<-iconv(x, from = finalEncoding, to = finalEncoding, sub = '', mark = T) } 
                       if(startingEncoding != "unknown"){ x<-iconv(x, from = startingEncoding, to = finalEncoding, sub = '', mark = T) }
                       return(x) })
   names(my_text) <- NULL 
+  ## Remove HTML/XML tags
   my_text <- gsub(my_text, pattern = "<.*?>", replace = " <html> ") 
+  
+  ## Remove newline, carriage return and tabs
   my_text <- gsub(my_text, pattern = "\n", replace = " ") 
   my_text <- gsub(my_text, pattern = "\r", replace = " ") 
   my_text <- gsub(my_text, pattern = "\t", replace = " ") 
+  
+  ## Convert URLs to generic <url> feature
   url_pattern1 <- "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
   url_pattern2 <- " ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)"
   my_text <- gsub(my_text, pattern = url_pattern1, replace = " <url> ") 
   my_text <- gsub(my_text, pattern = url_pattern2, replace = " <url> ") 
+  
+  ## Convert standard emoticons
   my_text <- gsub(my_text, pattern = ":-\\)", replace = " <smile> ")
   my_text <- gsub(my_text, pattern = "\\^_\\^", replace = " <smile> ")
   my_text <- gsub(my_text, pattern = ":\\)", replace = " <smile> ")
@@ -34,11 +47,15 @@ cleanText_fxn <- function(my_text){
   my_text <- gsub(my_text, pattern = "D:", replace = " <sadface> ")
   my_text <- gsub(my_text, pattern = "<3", replace = " ♥ ")
   
+  ## Remove punctuation
   my_text <- gsub(my_text, pattern = "\\s*-\\B|\\B-\\s*", replace = " ") 
   my_text <- gsub(my_text, pattern = " \\- ", replace = " ") 
   my_text <- gsub(my_text, pattern = "\\--", replace = " ") 
-  my_text <- gsub(my_text, pattern = "@\\S+", replace = " <user> ") 
-  my_text <- gsub(my_text, pattern = "[[:digit:]]+", replace = " <number> ") 
+  my_text <- gsub(my_text, pattern = "@\\S+", replace = " <user> ") ## Twitter-specific, any @text converted to a generic <user> feature
+  
+  my_text <- gsub(my_text, pattern = "[[:digit:]]+", replace = " <number> ") ## Convert numbers to generic <number> feature
+  
+  ## More removal of punctuation
   my_text <- gsub(my_text, pattern = '\\*', replace = " ")
   my_text <- gsub(my_text, pattern = "\\.\\.\\.", replace = " … ")
   my_text <- gsub(my_text, pattern = "\\.", replace = " ") 
@@ -54,12 +71,16 @@ cleanText_fxn <- function(my_text){
   my_text <- gsub(my_text, pattern = '\\"', replace = " ") 
   my_text <- gsub(my_text, pattern = '\\¨', replace = " ")
   my_text <- gsub(my_text, pattern = "\\ô", replace = " ") 
+  
+  ## Informative punctuation become their own features
   my_text <- gsub(my_text, pattern = '\\=', replace = " = ")
   my_text <- gsub(my_text, pattern = '\\+', replace = " + ")
   my_text <- gsub(my_text, pattern = "\\!", replace = " ! ") 
   my_text <- gsub(my_text, pattern = "\\?", replace = " ? ") 
   my_text <- gsub(my_text, pattern = "\\õ", replace = " ' ") 
   my_text <- gsub(my_text, pattern = "\\õ", replace = " ' ")
+  
+  ## Contractions are split out
   my_text <- gsub(my_text, pattern = "\\'s", replace = " \\'s ")
   my_text <- gsub(my_text, pattern = "n\\'t ", replace = " n\\'t ")
   my_text <- gsub(my_text, pattern = "\\'d ", replace = " \\'d ") 
@@ -67,7 +88,11 @@ cleanText_fxn <- function(my_text){
   my_text <- gsub(my_text, pattern = "\\'ve ", replace = " \\'ve ") 
   my_text <- gsub(my_text, pattern = "\\'ll ", replace = " \\'ll ") 
   my_text <- gsub(my_text, pattern = "\\'m ", replace = " \\'m ") 
+  
+  ## Standard abbreviations
   my_text <- gsub(my_text, pattern = "gov\\'t", replace = " government ") 
+  
+  ### Non-separating punctuation
   my_text <- gsub(my_text, pattern = "%", replace = "") 
   my_text <- gsub(my_text, pattern = ">>", replace = "") 
   my_text <- gsub(my_text, pattern = "<<", replace = "") 
@@ -76,14 +101,21 @@ cleanText_fxn <- function(my_text){
   my_text <- gsub(my_text, pattern = " -", replace = " ") 
   my_text <- gsub(my_text, pattern = "- ", replace = " ") 
 
+  ## Informative punctuation (brackets, ampersands, etc...)  
   my_text <- gsub(my_text, pattern = "\\{", replace = " \\{ ")
   my_text <- gsub(my_text, pattern = "\\}", replace = " \\} ")
   my_text <- gsub(my_text, pattern = "\\&", replace = " \\& ") 
   my_text <- gsub(my_text, pattern = "\\$", replace = " $ ") 
+  
+  # Tildes and carats - non-informative punctuation
   my_text <- gsub(my_text, pattern = "\\^\\^", replace = "") 
   my_text <- gsub(my_text, pattern = "\\~", replace = " ") 
   my_text <- gsub(my_text, pattern = "  ", replace = " ")
+  
+  # Make lower case
   my_text <- tolower(my_text)
+  
+  # Return output
   return( my_text )  
 }
 

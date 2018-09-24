@@ -6,21 +6,22 @@
 #' wanting control over the pre-processing protocol. 
 #'
 #' @param documentText A vector in which each entry corresponds to a ``clean'' document. 
-#' Note that the function will take as a ``word'' all space-separated elements in each vector entry. For example,
+#' Note that the function will take as a ``word'' all whitespace-separated elements in each vector entry. For example,
 #' \code{"star."} would have to have an exact analogue in the vector corpus, otherwise
 #' it will be dropped in the calculations. It will be more common to space separate punctuation marks (i.e. 
 #' \code{"star."} would become \code{"star ."}), since punctuation marks often have their own entries in the vector database. 
 #' 
-#' @param wordVecs_corpus A data.table object in which the first column holds the text of each word, 
-#' and in which the remaining columns contain the numerical representation. Either \code{wordVecs_corpus} or 
-#' \code{wordVecs_corpusPointer} should be null. If \code{wordVecs_corpus} and \code{wordVecs_corpusPointer} are \code{NULL}, 
-#' \code{undergrade} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
+#' @param wordVecs A matrix where each row denotes a word and each column a word vector. Words should be stored as the rownames of the matrix.
 #' 
-#' @param wordVecs_corpusPointer A character string denoting where to find the \code{wordVecs_corpus} for loading into memory as a 
-#' data.table. If \code{wordVecs_corpus} and \code{wordVecs_corpusPointer} are \code{NULL}, 
-#' \code{undergrade} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
+#' @param word_quantiles A numeric vector denoting the quantiles (0-1) used to summarize each word vector dimension. Defaults to 10th, 50th and 90th quantiles.
 #' 
-#' @return A data.frame consisting of the \code{10th}, \code{50th}, and \code{90th} quantiles of the word vectors by document.
+#' @param replace_missing If TRUE, attempts to match terms missing from the wordVec corpus with alternate representations.
+#' 
+#' @param unique_terms If TRUE, removes duplicate terms from each document - each document is represented only by the presence or absence of a term.
+#' 
+#' @param verbose If TRUE, prints updates as function runs
+#' 
+#' @return A data.frame consisting of the \code{word_quantiles} quantiles of the word vectors by document.
 #'  Each row corresonds to a document, and the columns to a particular summary of a particular word vector dimension. 
 #' 
 #' @examples 
@@ -49,159 +50,152 @@
 #' 
 #' @import tokenizers
 
-undergrad <- function(documentText, wordVecs_corpus = NULL, word_quantiles = c(.1, .5, .9), replace_missing = T, unique_terms = T){ 
+undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, .9), replace_missing = T, unique_terms = T, verbose=T){ 
    
-   if(is.null(wordVecs_corpus)){ 
-     cat("NOTE: No word vector corpus specified in 'wordVecs_corpus' - Returning a regular document-term matrix.\n")
-     cat("In order to use the word vector summaries, please provide a data frame containing the word vectors.\n")
-     cat("We recommend using a GloVe corpus from https://nlp.stanford.edu/projects/glove/\n")
-   }
+    if(is.null(wordVecs)){ 
+     stop("NOTE: No word vector matrix specified in 'wordVecs' -  Stoping undergrad.\n
+          In order to use the word vector summaries, please provide a data frame containing the word vectors.\n
+          We recommend using a GloVe corpus from https://nlp.stanford.edu/projects/glove/\n")
+    }
+    ## Sanity check the wordVecs
+    if (!is.matrix(wordVecs)){
+      stop("Error: 'wordVecs' is not a matrix")
+    }
   
-   #if(is.null(wordVecs_corpus)){ 
-    #  print("Downloading GloVe corpus trained on Wikipedia...(large file!)")
-    #  download.file("nlp.stanford.edu/data/glove.6B.zip", destfile = "./GLOVE_TRAINED_ON_WIKIPEDIA.zip")
-    #  unzip("./GLOVE_TRAINED_ON_WIKIPEDIA.zip", files = 'glove.6B.50d.txt')
-    #  try(file.remove("./GLOVE_TRAINED_ON_WIKIPEDIA.zip"), T)  
-    #  wordVecs_corpus <- data.table::fread("glove.6B.50d.txt")
-    #  try(file.remove("./glove.6B.50d.txt"), T)  
-    #} 
-    
-    #### NOTE: CLEAN THIS PART UP!
+
   
-    ## Tokenize the documents
-    documentText_orig <- documentText
-    tokenized_docs <- tokenize_words(documentText, strip_punct=F)
+    ## Tokenize the documents using whitespace splits
+    tokenized_docs <- tokenize_regex(documentText)
       
     ### Consider only unique terms
     if (unique_terms == T){
       tokenized_docs <- lapply(tokenized_docs), function(x) return(  unique(x[x!=""])) )
     }
     
-    ### Match each to a word-vector 
-    
-    
-    { 
-      len_to_index_FXN <- function(len_vec){ 
-        cumsum_vec <- cumsum(len_vec)
-        return(  sapply(1:length(len_vec),function(xs){ 
-          starting_v <- 1+cumsum_vec[xs-1]; if(length(starting_v) == 0){starting_v <- 1}
-          ending_v <- cumsum_vec[xs];
-          return(  list((starting_v):ending_v  )   ) 
-      } ) )  }  
-      indices_list <- len_to_index_FXN(unlist( lapply(documentText, length) ) )
-      
-      documentText_unlisted_new <- documentText_unlisted_orig <- unlist(documentText)
-      bad_indicator <- !documentText_unlisted_new %in% wordVecs_corpus[[1]]
-      
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = "\\#", replace ="")
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(len_to_index_FXN(lapply(TEMP_SPLIT, length)), function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-    
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = "#\\S+", replace = " <hashtag> ")
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(len_to_index_FXN(lapply(TEMP_SPLIT, length)), function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = '(\\w)\\1{2, }', replace =  '\\1')
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(len_to_index_FXN(lapply(TEMP_SPLIT, length)), function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = '[[:punct:]]+',replace =  ' ')
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(len_to_index_FXN(lapply(TEMP_SPLIT, length)), function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      if(sum(bad_indicator) > 0){  
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = 'ing\\b',replace =  '')
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        TEMP_SPLIT_INDICES = len_to_index_FXN(lapply(TEMP_SPLIT, length))
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(TEMP_SPLIT_INDICES, function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = 'ies\\b',replace =  'y')
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        TEMP_SPLIT_INDICES = len_to_index_FXN(lapply(TEMP_SPLIT, length))
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(TEMP_SPLIT_INDICES, function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = 's\\b',replace =  '')
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        TEMP_SPLIT_INDICES = len_to_index_FXN(lapply(TEMP_SPLIT, length))
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(TEMP_SPLIT_INDICES, function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      if(sum(bad_indicator) > 0){ 
-        documentText_unlisted_new[bad_indicator] <- gsub(documentText_unlisted_new[bad_indicator], pattern = 'ed\\b',replace =  '')
-        TEMP_SPLIT = strsplit(documentText_unlisted_new[bad_indicator], split = " ")
-        TEMP_SPLIT_INDICES = len_to_index_FXN(lapply(TEMP_SPLIT, length))
-        bad_indicator_new <- !unlist(TEMP_SPLIT) %in% wordVecs_corpus[[1]]
-        bad_indicator_new <- unlist(  lapply(TEMP_SPLIT_INDICES, function(ta){ all(bad_indicator_new[ta]) } ) ) 
-        documentText_unlisted_new[bad_indicator][bad_indicator_new] <- documentText_unlisted_orig[bad_indicator][bad_indicator_new]
-        bad_indicator[bad_indicator][!bad_indicator_new] <- F
-      } 
-      
-      documentText <- lapply(indices_list, function(index_i){  X___ <- unique(   unlist( strsplit(documentText_unlisted_new[index_i], split = " ")  )  ); X___[X___!=""] } ) 
-    } 
-    
-    wordsUsed_inCorpus_unique <- intersect( unique(  unlist(documentText) ), wordVecs_corpus[[1]] )
-    wordVecs_corpus <- wordVecs_corpus[which(wordVecs_corpus[[1]] %in% wordsUsed_inCorpus_unique),]
-    wordsUsed_inCorpus_unique_pointers <- 1:nrow(wordVecs_corpus)
-    names(wordsUsed_inCorpus_unique_pointers) <- wordVecs_corpus[[1]]
-    
-    #return diagnostics to user 
-    percent_dropped_overall <- round(100*mean( !unlist(documentText) %in% names(wordsUsed_inCorpus_unique_pointers) ),2 )
-    if(percent_dropped_overall > 0){ 
-      print(sprintf("Warning: %s percent of text is dropped due to word absence in vector corpus", percent_dropped_overall   )  )
-      print(head( sort( table( unlist(documentText)[!unlist(documentText) %in% names(wordsUsed_inCorpus_unique_pointers)] )  , decreasing = T), 10)  )
-    } 
-    
-    temp <- lapply(documentText,function(x){ x_ <- (wordsUsed_inCorpus_unique_pointers[ x ] );if(is.na(sum(x_))){ x_ <- na.omit(x_) }; return(unname(x_) )  } )
-    wordVecs_corpus_red <- as.matrix(  wordVecs_corpus[,-1] )
-    
-    docSummaries <- try(sapply(1:length(temp), function(qwer){ #
-      doc_indices <- temp[[qwer]]
-      if(length(doc_indices) > 0){ 
-          doc_values <- wordVecs_corpus_red[doc_indices,]
-          if(class(doc_values)!="matrix"){doc_values <- t(doc_values)}
-          DocSummary <- c(apply(doc_values, 2, function(x){c(quantile(x,probs = word_quantiles,names = F, type = 5))}))
-      }
-      else{ DocSummary <- NA }
-      return(  list( DocSummary )    )
-      }), T)
-    targetLen <- as.numeric(  names(sort( table( unlist( lapply(docSummaries, length) )   ), decreasing = T) )[1] )
-    docSummaries <- lapply(docSummaries, function(summi){ if(length(summi) != targetLen){summi <- rep(NA, times = targetLen)};return( summi ) })
-    docSummaries <- do.call(rbind, docSummaries); docSummaries[is.na(docSummaries)] <- NA
-    colnames(docSummaries) <- paste("V", 1:ncol(docSummaries), sep = "") 
-    docSummaries <- apply(docSummaries, 2, function(x){ x[is.na(x)] <- median(x, na.rm = T); return(x) })
+    ## Drop any documents that have zero terms
+    num_terms <- sapply(tokenized_docs, function(x) length(x))
+    if (length(which(num_terms == 0)) > 0){
+      cat(paste("WARNING: Document ", which(num_terms == 0), " has no terms, dropping from analysis...\n", collapse = "", sep = ""))
+    }
 
-    return( docSummaries[,colSds(docSummaries, colMeans(docSummaries))>0] )
+    ### wordVec terms
+    wordVec_terms <- rownames(wordVecs)
+    
+    ### Number of unique stems
+    unique_stems <- unique(unlist(tokenized_docs))
+    
+    if(verbose == T){
+      cat(paste("Processing...\n"))
+      cat(paste("Number of documents: ", length(documentText), "\n", sep=""))
+      cat(paste("Number of unique word stems: ", length(unique_stems), "\n", sep=""))
+      cat(paste("Number of word vector terms: ", nrow(wordVecs), "\n", sep=""))
+    }
+    
+    ### How many of the unique stems match the word vector matrix
+    unique_stem_match <- match(unique_stems, wordVec_terms)
+    names(unique_stem_match) <- unique_stems
+    ### 
+    if (verbose == T){
+      cat(paste("First attempt: Matched ", sum(!is.na(unique_stem_match)), " of ",  length(unique_stems), " ", "(",
+                round(sum(!is.na(unique_stem_match))/length(unique_stems), 3)*100, "%) ", "terms to word vectors\n", sep=""))
+    }
+    
+    ### If user wants to retry to match some of the missing terms
+    if (replace_missing == T){
+      
+      ### Which terms didn't get a match
+      missing_stems <- unique_stems[is.na(unique_stem_match)]
+      
+      ### Missing matches
+      match_missing <- rep(NA, length(missing_stems))
+      
+      ## Attempt 1:
+      # Did some of the terms have hashtags, drop them
+      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = "\\#", replace =""), wordVec_terms)
+      
+      # Attempt 2:
+      # Are they just hashtags?
+      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = "#\\S+", replace = "<hashtag>"), wordVec_terms)
+      
+      # Attempt 3:
+      # Not sure what this one's doing
+      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)],  pattern = '(\\w)\\1{2, }', replace =  '\\1'), wordVec_terms)
+      
+      # Attempt 4:
+      # Remaining punctuation?
+      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)],  pattern = '[[:punct:]]+',replace =  ''), wordVec_terms)
+      
+      # Attempt 5:
+      # Drop ending "ing"
+      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = 'ing\\b',replace =  ''), wordVec_terms)
+      
+      # Attempt 6:
+      # Drop ending "ies" -> "y"
+      match_missing[is.na(match_missing)]  <- match(gsub(missing_stems[is.na(match_missing)], pattern = 'ies\\b',replace =  'y'), wordVec_terms)
+      
+      # Attempt 7:
+      # Drop plural ending?
+      match_missing[is.na(match_missing)]  <- match(gsub(missing_stems[is.na(match_missing)],  pattern = 's\\b',replace =  ''), wordVec_terms) 
+      
+      # Attempt 8:
+      # Drop past tense ending?
+      match_missing[is.na(match_missing)]  <- match(gsub(missing_stems[is.na(match_missing)], pattern = 'ed\\b',replace =  ''), wordVec_terms) 
+      
+      ## Save the substituted matches
+      unique_stem_match[missing_stems] <- match_missing
+    }
+    
+    if (verbose == T){
+      cat(paste("Second attempt: Matched ", sum(!is.na(unique_stem_match)), " of ",  length(unique_stems), " ", "(",
+                round(sum(!is.na(unique_stem_match))/length(unique_stems), 3)*100, "%) ", "terms to word vectors\n", sep=""))
+    }
+    
+    ### Map each document to the relevant row of the wordVecs matrix
+    matched_terms <- lapply(tokenized_docs, function(x) unique_stem_match[x])
+    
+    ### Check if any documents had zero matches
+    num_terms_matched <- sapply(matched_terms, function(x) sum(!is.na(x)))
+    
+    ### Drop missing word vectors
+    matched_terms_noNA <- lapply(matched_terms, function(x) x[!is.na(x)])
+    
+    ### Document-vector matrices
+    document_matrices <- lapply(matched_terms_noNA, function(x) as.matrix(wordVecs[x,]))
+    
+    if (verbose == T){
+      cat("Computing word vector summaries for each document...\n")
+    }
+
+    ### For each summary quantile, calculate the summary
+    document_summaries <- list()
+    for (indic in 1:length(word_quantiles)){
+      
+      if (verbose == T){
+        cat(paste("Summarizing document word vectors: ", 100*word_quantiles[indic], "%",  " quantile\n", sep=""))
+      }
+      
+      quant <- word_quantiles[indic]
+      document_summary <- do.call(rbind, sapply(document_matrices, function(x) apply(x, 2, function(z) quantile(z, quant))))
+      colnames(document_summary) <- paste(colnames(document_summary), "-", 100*quant,"%", sep="")
+      document_summaries[[indic]] <- document_summary
+    }
+    
+    ### Merge all summaries into a document term matrix
+    dfm <- do.call(cbind, document_summaries)
+     
+    ### Are any columns zero-variance?
+    column_sds <- apply(dfm, 2, sd)
+    
+    ###
+    if (length(which(column_sds == 0)) > 0){
+      
+      if (verbose == T){
+        cat(paste("WARNING: Feature matrix ", which(column_sds == 0), " has zero variance, dropping from analysis...\n", collapse = "", sep = ""))
+      }
+      
+    }
+    
+    
+    
+    return(dfm[,column_sds != 0])
 }
