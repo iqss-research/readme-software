@@ -17,6 +17,9 @@
 #' 
 #' @param replace_missing If TRUE, attempts to match terms missing from the wordVec corpus with alternate representations.
 #' 
+#' @param replace_regex A list of character vectors containing regular expression pairs to be used for generating alternate representations of words to attempt
+#' to match with the wordVec corpus when terms initially cannot be matched.
+#' 
 #' @param unique_terms If TRUE, removes duplicate terms from each document - each document is represented only by the presence or absence of a term.
 #' 
 #' @param verbose If TRUE, prints updates as function runs
@@ -50,7 +53,9 @@
 #' 
 #' @import tokenizers
 
-undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, .9), replace_missing = T, unique_terms = T, verbose=T){ 
+undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, .9), replace_missing = T, 
+                      replace_regex = list(c("\\#",""),c("[[:punct:]]+", ''),c('ing\\b',''),c('s\\b', ''),c('ed\\b', ''),c('ies\\b', 'y')), 
+                      unique_terms = T, verbose=T){ 
    
     if(is.null(wordVecs)){ 
      stop("NOTE: No word vector matrix specified in 'wordVecs' -  Stoping undergrad.\n
@@ -61,9 +66,7 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
     if (!is.matrix(wordVecs)){
       stop("Error: 'wordVecs' is not a matrix")
     }
-  
 
-  
     ## Tokenize the documents using whitespace splits
     tokenized_docs <- tokenize_regex(documentText)
       
@@ -109,38 +112,14 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
       ### Missing matches
       match_missing <- rep(NA, length(missing_stems))
       
-      ## Attempt 1:
-      # Did some of the terms have hashtags, drop them
-      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = "\\#", replace =""), wordVec_terms)
-      
-      # Attempt 2:
-      # Are they just hashtags?
-      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = "#\\S+", replace = "<hashtag>"), wordVec_terms)
-      
-      # Attempt 3:
-      # Not sure what this one's doing
-      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)],  pattern = '(\\w)\\1{2, }', replace =  '\\1'), wordVec_terms)
-      
-      # Attempt 4:
-      # Remaining punctuation?
-      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)],  pattern = '[[:punct:]]+',replace =  ''), wordVec_terms)
-      
-      # Attempt 5:
-      # Drop ending "ing"
-      match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = 'ing\\b',replace =  ''), wordVec_terms)
-      
-      # Attempt 6:
-      # Drop ending "ies" -> "y"
-      match_missing[is.na(match_missing)]  <- match(gsub(missing_stems[is.na(match_missing)], pattern = 'ies\\b',replace =  'y'), wordVec_terms)
-      
-      # Attempt 7:
-      # Drop plural ending?
-      match_missing[is.na(match_missing)]  <- match(gsub(missing_stems[is.na(match_missing)],  pattern = 's\\b',replace =  ''), wordVec_terms) 
-      
-      # Attempt 8:
-      # Drop past tense ending?
-      match_missing[is.na(match_missing)]  <- match(gsub(missing_stems[is.na(match_missing)], pattern = 'ed\\b',replace =  ''), wordVec_terms) 
-      
+      ### For each reg-ex pair in replace_regex
+      for (indx in 1:length(replace_regex)){
+        
+        ## Attempt to match given the substitution
+        match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = replace_regex[[indx]][1], replace =replace_regex[[indx]][2]), wordVec_terms)
+        
+      }
+    
       ## Save the substituted matches
       unique_stem_match[missing_stems] <- match_missing
     }
