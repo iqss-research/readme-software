@@ -121,27 +121,6 @@ cleanText <- function(my_text){
 
 f2n <- function(.){as.numeric(as.character(.))}
 
-#library2 checks to see if package is installed and installs it if not. Package is then loaded into system. 
-library2 <- function(lib_name, loadin = T){ 
-  eval_value <- try(class(lib_name), T)
-  if( eval_value != "character" | class(eval_value) == "try-error" ){ lib_name <- deparse(substitute(lib_name)) } 
-  if( !lib_name %in% rownames(installed.packages()) ){
-    LIB_counter <- 0; LIB_ok <- F 
-    while(LIB_ok == F){ 
-      LIB_counter <- LIB_counter + 1 
-      print(sprintf("Trying %s for %s", .libPaths()[LIB_counter], lib_name))
-      try(eval(parse(text = sprintf("install.packages('%s', 
-                                    repos = 'http://cran.us.r-project.org',
-                                    lib = .libPaths()[LIB_counter] )", lib_name))), T)
-      LIB_ok <- lib_name %in% rownames(installed.packages())
-      if(LIB_counter > length(.libPaths())){LIB_ok <- T}
-    }
-  }
-  if(loadin == T){ 
-    eval(parse(text = sprintf("require('%s', quietly = T)", lib_name)))
-  } 
-}
-
 knn_adapt <- function(reweightSet = NULL, fixedSet = NULL, k=1, distMat = NULL){
   library2("optmatch", loadin = F)
   if(is.null(distMat)){ 

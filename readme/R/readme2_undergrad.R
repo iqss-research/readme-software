@@ -72,7 +72,7 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
       
     ### Consider only unique terms
     if (unique_terms == T){
-      tokenized_docs <- lapply(tokenized_docs), function(x) return(  unique(x[x!=""])) )
+      tokenized_docs <- lapply(tokenized_docs, function(x) return(  unique(x[x!=""])) )
     }
     
     ## Drop any documents that have zero terms
