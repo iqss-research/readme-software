@@ -13,12 +13,12 @@
 #' 
 #' @param wordVecs A matrix where each row denotes a word and each column a word vector. Words should be stored as the rownames of the matrix.
 #' 
-#' @param word_quantiles A numeric vector denoting the quantiles (0-1) used to summarize each word vector dimension. Defaults to 10th, 50th and 90th quantiles.
+#' @param word_quantiles A numeric vector denoting the quantiles (0-1) used to summarize each word vector dimension. Defaults to 0.10th, 0.50th and 0.90th quantiles.
 #' 
-#' @param replace_missing If TRUE, attempts to match terms missing from the wordVec corpus with alternate representations.
+#' @param reattempt If TRUE, attempts to match terms missing from the wordVec corpus with alternate representations.
 #' 
-#' @param replace_regex A list of character vectors containing regular expression pairs to be used for generating alternate representations of words to attempt
-#' to match with the wordVec corpus when terms initially cannot be matched.
+#' @param reattempt_regex A list of character vectors containing regular expression pairs to be used for generating alternate representations of words to attempt
+#' to match with the wordVec corpus when terms initially cannot be matched. Order matters. 
 #' 
 #' @param unique_terms If TRUE, removes duplicate terms from each document - each document is represented only by the presence or absence of a term.
 #' 
@@ -52,11 +52,11 @@
 #' @export 
 #' 
 #' @import tokenizers
-
-undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, .9), replace_missing = T, 
-                      replace_regex = list(c("\\#",""),c("[[:punct:]]+", ''),c('ing\\b',''),c('s\\b', ''),c('ed\\b', ''),c('ies\\b', 'y')), 
+undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, .9), reattempt = T, 
+                      reattempt_regex = list(c("\\#",""), c("#\\S+", "<hashtag>"), 
+                                            c("[[:punct:]]+", ''),c('ing\\b',''),
+                                            c('s\\b', ''),c('ed\\b', ''),c('ies\\b', 'y')), 
                       unique_terms = T, verbose=T){ 
-   
     if(is.null(wordVecs)){ 
      stop("NOTE: No word vector matrix specified in 'wordVecs' -  Stoping undergrad.\n
           In order to use the word vector summaries, please provide a data frame containing the word vectors.\n
@@ -68,7 +68,7 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
     }
 
     ## Tokenize the documents using whitespace splits
-    tokenized_docs <- tokenize_regex(documentText)
+    tokenized_docs <- tokenizers::tokenize_regex(documentText)
       
     ### Consider only unique terms
     if (unique_terms == T){
@@ -104,19 +104,21 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
     }
     
     ### If user wants to retry to match some of the missing terms
-    if (replace_missing == T){
-      
+    if (reattempt == T){
       ### Which terms didn't get a match
       missing_stems <- unique_stems[is.na(unique_stem_match)]
       
       ### Missing matches
       match_missing <- rep(NA, length(missing_stems))
       
-      ### For each reg-ex pair in replace_regex
-      for (indx in 1:length(replace_regex)){
+      ### For each reg-ex pair in reattempt_regex
+      for (indx in 1:length(reattempt_regex)){
         
         ## Attempt to match given the substitution
-        match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], pattern = replace_regex[[indx]][1], replace =replace_regex[[indx]][2]), wordVec_terms)
+        match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], 
+                                                          pattern = reattempt_regex[[indx]][1], 
+                                                          replace = reattempt_regex[[indx]][2]), 
+                                                     wordVec_terms)
         
       }
     
@@ -139,28 +141,22 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
     matched_terms_noNA <- lapply(matched_terms, function(x) x[!is.na(x)])
     
     ### Document-vector matrices
-    document_matrices <- lapply(matched_terms_noNA, function(x) as.matrix(wordVecs[x,]))
+    document_matrices <- lapply(matched_terms_noNA, function(x) { 
+                                  if(length(x) > 1){ docMatrix = wordVecs[x,] } 
+                                  if(length(x) == 1){ docMatrix = t(wordVecs[x,]) } 
+                                  if(length(x) == 0){ docMatrix = t(rep(NA, times = ncol(wordVecs))) }
+                                return( docMatrix )  
+                                })
     
     if (verbose == T){
       cat("Computing word vector summaries for each document...\n")
     }
 
-    ### For each summary quantile, calculate the summary
-    document_summaries <- list()
-    for (indic in 1:length(word_quantiles)){
-      
-      if (verbose == T){
-        cat(paste("Summarizing document word vectors: ", 100*word_quantiles[indic], "%",  " quantile\n", sep=""))
-      }
-      
-      quant <- word_quantiles[indic]
-      document_summary <- do.call(rbind, sapply(document_matrices, function(x) apply(x, 2, function(z) quantile(z, quant))))
-      colnames(document_summary) <- paste(colnames(document_summary), "-", 100*quant,"%", sep="")
-      document_summaries[[indic]] <- document_summary
-    }
-    
-    ### Merge all summaries into a document term matrix
-    dfm <- do.call(cbind, document_summaries)
+    ### Calculate the summary
+    dfm <- do.call(rbind, lapply(document_matrices, function(x){ 
+                                    c(apply(x, 2, function(x_col){ quantile(x_col, c(word_quantiles))}))}))
+    colnames(dfm) <- c(sapply(colnames(wordVecs), 
+                              function(z){ paste(z, "_", round(100*word_quantiles), "th_Quantile", sep = "") }))
      
     ### Are any columns zero-variance?
     column_sds <- apply(dfm, 2, sd)
@@ -169,12 +165,9 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
     if (length(which(column_sds == 0)) > 0){
       
       if (verbose == T){
-        cat(paste("WARNING: Feature matrix ", which(column_sds == 0), " has zero variance, dropping from analysis...\n", collapse = "", sep = ""))
+        cat(paste("WARNING: Feature matrix ", colnames(dfm)[which(column_sds == 0)], " has zero variance, dropping from analysis...\n", collapse = "", sep = ""))
       }
-      
     }
-    
-    
     
     return(dfm[,column_sds != 0])
 }
