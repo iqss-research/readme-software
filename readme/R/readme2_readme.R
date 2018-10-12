@@ -133,14 +133,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nProj <- as.integer(max(numProjections,nCat+2) );
   
   #Start SGD
-  if (verbose == t){
+  if (verbose == T){
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
   tf$reset_default_graph(); sess <- tf$Session()
   
   ## Construct TensorFlow graph
-  if (verbose == t){
+  if (verbose == T){
     cat("Constructing TensorFlow graph\n")
   }
   
