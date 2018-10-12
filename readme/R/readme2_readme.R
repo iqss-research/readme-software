@@ -88,7 +88,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nFeat <- ncol(dfm)
   nLabeled <- sum(labeledIndicator == 1)
   nUnlabeled <- sum(labeledIndicator == 0)
-  labeledCt <- table(categoryVec[labeledIndicator == 1,])
+  labeledCt <- table(categoryVec[labeledIndicator == 1])
 
   ### Sanity checks
   if (nDocuments != nLabeled + nUnlabeled){
