@@ -2,15 +2,11 @@
 ##INSTRUCTIONS FOR readme PACKAGE USE ############
 ##################################################
 
-#Set directory to the readme-software folder. 
-setwd("~/Downloads/readme-software")
-devtools::build("./readme")
-
-#Install package 
-install.packages("./readme.tar.gz", lib = "./", repos = NULL, type ="source",INSTALL_opts = c('--no-lock'))
+#Install package
+devtools::install_github("iqss-research/readme-software/readme")
 
 #Load in package to environment  
-library(readme, lib.loc = "./")
+library(readme)
 
 #For further instructions on use, see ?readme and ?undergrad, as well as readme.pdf
 

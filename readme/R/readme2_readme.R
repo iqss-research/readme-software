@@ -6,9 +6,6 @@
 #' (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
 #' Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
 #' 
-#' @param documentText A vector in which each entry corresponds to a document. The function will automatically ``clean'' the text. For 
-#' more control over the cleaning process, users should pre-process the text themselves, use the \code{undergrad} function, and leave the ``documentText'' parameter \code{NULL}. 
-#' 
 #' @param labeledIndicator An indicator vector where each entry corresponds to a row in \code{dfm}. 
 #' \code{1} represents document membership in the labeled class. \code{0} represents document membership in the unlabeled class. 
 #' 
@@ -22,9 +19,8 @@
 #' \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
 #' 
 #' 
-#'@param dfm 'document-feature matrix'. A data frame where each row represents a document and each column a unique feature. Note that 
-#'this parameter should be \code{NULL} if the user is supplying the raw document text into \code{readme} (i.e. \code{documentText} is not null).
-#'#'
+#'@param dfm 'document-feature matrix'. A data frame where each row represents a document and each column a unique feature. 
+#'
 #' @param nboot A scalar indicating the number of times the estimation will be re-run (useful for reducing the variance of the final output).
 #'
 #' @param verbose Should diagnostic plots be displayed? 
@@ -73,8 +69,7 @@
 #' my_categoryVec[my_labeledIndicator == 0] <- NA
 #' 
 #' #perform estimation
-#' readme_results <- readme(documentText = my_documentText,
-#'        labeledIndicator= my_labeledIndicator, 
+#' readme_results <- readme(labeledIndicator= my_labeledIndicator, 
 #'        categoryVec = my_categoryVec, 
 #'        wordVecs_corpus = my_wordVecs_corpus,
 #'        nboot = 1)
@@ -89,8 +84,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                     verbose=F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
-  nDocuments <- nrow(documentText)
-  nFeat <- ncol(documentText)
+  nDocuments <- nrow(dfm)
+  nFeat <- ncol(dfm)
   nLabeled <- sum(labeledIndicator == 1)
   nUnlabeled <- sum(labeledIndicator == 0)
   labeledCt <- table(categoryVec[labeledIndicator == 1,])
