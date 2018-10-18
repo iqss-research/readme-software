@@ -230,13 +230,14 @@ va2 <-
       for (i in 2:p){
         temp <- rep(0,p)
         for (j in 1:(i-1))
-          temp <- temp+t(omat[j,])%*%omat[i,]/(t(omat[j,])%*%omat[j,])*omat[j,]
+          browser()
+          temp <- temp+c(t(omat[j,])%*%omat[i,])/c(t(omat[j,])%*%omat[j,])*omat[j,]
         omat[i,] <- omat[i,]-temp
       }
       if (!is.null(orthnorm)) {
         oind<-orthnorm
         for ( i in oind)
-          omat[i,] <- omat[i,]/(t(omat[i,]%*%omat[i,]))^0.5
+          omat[i,] <- omat[i,]/c(t(omat[i,]%*%omat[i,]))^0.5
       }
       return(omat)
     }

@@ -1,30 +1,26 @@
-if(T == T){ 
-options(repos=structure(c(CRAN='http://lib.stat.cmu.edu/R/CRAN/')), 
-        INSTALL_opts = c('--no-lock' ))
-install.packages("./readme.tar.gz", lib = "./", repos = NULL, type ="source",INSTALL_opts = c('--no-lock'))
-library(readme, lib.loc = "./")
-
+devtools::install_github("iqss-research/readme-software/readme")
+library(readme)
 
 folder_name <- sprintf("Results_%s_%s", sampling_scheme , Sys.Date() ) 
 labeled_sz <- 300; unlabeled_sz <- 300; 
 feat <- 15
 nboot <- 10 
 minFreq <- 0.01; maxFreq <- 0.99 
-wordVecs_pointer <- grep(list.files("./data"), pattern = "\\.txt", value = T)
-if(length(wordVecs_pointer) == 0){stop("NO WORD VECTORS (SAVED IN .txt FORMAT) IN './data/'")}
-wordVecs_pointer <- sprintf("./data/%s", wordVecs_pointer)
 
 support_files <- list.files("./support/")
 support_files <- support_files[! support_files %in% c("readme2_master_public.R")]
 for(support_file in support_files){ source(sprintf("./support/%s", support_file)) }
 
-library2("data.table", loadin = F)
-wordVecs_corpus <- data.table::fread(wordVecs_pointer)
-key_list <- wordVecs_corpus[[1]]
+library("data.table")
+wordVecs_corpus <- fread(wordVecs_pointer)
+wordVecs_rowNames <- wordVecs_corpus[[1]]
+wordVecs_corpus <- as.matrix (  wordVecs_corpus[,-1] )  
+row.names(wordVecs_corpus) <- wordVecs_rowNames
+rm(wordVecs_rowNames)
 
-eval_text <- 'try( readme2_testing(dtm=csv_data_it[,-c(1:3)], labeledIndicator=csv_data_it$LABELEDSET, categoryVec=csv_data_it$CATEGORY,
-features = feat, dfm = DocSummaries_input[c(labeled_indices,unlabeled_indices),], 
-nboot = nboot, compareClassifiers = T, compareQuantifiers = T, verbose = F), T)'
+eval_text <- 'try( readme2_testing(dtm=iter_dtm, labeledIndicator=iter_labeledIndicator, 
+categoryVec=iter_categoryVec, dfm = iter_docSummaries, 
+nboot = nboot, compareClassifiers = T, compareQuantifiers = T, verbose = !RCE_indicator), T)'
 
 csv_keys <- grep(list.files("./data/"), pattern = "\\.csv", value = T)
 csv_keys <- sample(csv_keys)
@@ -44,6 +40,12 @@ for(ijack in global_iter_seq){
     in_file <- cbind(read.csv(sprintf("./data/%s", csv_keys[ijack]), header = T), 1)
     colnames(in_file)[3] <- "LABELEDSET"
     in_file[,2] <- enc2utf8(as.character(in_file[,2]))
+    
+    
+    corpus_DTM <- toDTM(my_text)
+    corpus_categoryVec = csv_input[,2]
+    
+    
     csv_undergrad <- undergrad(undergradVersion = "1", undergradVersion1_control = list(
                                     control=in_file,
                                sep=",", contentKey ="RAWTEXT",inputType = "raw", 
@@ -52,90 +54,27 @@ for(ijack in global_iter_seq){
                                minFreq=minFreq,  maxFreq=maxFreq) ) 
     my_text <- as.character( in_file[,2] )  
       
-    {
-        #CLEAN UP TEXT 
-        my_text_orig <- my_text
-        names(my_text) <- NULL 
-        my_text <- enc2utf8(my_text)
-        my_text <- gsub(my_text, pattern = "<.*?>", replace = " <html> ") 
-        url_pattern1 <- "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-        url_pattern2 <- " ?(f|ht)(tp)(s?)(://)(.*)[.|/](.*)"
-        my_text <- gsub(my_text, pattern = url_pattern1, replace = " <url> ") 
-        my_text <- gsub(my_text, pattern = url_pattern2, replace = " <url> ") 
-        my_text <- gsub(my_text, pattern = ":-)", replace = " <smile> ")
-        my_text <- gsub(my_text, pattern = ":)", replace = " <smile> ")
-        my_text <- gsub(my_text, pattern = ":D", replace = " <smile> ")
-        my_text <- gsub(my_text, pattern = ":-\\(", replace = " <sadface> ")
-        my_text <- gsub(my_text, pattern = ":\\(", replace = " <sadface> ")
-        my_text <- gsub(my_text, pattern = "<3", replace = " ♥ ")
+    DocSummaries_input <- undergrad(my_text,  wordVecs_corpus = wordVecs_corpus)
+    rm(my_text_orig); rm(my_text);
         
-        my_text <- gsub(my_text, pattern = "\\s*-\\B|\\B-\\s*", replace = " ") 
-        my_text <- gsub(my_text, pattern = " \\- ", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\--", replace = " ") 
-        my_text <- gsub(my_text, pattern = "@\\S+", replace = " <user> ") 
-        my_text <- gsub(my_text, pattern = "[[:digit:]]+", replace = " <number> ") 
-        my_text <- tolower(my_text)
-        my_text <- gsub(my_text, pattern = '\\*', replace = " ")
-        my_text <- gsub(my_text, pattern = "\\.\\.\\.", replace = " … ")
-        my_text <- gsub(my_text, pattern = "\\.", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\:", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\;", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\,", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\(", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\)", replace = " ") 
-        my_text <- gsub(my_text, pattern = '\\=', replace = " = ")
-        my_text <- gsub(my_text, pattern = '\\+', replace = " + ")
-        my_text <- gsub(my_text, pattern = '\\]', replace = " ")
-        my_text <- gsub(my_text, pattern = '\\[', replace = " ")
-        my_text <- gsub(my_text, pattern = "\\!", replace = " ! ") 
-        my_text <- gsub(my_text, pattern = "\\ô", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\/", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\\\", replace = " ") 
-        my_text <- gsub(my_text, pattern = '\\"', replace = " ") 
-        my_text <- gsub(my_text, pattern = '\\¨', replace = " ")
-        my_text <- gsub(my_text, pattern = "\\'", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\\?", replace = " ? ") 
-        my_text <- gsub(my_text, pattern = "\\õ", replace = " ' ") 
-        my_text <- gsub(my_text, pattern = "\\õ", replace = " ' ") 
-        my_text <- gsub(my_text, pattern = "'s ", replace = " 's ") 
-        my_text <- gsub(my_text, pattern = "'s ", replace = " 's ") 
-        my_text <- gsub(my_text, pattern = " s ", replace = " 's ") 
-        my_text <- gsub(my_text, pattern = "n't ", replace = " n't ") 
-        my_text <- gsub(my_text, pattern = "'d ", replace = " 'd ") 
-        my_text <- gsub(my_text, pattern = "'re ", replace = " 're ") 
-        my_text <- gsub(my_text, pattern = "'ve ", replace = " 've ") 
-        my_text <- gsub(my_text, pattern = "'ll ", replace = " 'll ") 
-        my_text <- gsub(my_text, pattern = "'m ", replace = " 'm ") 
-        my_text <- gsub(my_text, pattern = "gov't", replace = " government ") 
-        my_text <- gsub(my_text, pattern = "gov't", replace = " government ") 
-        
-        my_text <- gsub(my_text, pattern = "\n", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\r", replace = " ") 
-        my_text <- gsub(my_text, pattern = "\t", replace = " ") 
-        my_text <- gsub(my_text, pattern = "  ", replace = " ")
-        
-        DocSummaries_input <- undergrad(my_text,  wordVecs_corpus = wordVecs_corpus)
-        rm(my_text_orig); rm(my_text);
-        
-        ## Make "CATEGORY" coding a factor variable
-        csv_undergrad[,2] <- as.character(csv_undergrad[,2])
-        csv_undergrad[,2] <- paste(csv_undergrad[,2], as.numeric(as.factor(csv_undergrad[,2])) ) 
-        csv_undergrad[,2] <- gsub(as.character(csv_undergrad[,2]), 
-                                      pattern = "[[:punct:]]", 
+    ## Make "CATEGORY" coding a factor variable
+    csv_undergrad[,2] <- as.character(csv_undergrad[,2])
+    csv_undergrad[,2] <- paste(csv_undergrad[,2], as.numeric(as.factor(csv_undergrad[,2])) ) 
+    csv_undergrad[,2] <- gsub(as.character(csv_undergrad[,2]), 
+                                    pattern = "[[:punct:]]", 
                                       replace = " ")
-        csv_undergrad[,2] <- gsub(gsub(csv_undergrad[,2], 
+    csv_undergrad[,2] <- gsub(gsub(csv_undergrad[,2], 
                                            pattern = "  ", 
                                            replace = " "), pattern = "  ", replace =" ")
-        csv_undergrad[,2] <- gsub(csv_undergrad[,2], 
+    csv_undergrad[,2] <- gsub(csv_undergrad[,2], 
                                       pattern = "[[:space:]]", 
                                       replace = "_")
-        csv_undergrad[,2] <- as.factor(csv_undergrad[,2])
-        csv_undergrad <- csv_undergrad[,!duplicated(colnames(csv_undergrad))]
-        colnames(csv_undergrad)[-c(1:3)] <- gsub(colnames(csv_undergrad)[-c(1:3)] , 
+    csv_undergrad[,2] <- as.factor(csv_undergrad[,2])
+    csv_undergrad <- csv_undergrad[,!duplicated(colnames(csv_undergrad))]
+    colnames(csv_undergrad)[-c(1:3)] <- gsub(colnames(csv_undergrad)[-c(1:3)] , 
                                                      pattern = "[[:punct:]]", 
                                                      replace = "")
-    }
-     
+    
     csv_error <- rep(NA, length=iterations)
     sampling_scheme_used <- rep(NA, times = iterations)
     for(it in 1:iterations){ 
@@ -262,8 +201,7 @@ for(ijack in global_iter_seq){
           print( errors )  
         } 
       }
-  }
-} 
+}
 
 #Spitout results 
 if(T == T){
