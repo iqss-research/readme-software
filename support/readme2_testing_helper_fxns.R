@@ -1,4 +1,20 @@
 
+toDTM <- function(myText){
+  myText_ <- tolower(myText)
+  myText_ <- gsub('[[:punct:]]+','',myText_)
+  myText_ = tokenizers::tokenize_word_stems(myText_)
+  myText_ = lapply(myText_, function(x){unique(x)})
+  myStems_tab = table(unlist(myText_))
+  myStems_keep <- names( myStems_tab[myStems_tab > 0.01 * length(myText)] )
+  myText_ = lapply(myText_, function(x){x[x %in% myStems_keep]})
+  dfm_ = as.data.frame( matrix(0, nrow = length(myText), ncol = length(myStems_keep)) ) 
+  colnames(dfm_) <- myStems_keep
+  for(iaa in 1:length(myText_)){ 
+    dfm_[iaa,myText_[[iaa]]] <- 1 
+  }
+  return( dfm_ )               
+}
+
 f2n <- function(.){as.numeric(as.character(.))}
 colSds <- function (x, center = NULL, dim. = dim(x)){ n <- dim.[1]; x <- x * x; x <- colMeans(x); x <- (x - center^2); sqrt (  x * (n/(n - 1)) )  }
 FastScale <- function(x,cm=NULL,csd=NULL){
@@ -6,27 +22,6 @@ FastScale <- function(x,cm=NULL,csd=NULL){
   if(is.null(csd)){csd = colSds(x, center = cm)}# Get the column sd
   return( t( (t(x) - cm) / csd ) )
 } 
-
-#library2 checks to see if package is installed and installs it if not. Package is then loaded into system. 
-library2 <- function(lib_name, loadin = T){ 
-  eval_value <- try(class(lib_name), T)
-  if( eval_value != "character" | class(eval_value) == "try-error" ){ lib_name <- deparse(substitute(lib_name)) } 
-  if( !lib_name %in% rownames(installed.packages()) ){
-    LIB_counter <- 0; LIB_ok <- F 
-    while(LIB_ok == F){ 
-      LIB_counter <- LIB_counter + 1 
-      print(sprintf("Trying %s for %s", .libPaths()[LIB_counter], lib_name))
-      try(eval(parse(text = sprintf("install.packages('%s', 
-                                    repos = 'http://cran.us.r-project.org',
-                                    lib = .libPaths()[LIB_counter] )", lib_name))), T)
-      LIB_ok <- lib_name %in% rownames(installed.packages())
-      if(LIB_counter > length(.libPaths())){LIB_ok <- T}
-    }
-  }
-  if(loadin == T){ 
-    eval(parse(text = sprintf("require('%s', quietly = T)", lib_name)))
-  } 
-}
 
 rdirichlet <- function(n, alpha) {
   normalize <- function(.) . / sum(.)
@@ -36,7 +31,7 @@ rdirichlet <- function(n, alpha) {
   return( ret_q ) 
 }
 liblinearModelFunction<-function(xTrain){
-  library2("LiblineaR", loadin = F)
+  require("LiblineaR", loadin = F)
   LiblineaR::LiblineaR(data=xTrain[,-1],target=xTrain[,1], type=7,cost=1, bias=TRUE)
 }
 liblinearPredFunction<-function(PLT, testData){
@@ -48,8 +43,8 @@ naiveMethod<-function(trainMatrix,testMatrix,baseClassifierModelFunction=libline
   probs<-baseClassifierPredFunction(model,testMatrix)
 }
 EnsembleMethod <- function(train_cats, train_feat, test_feat, labeled_pd){ 
-  library2("randomForest", loadin = F)
-  library2("e1071", loadin = F)
+  require("randomForest")
+  require("e1071")
   
   KeepCols <- apply(test_feat, 2, sd) > 0 & apply(train_feat, 2, sd) > 0 
   train_feat <- train_feat[,KeepCols]

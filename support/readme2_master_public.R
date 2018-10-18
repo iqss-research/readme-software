@@ -41,8 +41,7 @@ for(ijack in global_iter_seq){
     colnames(in_file)[3] <- "LABELEDSET"
     in_file[,2] <- enc2utf8(as.character(in_file[,2]))
     
-    
-    corpus_DTM <- toDTM(my_text)
+    corpus_DTM <- toDTM(in_file[,2])
     corpus_categoryVec = csv_input[,2]
     
     
