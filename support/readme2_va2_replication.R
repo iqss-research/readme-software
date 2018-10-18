@@ -112,7 +112,7 @@ va2 <-
     
     mnlPrediction <- function(data) mnlclassifier(data)
     
-    library2(quadprog, loadin = F)
+    library(quadprog)
     
     normalizeColumnsToProbability <-function(aMatrix) sweep(data.matrix(aMatrix),2,margin.table(data.matrix(aMatrix),2),"/") 
     

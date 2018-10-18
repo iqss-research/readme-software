@@ -122,7 +122,7 @@ cleanText <- function(my_text){
 f2n <- function(.){as.numeric(as.character(.))}
 
 knn_adapt <- function(reweightSet = NULL, fixedSet = NULL, k=1, distMat = NULL){
-  library2("optmatch", loadin = F)
+  library("optmatch")
   if(is.null(distMat)){ 
     fixedSet <- as.data.frame(  cbind(1, fixedSet)) ; colnames(fixedSet)[1] <- "fixed_indicator"
     reweightSet <- as.data.frame(  cbind(0, reweightSet))  ; colnames(reweightSet)[1] <- "fixed_indicator"

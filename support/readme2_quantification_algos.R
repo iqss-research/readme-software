@@ -1,7 +1,7 @@
 if(T == T){ 
   #Optimization Functions
   quad.constrain_QUANT<-function(Y,X){ 
-    library2(quadprog,loadin = F)
+    require(quadprog)
     K<-ncol(X)
     Amat<-t(rbind(rep(1,K),diag(1,K),diag(-1,K)))
     quadprog::solve.QP(t(X)%*%X,matrix(Y,nrow=1)%*%X, Amat, c(1, rep(0,K), rep(-1,K)), meq=1)$solution
@@ -32,7 +32,7 @@ if(T == T){
     Beq=matrix(1,1,1)
     conf<-function(x) return(list(ceq=NULL,c=NULL))
     #objfun<-function(beta){q<-X%*%beta; q[q<0]<-0; p<-Y; sum(abs(p-q))}
-    #library2(NlcOptim)
+    #requireNlcOptim)
     #as.numeric(NlcOptim::NlcOptim(X=matrix(start,K,1), objfun=objfun,Aeq=Aeq,Beq=Beq, lb=matrix(0,K,1), ub=matrix(1,K,1),confun=conf)$p)
     objfun<-function(beta){
       beta <- 1/(1+exp(-beta))
@@ -51,7 +51,7 @@ if(T == T){
     Amat<-rbind(cbind(I,X),cbind(I,-X),c(rep(0,M), rep(1,K)))
     bvec<-c(Y,-Y,1)
     cvec<-c(rep(1,M), rep(0,K))
-    library2(linprog)
+    requirelinprog)
     l<-linprog::solveLP(cvec,bvec,Amat,const.dir=c(rep(">=",2*M),"=="),lpSolve=T)
     as.numeric(tail(l$solution[],K))
   }

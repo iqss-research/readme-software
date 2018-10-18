@@ -53,10 +53,8 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
   names(error_quantify) <- error_quantify_names
   va2_error <- NA
   if(compareQuantifiers == T){
-    source("./Readme2_SupportCode/readme2_va2_replication.R")
-    source("./Readme2_SupportCode/readme2_quantification_algos.R")
-    #termMatrix_use <- cbind(1:length(labeledIndicator), categoryVec, labeledIndicator, dtm)
-    #colnames(termMatrix_use)[1:3] <- c("FILENAME", "categoryLabels", "TRAININGSET")
+    source("./support/readme2_va2_replication.R")
+    source("./support/readme2_quantification_algos.R")
     termMatrix_use <- cbind(1:length(categoryVec), categoryVec, labeledIndicator, dtm)
     colnames(termMatrix_use)[1:3] <- c("FILENAME",  "categoryLabels", "TRAININGSET")
     va2_results <- try(va2(termMatrix=termMatrix_use,seed=ceiling(runif(1,1,1000)), nsymps=2), T)  
