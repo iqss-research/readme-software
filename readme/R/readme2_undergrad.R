@@ -154,7 +154,13 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
 
     ### Calculate the summary
     dfm <- do.call(rbind, lapply(document_matrices, function(x){ 
-                                    c(apply(x, 2, function(x_col){ quantile(x_col, c(word_quantiles))}))}))
+                                    c(apply(x, 2, function(x_col){ 
+                                      quantile(x_col, c(word_quantiles), na.rm = T)
+                                  }))}))
+    dfm = apply(dfm, 2, function(x){
+      x[is.na(x)] <- mean(x,na.rm = T)
+      return( x ) 
+    })
     colnames(dfm) <- c(sapply(colnames(wordVecs), 
                               function(z){ paste(z, "_", round(100*word_quantiles), "th_Quantile", sep = "") }))
      

@@ -42,37 +42,23 @@ for(ijack in global_iter_seq){
     in_file[,2] <- enc2utf8(as.character(in_file[,2]))
     
     corpus_DTM <- toDTM(in_file[,2])
-    corpus_categoryVec = csv_input[,2]
-    
-    
-    csv_undergrad <- undergrad(undergradVersion = "1", undergradVersion1_control = list(
-                                    control=in_file,
-                               sep=",", contentKey ="RAWTEXT",inputType = "raw", 
-                               categoryKey="CATEGORY", 
-                               labeledSet_key ="LABELEDSET",
-                               minFreq=minFreq,  maxFreq=maxFreq) ) 
-    my_text <- as.character( in_file[,2] )  
-      
-    DocSummaries_input <- undergrad(my_text,  wordVecs_corpus = wordVecs_corpus)
-    rm(my_text_orig); rm(my_text);
+    corpus_categoryVec = in_file[,1]
+    docSummaries <- undergrad(cleanText(in_file[,2]),  wordVecs = wordVecs_corpus)
+    rm(in_file);
         
     ## Make "CATEGORY" coding a factor variable
-    csv_undergrad[,2] <- as.character(csv_undergrad[,2])
-    csv_undergrad[,2] <- paste(csv_undergrad[,2], as.numeric(as.factor(csv_undergrad[,2])) ) 
-    csv_undergrad[,2] <- gsub(as.character(csv_undergrad[,2]), 
+    corpus_categoryVec <- as.character(corpus_categoryVec)
+    corpus_categoryVec <- paste(corpus_categoryVec, as.numeric(as.factor(corpus_categoryVec)) ) 
+    corpus_categoryVec <- gsub(as.character(corpus_categoryVec), 
                                     pattern = "[[:punct:]]", 
                                       replace = " ")
-    csv_undergrad[,2] <- gsub(gsub(csv_undergrad[,2], 
+    corpus_categoryVec <- gsub(gsub(corpus_categoryVec, 
                                            pattern = "  ", 
                                            replace = " "), pattern = "  ", replace =" ")
-    csv_undergrad[,2] <- gsub(csv_undergrad[,2], 
+    corpus_categoryVec <- gsub(corpus_categoryVec, 
                                       pattern = "[[:space:]]", 
                                       replace = "_")
-    csv_undergrad[,2] <- as.factor(csv_undergrad[,2])
-    csv_undergrad <- csv_undergrad[,!duplicated(colnames(csv_undergrad))]
-    colnames(csv_undergrad)[-c(1:3)] <- gsub(colnames(csv_undergrad)[-c(1:3)] , 
-                                                     pattern = "[[:punct:]]", 
-                                                     replace = "")
+    corpus_categoryVec <- as.factor(corpus_categoryVec)
     
     csv_error <- rep(NA, length=iterations)
     sampling_scheme_used <- rep(NA, times = iterations)
