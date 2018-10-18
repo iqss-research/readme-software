@@ -31,7 +31,7 @@ rdirichlet <- function(n, alpha) {
   return( ret_q ) 
 }
 liblinearModelFunction<-function(xTrain){
-  require("LiblineaR", loadin = F)
+  require("LiblineaR")
   LiblineaR::LiblineaR(data=xTrain[,-1],target=xTrain[,1], type=7,cost=1, bias=TRUE)
 }
 liblinearPredFunction<-function(PLT, testData){

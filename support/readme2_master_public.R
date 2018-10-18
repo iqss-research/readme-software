@@ -20,7 +20,7 @@ rm(wordVecs_rowNames)
 
 eval_text <- 'try( readme2_testing(dtm=iter_dtm, labeledIndicator=iter_labeledIndicator, 
 categoryVec=iter_categoryVec, dfm = iter_docSummaries, 
-nboot = nboot, compareClassifiers = T, compareQuantifiers = T, verbose = !RCE_indicator), T)'
+nboot = nboot, compareClassifiers = T, compareQuantifiers = T, verbose = F), T)'
 
 csv_keys <- grep(list.files("./data/"), pattern = "\\.csv", value = T)
 csv_keys <- sample(csv_keys)
@@ -63,129 +63,145 @@ for(ijack in global_iter_seq){
     csv_error <- rep(NA, length=iterations)
     sampling_scheme_used <- rep(NA, times = iterations)
     for(it in 1:iterations){ 
-        cat(paste("Generating Dataset :", it, "\n"))
-        sampling_scheme_old <- sampling_scheme
-        if(sampling_scheme == "RandomCombination"){
-          sampling_scheme <- sample(c( "Max_XDiv", "Min_XDiv","Uniform_XDiv" , 
-                                      "Historical","Historical2", "Historical3", "HistoricalVarySampSize", 
-                                      "Ahistorical_NoReuse",
-                                      "breakdown_sampling","breakdown_sampling2", 
-                                      "JustPermutations", "MinDiv", "MaxDiv",
-                                      "Ahistorical_NoReuse2","Ahistorical_aykut","Ahistorical_aykut_quantification"
-                                      ), 1)
-          if(csv_name %in% "immigration"){  sampling_scheme <- sample(c("Historical"), 1)  }
+      cat(paste("Generating Dataset :", it, "\n"))
+      sampling_scheme_old <- sampling_scheme
+      if(sampling_scheme == "RandomCombination"){
+        if(it == 1){ 
+          sampling_scheme_vec <- c( "Max_XDiv", "Min_XDiv","Uniform_XDiv" , 
+                                    "Historical","Historical2", "Historical3", "HistoricalVarySampSize", 
+                                    "Ahistorical_NoReuse","firat2018",
+                                    "breakdown_sampling","breakdown_sampling2", 
+                                    "JustPermutations", "MinDiv", "MaxDiv",
+                                    "Ahistorical_NoReuse2","Ahistorical_aykut","Ahistorical_aykut_quantification")
+          sampling_scheme_vec <- sample(sampling_scheme_vec)
+          sampling_scheme_vec <- rep(sampling_scheme_vec, times = ceiling( iterations/length(sampling_scheme_vec)) ) 
         }
-
-        INDICES_LIST = try(GetLabeledUnlabeledIndices( csv_undergrad_input = csv_undergrad,
-                                                   sampling_scheme = sampling_scheme, 
-                                                   labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz, vecs_input_ordered = DocSummaries_input ), T)  
-        if(length(INDICES_LIST$labeled_indices)==0){browser()}
-        if(class(INDICES_LIST) == "try-error"){ 
-          print("SAMPLING ERROR, DEFAULTING TO HISTORICAL")
-          sampling_scheme <- "Historical"
-          INDICES_LIST = try(GetLabeledUnlabeledIndices( csv_undergrad_input = csv_undergrad,
-                                                         sampling_scheme = sampling_scheme, 
-                                                         labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz, vecs_input_ordered = DocSummaries_input ), T)  
+        sampling_scheme <- sampling_scheme_vec[it]
+      }
+      if(sampling_scheme == "RandomCombination2"){
+        if(it == 1){ 
+          sampling_scheme_vec <- sample(c("Historical","firat2018"))
+          sampling_scheme_vec <- rep(sampling_scheme_vec, times = ceiling( iterations/length(sampling_scheme_vec)) ) 
         }
-        labeled_indices <- INDICES_LIST$labeled_indices
-        unlabeled_indices <- INDICES_LIST$unlabeled_indices
-        LC <- csv_undergrad$CATEGORY[INDICES_LIST$labeled_indices]
-        UC <- csv_undergrad$CATEGORY[INDICES_LIST$unlabeled_indices]
-        LC_CATS_KEEP <- table( LC); LC_CATS_KEEP <- names(LC_CATS_KEEP)[LC_CATS_KEEP>10]
-        unlabeled_indices <- unlabeled_indices[UC %in% LC_CATS_KEEP]
-        labeled_indices <- labeled_indices[LC %in% LC_CATS_KEEP]
-        indices_list[[it]] <- list(labeled_indices = labeled_indices, 
-                                   unlabeled_indices = unlabeled_indices)
-        sampling_scheme_used[it] <- sampling_scheme
-        sampling_scheme <- sampling_scheme_old
+        sampling_scheme <- sampling_scheme_vec[it]
       }
       
-      for (it in 1:iterations){
-        cat(paste("Estimation Iteration", it, "\n"))
-        
-        labeled_indices <- indices_list[[it]]$labeled_indices
-        unlabeled_indices <- indices_list[[it]]$unlabeled_indices
-        
-        csv_data_it <- as.data.frame( csv_undergrad )  
-        csv_data_it$LABELEDSET <- 0
-        csv_data_it$LABELEDSET[labeled_indices] <- 1 
-        csv_data_it <- csv_data_it[c(labeled_indices, unlabeled_indices),]
-        csv_data_it <- cbind(csv_data_it[,1:3], csv_data_it[,-c(1:3)][,colMeans(csv_data_it[,-c(1:3)])>minFreq])
-        csv_data_it$CATEGORY <- as.character(csv_data_it$CATEGORY)
-        
-        #################### Run the testing code ####################### 
-        outer_start_time <-  proc.time(); predicted_prD <- try( eval(parse(text = eval_text ) ), T); print("outer_time:"); print( proc.time()- outer_start_time)
-        
-        #################### Save estimates ##############################
-        if( class(predicted_prD) == "try-error"  ) {print(predicted_prD); browser()}
-        if( class(predicted_prD) != "try-error"  ) 
-        { 
-          new_error <-  try(data.frame(dataset=csv_name,
-                                   readme_error = predicted_prD$error_readme , 
-                                   readme2_error = predicted_prD$error_readme2, 
-                                   
-                                   #continuous comparisons 
-                                   continuousRegression_error = predicted_prD$ErrorResultsEnsemble_continuous$Regression_est,
-                                   continuousEnsemble_error = predicted_prD$ErrorResultsEnsemble_continuous$ensemble,
-                                   continuousBayes_error = predicted_prD$ErrorResultsEnsemble_continuous$NaiveBayes_est,
-                                   continuousSVM_error = predicted_prD$ErrorResultsEnsemble_continuous$SVM_est,
-                                   continuousForest_error = predicted_prD$ErrorResultsEnsemble_continuous$Forest_est,
-                                   
-                                   #continuous pure count comparisons 
-                                   continuousRegression_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$Regression_est_count,
-                                   continuousEnsemble_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$ensemble_count,
-                                   continuousBayes_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$NaiveBayes_est_count,
-                                   continuousSVM_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$SVM_est_count,
-                                   continuousForest_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$Forest_est_count,
-                                   
-                                   #discrete comparisons 
-                                   discreteRegression_error = predicted_prD$ErrorResultsEnsemble_discrete$Regression_est,
-                                   discreteEnsemble_error = predicted_prD$ErrorResultsEnsemble_discrete$ensemble,
-                                   discreteBayes_error = predicted_prD$ErrorResultsEnsemble_discrete$NaiveBayes_est,
-                                   discreteSVM_error = predicted_prD$ErrorResultsEnsemble_discrete$SVM_est,
-                                   discreteForest_error = predicted_prD$ErrorResultsEnsemble_discrete$Forest_est,
-                                   
-                                   #discrete pure count comparisons 
-                                   discreteRegression_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$Regression_est_count,
-                                   discreteEnsemble_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$ensemble_count,
-                                   discreteBayes_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$NaiveBayes_est_count,
-                                   discreteSVM_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$SVM_est_count,
-                                   discreteForest_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$Forest_est_count,
-                                   
-                                   #quantification error metrics 
-                                   va2_error  = predicted_prD$va2_error,
-                                   quantify_friedman_error = predicted_prD$error_quantify[[1]]["friedman"], 
-                                   quantify_prob_error = predicted_prD$error_quantify[[1]]["prob"], 
-                                   quantify_mixtureL2_error = predicted_prD$error_quantify[[1]]["mixtureL2"], 
-                                   quantify_mixtureL1_error = predicted_prD$error_quantify[[1]]["mixtureL1_QUANT"], 
-                                   quantify_mixtureHPMF_error = predicted_prD$error_quantify[[1]]["mixtureHPMF"], 
-                                   quantify_adjCount_error = predicted_prD$error_quantify[[1]]["adjCount"], 
-                                   quantify_medianSweep_error = predicted_prD$error_quantify[[1]]["medianSweep"], 
-                                   quantify_hdx_error = predicted_prD$error_quantify[[1]]["hdx"], 
-                                   quantify_va1_error = predicted_prD$error_quantify[[1]]["va1"], 
-                                   quantify_naive_error = predicted_prD$error_quantify[[1]]["naive"], 
-                                   
-                                   #diagnostics 
-                                   PrDDiv_withMatching = c(predicted_prD$PrDDiv_withMatching), 
-                                   PrDDiv = c(predicted_prD$PrDDiv), 
-                                   
-                                   ESGivenDDiv_withMatching = c(predicted_prD$ESGivenDDiv_withMatching), 
-                                   ESGivenDDiv = c(predicted_prD$ESGivenDDiv), 
-                                   
-                                   nCat = length( unique(csv_data_it$CATEGORY) ), 
-                                   iteration = it, feat = feat, nboot = nboot, 
-                                   n_labeled = sum(csv_data_it$LABELEDSET==1),  n_unlabeled = sum(csv_data_it$LABELEDSET==0), 
-                                   sampling_scheme = sampling_scheme_used[it], 
-                                   nWords = ncol(csv_data_it)-3), T)  
-          if(class(new_error) != "try-error"){ 
-            row.names(new_error) <- NULL ; errors <- rbind(errors,new_error)
-          }
-          
-          ### Save results
-          write.csv(errors, sprintf("./results/%s", out_file) ) 
-          print( errors )  
-        } 
+      docSummaries_fs = FastScale(docSummaries)
+      docSummaries_fs = docSummaries_fs[,!is.na(colSums(docSummaries_fs))]
+      INDICES_LIST = try(GetLabeledUnlabeledIndices( csv_category = corpus_categoryVec,
+                                                     sampling_scheme = sampling_scheme, 
+                                                     labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz, docSummaries_input = docSummaries_fs ), T)  
+      if(class(INDICES_LIST) == "try-error"){ 
+        print("SAMPLING ERROR, DEFAULTING TO HISTORICAL")
+        INDICES_LIST = try(GetLabeledUnlabeledIndices( csv_category = corpus_categoryVec,
+                                                       sampling_scheme = "Historical", 
+                                                       labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz, 
+                                                       docSummaries_input = docSummaries_fs  ), T)  
       }
+      labeled_indices <- INDICES_LIST$labeled_indices
+      unlabeled_indices <- INDICES_LIST$unlabeled_indices
+      LC <- corpus_categoryVec[INDICES_LIST$labeled_indices]
+      UC <- corpus_categoryVec[INDICES_LIST$unlabeled_indices]
+      LC_CATS_KEEP <- table( LC); LC_CATS_KEEP <- names(LC_CATS_KEEP)[LC_CATS_KEEP>10]
+      unlabeled_indices <- unlabeled_indices[UC %in% LC_CATS_KEEP]
+      labeled_indices <- labeled_indices[LC %in% LC_CATS_KEEP]
+      indices_list[[it]] <- list(labeled_indices = labeled_indices, 
+                                 unlabeled_indices = unlabeled_indices)
+      sampling_scheme_used[it] <- sampling_scheme
+      sampling_scheme <- sampling_scheme_old
+    }
+    
+    for (it in 1:iterations){
+      cat(paste("Estimation Iteration", it, "\n"))
+      
+      labeled_indices <- indices_list[[it]]$labeled_indices
+      unlabeled_indices <- indices_list[[it]]$unlabeled_indices
+      
+      iter_dtm <- corpus_DTM[c(labeled_indices, unlabeled_indices),]
+      iter_dtm <-iter_dtm[,colSums(iter_dtm[1:length(labeled_indices),])>2]
+      iter_categoryVec <- as.character( corpus_categoryVec[ c(labeled_indices, unlabeled_indices) ]  ) 
+      iter_labeledIndicator <- rep(0, times = length( c(labeled_indices, unlabeled_indices) )  )
+      iter_labeledIndicator[c(1:length(labeled_indices))] <- 1
+      iter_labeledIndicator[-c(1:length(labeled_indices))] <- 0 
+      iter_dtm <- iter_dtm[,colMeans(iter_dtm)>0.005]
+      iter_docSummaries <- docSummaries[c(labeled_indices,unlabeled_indices),]
+      
+      #################### Run the relevant code ####################### 
+      #sort( sapply(ls(),function(x){object.size(get(x))})) 
+      outer_start_time <-  proc.time(); predicted_prD <- try( eval(parse(text = eval_text ) ), T); print("outer_time:"); print( proc.time()- outer_start_time)
+      
+      #################### Save estimates ##############################
+      if( class(predicted_prD) == "try-error"  ) {print(predicted_prD); browser()}
+      if( class(predicted_prD) != "try-error"  ) 
+      { 
+        new_error <-  try(data.frame(dataset=paste(csv_name, " - Analysis",sep=""), 
+                                     readme_error = predicted_prD$error_readme , 
+                                     readme2_error = predicted_prD$error_readme2, 
+                                     
+                                     continuousRegression_error = predicted_prD$ErrorResultsEnsemble_continuous$Regression_est,
+                                     discreteRegression_error = predicted_prD$ErrorResultsEnsemble_discrete$Regression_est,
+                                     
+                                     #continuous comparisons 
+                                     continuousEnsemble_error = predicted_prD$ErrorResultsEnsemble_continuous$ensemble,
+                                     continuousBayes_error = predicted_prD$ErrorResultsEnsemble_continuous$NaiveBayes_est,
+                                     continuousSVM_error = predicted_prD$ErrorResultsEnsemble_continuous$SVM_est,
+                                     continuousForest_error = predicted_prD$ErrorResultsEnsemble_continuous$Forest_est,
+                                     
+                                     #continuous pure count comparisons 
+                                     continuousRegression_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$Regression_est_count,
+                                     continuousEnsemble_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$ensemble_count,
+                                     continuousBayes_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$NaiveBayes_est_count,
+                                     continuousSVM_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$SVM_est_count,
+                                     continuousForest_error_count = predicted_prD$ErrorResultsEnsemble_continuous_count$Forest_est_count,
+                                     
+                                     #discrete comparisons 
+                                     discreteEnsemble_error = predicted_prD$ErrorResultsEnsemble_discrete$ensemble,
+                                     discreteBayes_error = predicted_prD$ErrorResultsEnsemble_discrete$NaiveBayes_est,
+                                     discreteSVM_error = predicted_prD$ErrorResultsEnsemble_discrete$SVM_est,
+                                     discreteForest_error = predicted_prD$ErrorResultsEnsemble_discrete$Forest_est,
+                                     
+                                     #discrete pure count comparisons 
+                                     discreteRegression_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$Regression_est_count,
+                                     discreteEnsemble_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$ensemble_count,
+                                     discreteBayes_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$NaiveBayes_est_count,
+                                     discreteSVM_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$SVM_est_count,
+                                     discreteForest_error_count = predicted_prD$ErrorResultsEnsemble_discrete_count$Forest_est_count,
+                                     
+                                     #quantification error metrics 
+                                     va2_error  = predicted_prD$va2_error,
+                                     quantify_friedman_error = predicted_prD$error_quantify[[1]]["friedman"], 
+                                     quantify_prob_error = predicted_prD$error_quantify[[1]]["prob"], 
+                                     quantify_mixtureL2_error = predicted_prD$error_quantify[[1]]["mixtureL2"], 
+                                     quantify_mixtureL1_error = predicted_prD$error_quantify[[1]]["mixtureL1_QUANT"], 
+                                     quantify_mixtureHPMF_error = predicted_prD$error_quantify[[1]]["mixtureHPMF"], 
+                                     quantify_adjCount_error = predicted_prD$error_quantify[[1]]["adjCount"], 
+                                     quantify_medianSweep_error = predicted_prD$error_quantify[[1]]["medianSweep"], 
+                                     quantify_hdx_error = predicted_prD$error_quantify[[1]]["hdx"], 
+                                     quantify_va1_error = predicted_prD$error_quantify[[1]]["va1"], 
+                                     quantify_naive_error = predicted_prD$error_quantify[[1]]["naive"], 
+                                     
+                                     #diagnostics 
+                                     PrDDiv_withMatching = c(predicted_prD$PrDDiv_withMatching), 
+                                     PrDDiv = c(predicted_prD$PrDDiv), 
+                                     
+                                     ESGivenDDiv_withMatching = c(predicted_prD$ESGivenDDiv_withMatching), 
+                                     ESGivenDDiv = c(predicted_prD$ESGivenDDiv), 
+                                     
+                                     nCat = length( unique(iter_categoryVec) ), 
+                                     iteration = it, nboot = nboot, 
+                                     n_labeled = sum(iter_labeledIndicator==1),  n_unlabeled = sum(iter_labeledIndicator==0), 
+                                     sampling_scheme = sampling_scheme_used[it], 
+                                     nWords = ncol(iter_dtm)), T)
+        if(class(new_error) != "try-error"){ 
+          row.names(new_error) <- NULL ; errors <- rbind(errors,new_error)
+        }
+        
+        ### Save results
+        write.csv(errors, sprintf("./results/%s", out_file) ) 
+        print( errors )  
+      } 
+    }
+    
 }
 
 #Spitout results 
