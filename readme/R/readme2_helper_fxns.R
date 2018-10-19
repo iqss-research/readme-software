@@ -1,7 +1,3 @@
-#need the following packages 
-#library("optmatch")
-
-vec2prob <- function(.){x <- table(.); x/sum(x)}
 
 #' cleanText
 #' 
@@ -121,6 +117,8 @@ cleanText <- function(my_text){
   # Return output
   return( my_text )  
 }
+
+vec2prob <- function(.){x <- table(.); x/sum(x)}
 
 f2n <- function(.){as.numeric(as.character(.))}
 
