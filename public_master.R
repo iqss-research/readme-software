@@ -27,7 +27,7 @@ sampling_scheme <- "Historical"
 iterations <- 2 
 
 #where should we look for the word vector corpus? 
-#wordVecs_pointer <- "~/Downloads/glove.twitter.27B.50d.txt" #from <http://nlp.stanford.edu/data/glove.twitter.27B.zip>
+wordVecs_pointer <- "~/Downloads/glove.twitter.27B.50d.txt" #from <http://nlp.stanford.edu/data/glove.twitter.27B.zip>
 
 #Run battery. 
 #For users interested in speeding up this protocol, 

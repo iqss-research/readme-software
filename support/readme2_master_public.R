@@ -11,8 +11,7 @@ support_files <- list.files("./support/")
 support_files <- support_files[! support_files %in% c("readme2_master_public.R")]
 for(support_file in support_files){ source(sprintf("./support/%s", support_file)) }
 
-library("data.table")
-wordVecs_corpus <- fread(wordVecs_pointer)
+wordVecs_corpus <- data.table::fread(wordVecs_pointer)
 wordVecs_rowNames <- wordVecs_corpus[[1]]
 wordVecs_corpus <- as.matrix (  wordVecs_corpus[,-1] )  
 row.names(wordVecs_corpus) <- wordVecs_rowNames
@@ -201,7 +200,6 @@ for(ijack in global_iter_seq){
         print( errors )  
       } 
     }
-    
 }
 
 #Spitout results 

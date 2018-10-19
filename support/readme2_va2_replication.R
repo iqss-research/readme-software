@@ -112,8 +112,6 @@ va2 <-
     
     mnlPrediction <- function(data) mnlclassifier(data)
     
-    library(quadprog)
-    
     normalizeColumnsToProbability <-function(aMatrix) sweep(data.matrix(aMatrix),2,margin.table(data.matrix(aMatrix),2),"/") 
     
     repmat<-function(x,n) matrix(rep(x,n),nrow=n,byrow=T)
