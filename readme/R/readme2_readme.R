@@ -28,11 +28,17 @@
 #' features only.  
 #' 
 #' @param numProjections How many projections should be calculated? Input should be a positive number.   
+#' 
 #' @param minBatch What should the minimum per category batch size be in the sgd optimization? Input should be a positive number.   
+#' 
 #' @param maxBatch What should the maximum per category batch size be in the sgd optimization? Input should be a positive number.   
+#' 
 #' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
+#' 
 #' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
+#' 
 #' @param nBoot_matching How many times should matching with resampling be done?  Input should be a positive number.   
+#' 
 #' @param winsorize Should columns of the raw \code{dfm} be Windorized? 
 #' 
 #' @return A list consiting of \itemize{
