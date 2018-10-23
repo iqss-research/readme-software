@@ -5,9 +5,10 @@
 \title{undergrad}
 \usage{
 undergrad(documentText, wordVecs = NULL, word_quantiles = c(0.1, 0.5,
-  0.9), replace_missing = T, replace_regex = list(c("\\\\#", ""),
-  c("[[:punct:]]+", ""), c("ing\\\\b", ""), c("s\\\\b", ""), c("ed\\\\b",
-  ""), c("ies\\\\b", "y")), unique_terms = T, verbose = T)
+  0.9), reattempt = T, reattempt_regex = list(c("\\\\#", ""),
+  c("#\\\\S+", "<hashtag>"), c("[[:punct:]]+", ""), c("ing\\\\b", ""),
+  c("s\\\\b", ""), c("ed\\\\b", ""), c("ies\\\\b", "y")),
+  unique_terms = T, verbose = T)
 }
 \arguments{
 \item{documentText}{A vector in which each entry corresponds to a ``clean'' document. 
@@ -18,12 +19,12 @@ it will be dropped in the calculations. It will be more common to space separate
 
 \item{wordVecs}{A matrix where each row denotes a word and each column a word vector. Words should be stored as the rownames of the matrix.}
 
-\item{word_quantiles}{A numeric vector denoting the quantiles (0-1) used to summarize each word vector dimension. Defaults to 10th, 50th and 90th quantiles.}
+\item{word_quantiles}{A numeric vector denoting the quantiles (0-1) used to summarize each word vector dimension. Defaults to 0.10th, 0.50th and 0.90th quantiles.}
 
-\item{replace_missing}{If TRUE, attempts to match terms missing from the wordVec corpus with alternate representations.}
+\item{reattempt}{If TRUE, attempts to match terms missing from the wordVec corpus with alternate representations.}
 
-\item{replace_regex}{A list of character vectors containing regular expression pairs to be used for generating alternate representations of words to attempt
-to match with the wordVec corpus when terms initially cannot be matched.}
+\item{reattempt_regex}{A list of character vectors containing regular expression pairs to be used for generating alternate representations of words to attempt
+to match with the wordVec corpus when terms initially cannot be matched. Order matters.}
 
 \item{unique_terms}{If TRUE, removes duplicate terms from each document - each document is represented only by the presence or absence of a term.}
 
@@ -44,21 +45,19 @@ wanting control over the pre-processing protocol.
 set.seed(1) 
 
 #Generate synthetic word vector corpus. 
-my_wordVecs_corpus <- data.frame(matrix(rnorm(11*50), ncol = 50))
-my_wordVecs_corpus <- cbind(c("the","true", "thine", "stars", "are" ,
-                              "fire", ".", "to", "own", "self", "be"), 
-                          my_wordVecs_corpus)
-my_wordVecs_corpus <- data.table::as.data.table(my_wordVecs_corpus)
+my_wordVecs <- matrix(rnorm(11*50), ncol = 50)
+row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" ,
+                              "fire", ".", "to", "own", "self", "be")
 
 #Setup ``documents'' 
-my_documents <- c(
+my_documentText <- c(
 "the stars are fire .", #document 1 
 "to thine own self be true ", #document 2 
 "true stars be true ." #document 3
 )
 
 #Get document-level word vector summaries. 
-my_dfm <- undergrad(documentText = my_documents, wordVecs_corpus = my_wordVecs_corpus)
+my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
 print( my_dfm ) 
 
 }

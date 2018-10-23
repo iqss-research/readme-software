@@ -4,15 +4,14 @@
 \alias{readme}
 \title{readme}
 \usage{
-readme(dfm, labeledIndicator, categoryVec, wordVecs_corpus = NULL,
-  nboot = 10, sgd_iters = 1000, numProjections = 20, minBatch = 3,
-  maxBatch = 20, drop_out_rate = 0.5, verbose = F, diagnostics = F,
+readme(dfm, labeledIndicator, categoryVec, nboot = 10,
+  sgd_iters = 1000, numProjections = 20, minBatch = 3,
+  maxBatch = 20, dropout_rate = 0.5, kMatch = 3,
+  nBoot_matching = 50, verbose = F, diagnostics = F,
   justTransform = F, winsorize = T)
 }
 \arguments{
-\item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature. Note that 
-this parameter should be \code{NULL} if the user is supplying the raw document text into \code{readme} (i.e. \code{documentText} is not null).
-#'}
+\item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature.}
 
 \item{labeledIndicator}{An indicator vector where each entry corresponds to a row in \code{dfm}. 
 \code{1} represents document membership in the labeled class. \code{0} represents document membership in the unlabeled class.}
@@ -21,32 +20,42 @@ this parameter should be \code{NULL} if the user is supplying the raw document t
 The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
 \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia.}
 
-\item{wordVecs_corpus}{A data.table object in which the first column holds the text of each word, 
-and in which the remaining columns contain the numerical representation. Either \code{wordVecs_corpus} or 
-\code{wordVecs_corpusPointer} should be null. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
-\code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia.}
-
 \item{nboot}{A scalar indicating the number of times the estimation will be re-run (useful for reducing the variance of the final output).}
 
-\item{sgd_iters}{How many stochastic gradient descent iterations should be used?}
+\item{sgd_iters}{How many stochastic gradient descent iterations should be used? Input should be a positive number.}
 
-\item{verbose}{Should diagnostic plots be displayed?}
+\item{numProjections}{How many projections should be calculated? Input should be a positive number.}
+
+\item{minBatch}{What should the minimum per category batch size be in the sgd optimization? Input should be a positive number.}
+
+\item{maxBatch}{What should the maximum per category batch size be in the sgd optimization? Input should be a positive number.}
+
+\item{dropout_rate}{What should the dropout rate be in the sgd optimization? Input should be a positive number.}
+
+\item{kMatch}{What should k be in the k-nearest neighbor matching? Input should be a positive number.}
+
+\item{nBoot_matching}{How many times should matching with resampling be done?  Input should be a positive number.}
+
+\item{verbose}{Should progress updates be given? Input should be a Boolean.}
+
+\item{diagnostics}{Should diagnostics be returned? Input should be a Boolean.}
 
 \item{justTransform}{A Boolean indicating whether the user wants to extract the quanficiation-optimized 
 features only.}
 
-\item{documentText}{A vector in which each entry corresponds to a document. The function will automatically ``clean'' the text. For 
-more control over the cleaning process, users should pre-process the text themselves, use the \code{undergrad} function, and leave the ``documentText'' parameter \code{NULL}.}
+\item{winsorize}{Should columns of the raw \code{dfm} be Windorized?}
 }
 \value{
 A list consiting of \itemize{
   \item estimated category proportions in the unlabeled set (\code{point_readme});
   \item the transformed dfm optimized for quantification (\code{transformed_dfm}); 
+  \item (optional) a list of diagnostics (\code{diagnostics}); 
 }
 }
 \description{
 Implements the quantification algorithm described in Jerzak, King, and Strezhnev (2018) which is meant to improve on the ideas in Hopkins and King (2010).
-Employs the Law of Total Expectation in a feature space that is crafted to minimize the error of the resulting estimate. Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
+Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate. 
+Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
 Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership 
 (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
 Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
@@ -70,12 +79,11 @@ Other options exist for users wanting more control over the pre-processing proto
 set.seed(1)
 
 #Generate synthetic 25-d word vector corpus. 
-my_wordVecs_corpus <- data.frame(matrix(rnorm(11*25), ncol = 25))
-my_wordVecs_corpus <- cbind(c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be"), my_wordVecs_corpus)
-my_wordVecs_corpus <- data.table::as.data.table(my_wordVecs_corpus)
+my_wordVecs <- matrix(rnorm(11*25), ncol = 25)
+row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be")
 
 #Generate 100 ``documents'' of between 5-10 words each. 
-my_documentText <- replicate(100, paste(sample(my_wordVecs_corpus[[1]], sample(5:10, 1)), collapse = " ") ) 
+my_documentText <- replicate(100, paste(sample(row.names(my_wordVecs), sample(5:10, 1), replace = T), collapse = " ") ) 
 
 #Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled. 
 my_labeledIndicator <- rep(1, times = 100)
@@ -86,12 +94,14 @@ my_categoryVec <- sample(c("C1", "C2", "C3", "C4"), 100, replace = T)
 true_unlabeled_pd <- prop.table(table(my_categoryVec[my_labeledIndicator==0]))
 my_categoryVec[my_labeledIndicator == 0] <- NA
 
+#Get word vector summaries 
+my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
+
 #perform estimation
-readme_results <- readme(documentText = my_documentText,
-       labeledIndicator= my_labeledIndicator, 
-       categoryVec = my_categoryVec, 
-       wordVecs_corpus = my_wordVecs_corpus,
-       nboot = 1)
+readme_results <- readme(dfm = my_dfm,  
+                         labeledIndicator = my_labeledIndicator, 
+                         categoryVec = my_categoryVec, 
+                         nboot = 2)
 print(readme_results$point_readme)
 
 }
