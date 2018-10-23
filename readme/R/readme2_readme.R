@@ -6,6 +6,8 @@
 #' (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
 #' Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
 #' 
+#' @param dfm 'document-feature matrix'. A data frame where each row represents a document and each column a unique feature. 
+#'
 #' @param labeledIndicator An indicator vector where each entry corresponds to a row in \code{dfm}. 
 #' \code{1} represents document membership in the labeled class. \code{0} represents document membership in the unlabeled class. 
 #' 
@@ -17,9 +19,6 @@
 #' and in which the remaining columns contain the numerical representation. Either \code{wordVecs_corpus} or 
 #' \code{wordVecs_corpusPointer} should be null. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
 #' \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
-#' 
-#' 
-#'@param dfm 'document-feature matrix'. A data frame where each row represents a document and each column a unique feature. 
 #'
 #' @param nboot A scalar indicating the number of times the estimation will be re-run (useful for reducing the variance of the final output).
 #'
@@ -79,7 +78,7 @@
 #' @import tensorflow
 #' Imports: limSolve
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                    wordVecs_corpus = NULL, nboot = 10,  sgd_iters = 1000, numProjections = 20, minBatch = 3, maxBatch = 20, drop_out_rate = .5,
+                    wordVecs_corpus = NULL, nboot = 10,  sgd_iters = 1000, numProjections = 20, minBatch = 3, maxBatch = 20, drop_out_rate = .5, KMatch = 3, numRuns = 50,
                     verbose=F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -121,7 +120,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm <- dfm[,apply(dfm,2,sd)>0]
   
   #Setup information for SGD
-  categoryVec_unlabeled <- as.factor(categoryVec)[labeledIndicator == 0] 
+  categoryVec_unlabeled <- as.factor(categoryVec)[labeledIndicator == 0]  
   categoryVec_labeled <- as.factor(categoryVec)[labeledIndicator == 1]
   labeled_pd <- vec2prob( categoryVec_labeled ); unlabeled_pd <- vec2prob( categoryVec_unlabeled )
   dfm_labeled <- dfm[labeledIndicator==1,]; dfm_unlabeled <- dfm[labeledIndicator==0,]
@@ -233,18 +232,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_LFinal = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   OUTPUT_LFinal_n = tf$nn$batch_normalization(OUTPUT_LFinal, mean = LF_mu_last,variance = tf$square(LF_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
-  #set up initializer 
+  # Initialize global variables in TensorFlow Graph
   init = tf$global_variables_initializer()
  
-
-  #set up holding containers 
+  # Holding containers for results
   boot_readme <- matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) <- names(labeled_pd)
-  hold_coef <- rep(0, nCat); names(hold_coef) <-  names(labeled_pd)
-  MatchedPrD_div <- OrigESGivenD_div <- MatchedESGivenD_div <- rep(NA, times = nboot)
+  hold_coef <- rep(0, nCat); names(hold_coef) <-  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  MatchedPrD_div <- OrigESGivenD_div <- MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
+  
   for(iter_i in 1:nboot){ 
   {
-      sess$run(init)#initialize parameters and gather up useful statistics
+      sess$run(init) # Initialize TensorFlow parameters
+      
+      ### Generate bootstrap sample
       sgd_grabSamp = function(){ unlist(sapply(1:nCat, function(ze){  sample(list_indices_by_cat[[ze]], NObsByCat[ze], replace = T )  } ))}
+      
       update_ls <- list() 
       update_ls[[1]] =  c(rowMeans(  replicate(50, sess$run(IL_mu_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
                                             IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)) ) )) )  )
@@ -253,42 +255,47 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       init_L2_squared_vec = unlist(replicate(50,sess$run(list(L2_squared_unclipped),  
                            feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],rmax = 1, dmax = 0,IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled))) )))
       clip_value =  0.5*median(sqrt(init_L2_squared_vec))
+      
       m1 <-inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
+      
       inverse_learning_rate <- 0.5 * median( init_L2_squared_vec ) 
+      
       for(awer in 1:sgd_iters){
         update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOptimizer_tf_apply),
                              feed_dict = dict(IL = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         inverse_learning_rate_vec[awer] <- inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
       }
+      
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
       out_dfm_labeled <- out_dfm[1:nrow(dfm_labeled), ]; out_dfm_unlabeled <- out_dfm[-c(1:nrow(dfm_labeled)),]
 
       ### Here ends the SGD for generating optimal document-feature matrix.
       
+      ### If we're also going to do estimation
       if(justTransform == F){ 
-        if(verbose == T){ 
-          par(mfrow = c(2,1)); plot_indices <- sample(1:nProj, 2);
-          xlim_ <- c(min(out_dfm[,plot_indices[1]]),max(out_dfm[,plot_indices[1]])); ylim_ <- c(min(out_dfm[,plot_indices[2]]),max(out_dfm[,plot_indices[2]]))
-          plot(out_dfm_labeled[,plot_indices],col = as.factor(categoryVec_labeled),
-               xlab = "Projection 1", ylab = "Projection 2", 
-               main = "Labeled Set Results",
-               xlim =xlim_,ylim=ylim_, cex = 1.5, pch = as.numeric(as.factor(categoryVec_labeled)))
-          legend("bottomleft", 
-                 col = unique(as.factor(categoryVec_labeled)),
-                 pch = unique(as.numeric(as.factor(categoryVec_labeled))), 
-                 legend = unique(as.character(categoryVec_labeled)),
-                 cex = 2/length(unique(categoryVec_labeled)))
-          pch_unlabeled = as.numeric(as.factor(categoryVec_unlabeled)); pch_unlabeled[is.na(pch_unlabeled)] <- 1
-          col_unlabeled = as.numeric(as.factor(categoryVec_unlabeled)); col_unlabeled[is.na(col_unlabeled)] <- 1
-          plot(out_dfm_unlabeled[,plot_indices],col = as.factor(col_unlabeled),xlim =xlim_,ylim=ylim_,
-               xlab = "Projection 1", ylab = "Projection 2", 
-               main = "Unlabeled Set Results", cex = 1.5,  pch = pch_unlabeled)
-          par(mfrow = c(1,1));
-        }
+        #if(verbose == T){ 
+          #par(mfrow = c(2,1)); plot_indices <- sample(1:nProj, 2);
+          #xlim_ <- c(min(out_dfm[,plot_indices[1]]),max(out_dfm[,plot_indices[1]])); ylim_ <- c(min(out_dfm[,plot_indices[2]]),max(out_dfm[,plot_indices[2]]))
+          #plot(out_dfm_labeled[,plot_indices],col = as.factor(categoryVec_labeled),
+          #     xlab = "Projection 1", ylab = "Projection 2", 
+          #     main = "Labeled Set Results",
+          #     xlim =xlim_,ylim=ylim_, cex = 1.5, pch = as.numeric(as.factor(categoryVec_labeled)))
+          #legend("bottomleft", 
+          #       col = unique(as.factor(categoryVec_labeled)),
+          #       pch = unique(as.numeric(as.factor(categoryVec_labeled))), 
+          #       legend = unique(as.character(categoryVec_labeled)),
+          #       cex = 2/length(unique(categoryVec_labeled)))
+          #pch_unlabeled = as.numeric(as.factor(categoryVec_unlabeled)); pch_unlabeled[is.na(pch_unlabeled)] <- 1
+          #col_unlabeled = as.numeric(as.factor(categoryVec_unlabeled)); col_unlabeled[is.na(col_unlabeled)] <- 1
+          #plot(out_dfm_unlabeled[,plot_indices],col = as.factor(col_unlabeled),xlim =xlim_,ylim=ylim_,
+          #     xlab = "Projection 1", ylab = "Projection 2", 
+          #     main = "Unlabeled Set Results", cex = 1.5,  pch = pch_unlabeled)
+          #par(mfrow = c(1,1));
+        #}
         if(T == T){ 
           min_size <- min(r_clip_by_value(as.integer( round( 0.90*(  nrow(dfm_labeled)*labeled_pd) )),10,100))
-          nRun = 50; k_match = 3
+          nRun = numRuns ; k_match = KMatch
           indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )
           BOOTSTRAP_EST <- sapply(1:nRun, function(boot_iter){ 
             indi_i = indices_list[[boot_iter]]; 
@@ -323,7 +330,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         tf_est_results <- list(est_readme2 = est_readme2, transformed_unlabeled_dfm = out_dfm_unlabeled,
                                transformed_labeled_dfm = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),matched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
       }
-      if(justTransform == T){ tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,transformed_labeled_dfm = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) ) }    
+      ## If we're just doing the transformation
+      else if(justTransform == T){ tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,transformed_labeled_dfm = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) ) }    
     }
     if(iter_i == 1){ 
       transformed_dfm <- dfm[,1:(ncol(tf_est_results$transformed_unlabeled_dfm))]; transformed_dfm[] <- NA
