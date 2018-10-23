@@ -228,7 +228,6 @@ va2 <-
       for (i in 2:p){
         temp <- rep(0,p)
         for (j in 1:(i-1))
-          browser()
           temp <- temp+c(t(omat[j,])%*%omat[i,])/c(t(omat[j,])%*%omat[j,])*omat[j,]
         omat[i,] <- omat[i,]-temp
       }

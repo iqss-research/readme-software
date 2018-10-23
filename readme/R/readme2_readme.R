@@ -1,7 +1,8 @@
 #' readme
 #' 
 #' Implements the quantification algorithm described in Jerzak, King, and Strezhnev (2018) which is meant to improve on the ideas in Hopkins and King (2010).
-#' Employs the Law of Total Expectation in a feature space that is crafted to minimize the error of the resulting estimate. Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
+#' Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate. 
+#' Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
 #' Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership 
 #' (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
 #' Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
@@ -14,24 +15,30 @@
 #' @param categoryVec An factor vector where each entry corresponds to the document category. 
 #' The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
 #' \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
-#' 
-#' @param wordVecs_corpus A data.table object in which the first column holds the text of each word, 
-#' and in which the remaining columns contain the numerical representation. Either \code{wordVecs_corpus} or 
-#' \code{wordVecs_corpusPointer} should be null. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
-#' \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
 #'
 #' @param nboot A scalar indicating the number of times the estimation will be re-run (useful for reducing the variance of the final output).
 #'
-#' @param verbose Should diagnostic plots be displayed? 
+#' @param verbose Should progress updates be given? Input should be a Boolean. 
+#' 
+#' @param diagnostics Should diagnostics be returned? Input should be a Boolean. 
 #'  
-#' @param sgd_iters How many stochastic gradient descent iterations should be used?   
+#' @param sgd_iters How many stochastic gradient descent iterations should be used? Input should be a positive number.   
 #'  
 #' @param justTransform A Boolean indicating whether the user wants to extract the quanficiation-optimized 
 #' features only.  
 #' 
+#' @param numProjections How many projections should be calculated? Input should be a positive number.   
+#' @param minBatch What should the minimum per category batch size be in the sgd optimization? Input should be a positive number.   
+#' @param maxBatch What should the maximum per category batch size be in the sgd optimization? Input should be a positive number.   
+#' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
+#' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
+#' @param nBoot_matching How many times should matching with resampling be done?  Input should be a positive number.   
+#' @param winsorize Should columns of the raw \code{dfm} be Windorized? 
+#' 
 #' @return A list consiting of \itemize{
 #'   \item estimated category proportions in the unlabeled set (\code{point_readme});
 #'   \item the transformed dfm optimized for quantification (\code{transformed_dfm}); 
+#'   \item (optional) a list of diagnostics (\code{diagnostics}); 
 #' }
 #'
 #' @section References:
@@ -78,8 +85,8 @@
 #' @import tensorflow
 #' Imports: limSolve
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                    wordVecs_corpus = NULL, nboot = 10,  sgd_iters = 1000, numProjections = 20, minBatch = 3, maxBatch = 20, drop_out_rate = .5, KMatch = 3, numRuns = 50,
-                    verbose=F, diagnostics = F, justTransform = F, winsorize=T){ 
+                   nboot = 10,  sgd_iters = 1000, numProjections = 20, minBatch = 3, maxBatch = 20, dropout_rate = .5, kMatch = 3, nBoot_matching = 50,
+                   verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
   nDocuments <- nrow(dfm)
@@ -184,7 +191,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP WEIGHTS 
   WtsMat = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
-  dropout_rate1 = drop_out_rate 
+  dropout_rate1 = dropout_rate 
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
     
@@ -274,28 +281,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### If we're also going to do estimation
       if(justTransform == F){ 
-        #if(verbose == T){ 
-          #par(mfrow = c(2,1)); plot_indices <- sample(1:nProj, 2);
-          #xlim_ <- c(min(out_dfm[,plot_indices[1]]),max(out_dfm[,plot_indices[1]])); ylim_ <- c(min(out_dfm[,plot_indices[2]]),max(out_dfm[,plot_indices[2]]))
-          #plot(out_dfm_labeled[,plot_indices],col = as.factor(categoryVec_labeled),
-          #     xlab = "Projection 1", ylab = "Projection 2", 
-          #     main = "Labeled Set Results",
-          #     xlim =xlim_,ylim=ylim_, cex = 1.5, pch = as.numeric(as.factor(categoryVec_labeled)))
-          #legend("bottomleft", 
-          #       col = unique(as.factor(categoryVec_labeled)),
-          #       pch = unique(as.numeric(as.factor(categoryVec_labeled))), 
-          #       legend = unique(as.character(categoryVec_labeled)),
-          #       cex = 2/length(unique(categoryVec_labeled)))
-          #pch_unlabeled = as.numeric(as.factor(categoryVec_unlabeled)); pch_unlabeled[is.na(pch_unlabeled)] <- 1
-          #col_unlabeled = as.numeric(as.factor(categoryVec_unlabeled)); col_unlabeled[is.na(col_unlabeled)] <- 1
-          #plot(out_dfm_unlabeled[,plot_indices],col = as.factor(col_unlabeled),xlim =xlim_,ylim=ylim_,
-          #     xlab = "Projection 1", ylab = "Projection 2", 
-          #     main = "Unlabeled Set Results", cex = 1.5,  pch = pch_unlabeled)
-          #par(mfrow = c(1,1));
-        #}
-        if(T == T){ 
           min_size <- min(r_clip_by_value(as.integer( round( 0.90*(  nrow(dfm_labeled)*labeled_pd) )),10,100))
-          nRun = numRuns ; k_match = KMatch
+          nRun = nBoot_matching ; k_match = kMatch
           indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )
           BOOTSTRAP_EST <- sapply(1:nRun, function(boot_iter){ 
             indi_i = indices_list[[boot_iter]]; 
@@ -324,7 +311,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               } 
               list(est_readme2 = est_readme2) 
           } )
-        } 
+        
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
         #sum(abs(est_readme2-unlabeled_pd))
         tf_est_results <- list(est_readme2 = est_readme2, transformed_unlabeled_dfm = out_dfm_unlabeled,
