@@ -79,5 +79,4 @@
 #'
 #' @docType package
 #' @name readme-package
-#' Imports: optmatch
 NULL

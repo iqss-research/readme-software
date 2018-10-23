@@ -1,6 +1,12 @@
 ##################################################
-##INSTRUCTIONS FOR readme PACKAGE USE ############
+##INSTRUCTIONS FOR README PACKAGE USE ############
 ##################################################
+
+#Generate documentation 
+#setwd("~/Downloads/readme-software")
+#devtools::document("./readme/")
+#system("R CMD Rd2pdf readme")
+
 
 #Install package
 devtools::install_github("iqss-research/readme-software/readme")

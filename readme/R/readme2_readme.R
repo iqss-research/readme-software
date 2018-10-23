@@ -91,7 +91,6 @@
 #'
 #' @export 
 #' @import tensorflow
-#' Imports: limSolve
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot = 10,  sgd_iters = 1000, numProjections = 20, minBatch = 3, maxBatch = 20, dropout_rate = .5, kMatch = 3, nBoot_matching = 50,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 

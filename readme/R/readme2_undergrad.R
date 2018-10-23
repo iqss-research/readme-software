@@ -49,7 +49,6 @@
 #' 
 #' @export 
 #' 
-#' Imports: methods
 undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, .9), reattempt = T, 
                       reattempt_regex = list(c("\\#",""), c("#\\S+", "<hashtag>"), 
                                             c("[[:punct:]]+", ''),c('ing\\b',''),
