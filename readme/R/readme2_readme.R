@@ -58,12 +58,11 @@
 #' set.seed(1)
 #' 
 #' #Generate synthetic 25-d word vector corpus. 
-#' my_wordVecs_corpus <- data.frame(matrix(rnorm(11*25), ncol = 25))
-#' my_wordVecs_corpus <- cbind(c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be"), my_wordVecs_corpus)
-#' my_wordVecs_corpus <- data.table::as.data.table(my_wordVecs_corpus)
+#' my_wordVecs <- matrix(rnorm(11*25), ncol = 25)
+#' row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be")
 #' 
 #' #Generate 100 ``documents'' of between 5-10 words each. 
-#' my_documentText <- replicate(100, paste(sample(my_wordVecs_corpus[[1]], sample(5:10, 1)), collapse = " ") ) 
+#' my_documentText <- replicate(100, paste(sample(row.names(my_wordVecs), sample(5:10, 1), replace = T), collapse = " ") ) 
 #' 
 #' #Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled. 
 #' my_labeledIndicator <- rep(1, times = 100)
@@ -74,11 +73,14 @@
 #' true_unlabeled_pd <- prop.table(table(my_categoryVec[my_labeledIndicator==0]))
 #' my_categoryVec[my_labeledIndicator == 0] <- NA
 #' 
+#' #Get word vector summaries 
+#' my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
+#' 
 #' #perform estimation
-#' readme_results <- readme(labeledIndicator= my_labeledIndicator, 
-#'        categoryVec = my_categoryVec, 
-#'        wordVecs_corpus = my_wordVecs_corpus,
-#'        nboot = 1)
+#' readme_results <- readme(dfm = my_dfm,  
+#'                          labeledIndicator = my_labeledIndicator, 
+#'                          categoryVec = my_categoryVec, 
+#'                          nboot = 2)
 #'print(readme_results$point_readme)
 #'
 #' @export 

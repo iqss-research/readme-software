@@ -32,21 +32,19 @@
 #' set.seed(1) 
 #' 
 #' #Generate synthetic word vector corpus. 
-#' my_wordVecs_corpus <- data.frame(matrix(rnorm(11*50), ncol = 50))
-#' my_wordVecs_corpus <- cbind(c("the","true", "thine", "stars", "are" ,
-#'                               "fire", ".", "to", "own", "self", "be"), 
-#'                           my_wordVecs_corpus)
-#' my_wordVecs_corpus <- data.table::as.data.table(my_wordVecs_corpus)
+#' my_wordVecs <- matrix(rnorm(11*50), ncol = 50)
+#' row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" ,
+#'                               "fire", ".", "to", "own", "self", "be")
 #' 
 #' #Setup ``documents'' 
-#' my_documents <- c(
+#' my_documentText <- c(
 #' "the stars are fire .", #document 1 
 #' "to thine own self be true ", #document 2 
 #' "true stars be true ." #document 3
 #' )
 #' 
 #' #Get document-level word vector summaries. 
-#' my_dfm <- undergrad(documentText = my_documents, wordVecs_corpus = my_wordVecs_corpus)
+#' my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
 #' print( my_dfm ) 
 #' 
 #' @export 
