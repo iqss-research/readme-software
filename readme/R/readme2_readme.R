@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 10,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, nBoot_matching = 50,
+                   nboot = 10,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 50,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -116,6 +116,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   if (mLearn <= 0 | mLearn > 1){
     stop("Error: 'mLearn' must be greater than 0 and less than 1")
+  }
+  
+  if (verbose == t){
+    if (kMatch == 0){
+      cat("Note: 'kmatch' set to 0, skipping matching procedure for the labeled set")
+    }
   }
   
   ## Print a summary of the input data
@@ -348,13 +354,19 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               MM2 = sapply(1:ncol(X_), function(x){x1 = sd(X_[,x]); x2 = sd(Y_[,x]); get_SD1(x1,x2) } )
               X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2); 
               
-              ### KNN matching - find k_match matches in X_ to Y_
-              MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-              t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<5]
-              if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
+              ## If we're using matching
+              if (k_match != 0){
+                ### KNN matching - find k_match matches in X_ to Y_
+                MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                ## Any category with less than minMatch matches includes all of that category
+                t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
+                if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
+              }else{ ## Otherwise use all the indices
+                MatchIndices_i <- 1:nrow(X_)
+              }
               categoryVec_labeled_matched = Cat_[MatchIndices_i]; X_ = X_[MatchIndices_i,]
               matched_list_indices_by_cat <- tapply(1:length(categoryVec_labeled_matched), categoryVec_labeled_matched, function(x){c(x) })
-              
+         
               ### Carry out estimation on the matched samples
               min_size2 <- min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100))
               est_readme2 = rowMeans(  replicate(30, { 
