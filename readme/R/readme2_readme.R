@@ -158,7 +158,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   NObsByCat = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
   nProj <- as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
-  
   #Start SGD
   if (verbose == T){
     cat("Initializing TensorFlow session\n")
@@ -215,12 +214,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
   
-  ### Drop-out transformation
-  dropout_rate1 = dropout_rate 
+  ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
+  dropout_rate1 = 0.90 * dropout_rate  ##RATE FOR DROPPING NODES 
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
-    
-  dropout_rate2 = 1 - (1 - 0.51) /  (1 -  dropout_rate1 );
+
+  dropout_rate2 = 0.10 * dropout_rate ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
@@ -247,7 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf)  + 1 * tf$reduce_mean(tf$log(0.01+Spread_tf) ) )
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf)  + 0.1 * tf$reduce_mean(tf$log(0.10+Spread_tf) ) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate=sdg_learning_rate,momentum = sgd_momentum ,use_nesterov = T)
@@ -289,7 +288,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   for(iter_i in 1:nboot){ 
-
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
@@ -350,15 +348,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             { 
               ### Normalize X and Y
               MM1 = colMeans(Y_); 
-              get_SD1 <- get_SD2 <- function(x,y){min( max(x,y,1/6),6)}
+              get_SD1 <- get_SD2 <- function(x,y){prod(x+0.10,y+0.10)}
               MM2 = sapply(1:ncol(X_), function(x){x1 = sd(X_[,x]); x2 = sd(Y_[,x]); get_SD1(x1,x2) } )
               X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2); 
               
               ## If we're using matching
               if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
-                browser()
-                MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                #MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices #OLD 
+                MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) #NEW 
                 ## Any category with less than minMatch matches includes all of that category
                 t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
