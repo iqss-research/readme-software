@@ -357,6 +357,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               ## If we're using matching
               if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
+                browser()
                 MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
                 ## Any category with less than minMatch matches includes all of that category
                 t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
