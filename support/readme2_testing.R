@@ -67,7 +67,7 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
                                                   testMatrix = as.data.frame(cbind(categoryVec_unlabeled_factor, dtm[labeledIndicator==0,])),
                                                   baseClassifierModelFunction=liblinearModelFunction,
                                                   baseClassifierPredFunction=liblinearPredFunction,
-                                                  trials=20), T)  
+                                                  trials=10), T)  
     error_quantify <- try(apply(QUANTIFY_ALL_RESULTS[,-1][,names(unlabeled_pd)], 1, function(x){ sum(abs(f2n(x) - unlabeled_pd)) }), T)
     if(length(error_quantify) != length(c(QUANTIFY_ALL_RESULTS[,1]))){browser()}
     names(error_quantify) <- QUANTIFY_ALL_RESULTS[,1]

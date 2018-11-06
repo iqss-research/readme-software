@@ -1,3 +1,6 @@
+#require("LiblineaR")
+#require("randomForest")
+#require("e1071")
 
 toDTM <- function(myText){
   myText_ <- tolower(myText)
@@ -55,12 +58,13 @@ EnsembleMethod <- function(train_cats, train_feat, test_feat, labeled_pd){
                                      1, function(zeta){ sample(names(zeta)[zeta==max(zeta)], 1) }), T)
   Regression_est_count <- table( Regression_est_count ) / sum(table(Regression_est_count))
   
-  Forest_method <- try(randomForest::randomForest(x = DF1[,-1], y = as.factor(DF1[,1]) ), T)  
+  Forest_method <- try(randomForest::randomForest(x = apply(DF1[,-1], 2, f2n), y = as.factor(DF1[,1]), 
+                                                  ntree = 10), T)  
   Forest_est <- try(colMeans( predict(Forest_method  , test_feat , type = "prob"), na.rm = T  ) , T)  
   Forest_est_count <- try(predict(Forest_method  , test_feat , type = "class") , T)
   Forest_est_count <- try(table(Forest_est_count)/sum(table(Forest_est_count)))
   
-  SVM_method <-  try(e1071::svm(x = DF1[,-1], y = as.factor(DF1[,1]), probability = T ), T)  
+  SVM_method <-  try(e1071::svm(x = DF1[,-1], y = as.factor(DF1[,1]), probability = T, tolerance = 0.01 ), T)  
   SVM_est <- try(colMeans( attr(predict(SVM_method , test_feat , probability = T) , "probabilities" ), na.rm = T )  , T)  
   SVM_est_count <- try(predict(SVM_method , test_feat , probability = F), T) 
   SVM_est_count <- try(table(SVM_est_count)/sum(table(SVM_est_count)))
