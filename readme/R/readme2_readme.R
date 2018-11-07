@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 10,  sgd_iters = 10000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 2, nBoot_matching = 20,
+                   nboot = 10,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 2, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -186,7 +186,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.05; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
+    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
     MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) )
   MultMat = MultMat  / rowSums( MultMat )
@@ -305,9 +305,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls <- list() 
-      update_ls[[1]] =  c(rowMeans(  replicate(50, sess$run(IL_mu_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
+      browser() 
+      update_ls[[1]] =  c(rowMeans(  replicate(20, sess$run(IL_mu_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
                                             IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)) ) )) )  )
-      update_ls[[2]] =  c(rowMeans( replicate(50, sess$run(IL_sigma_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
+      update_ls[[2]] =  c(rowMeans( replicate(20, sess$run(IL_sigma_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
                                                                          IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)) ) )) )  )
       
       ### Calculate a clip value for the gradients to avoid overflow
