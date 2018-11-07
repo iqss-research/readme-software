@@ -247,7 +247,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(Spread_tf)#+ tf$reduce_mean(tf$log(0.01+Spread_tf) ) )
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(Spread_tf))#+ tf$reduce_mean(tf$log(0.01+Spread_tf) ) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate=sdg_learning_rate,momentum = sgd_momentum ,use_nesterov = T)
