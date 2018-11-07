@@ -305,7 +305,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls <- list() 
-      d_ <- replicate(20, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
+      d_ <- replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
                                                                                IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
@@ -313,7 +313,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = median(init_L2_squared_vec)
+      clip_value =1# median(init_L2_squared_vec)
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
