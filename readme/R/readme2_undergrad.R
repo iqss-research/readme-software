@@ -110,7 +110,6 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
       
       ### For each reg-ex pair in reattempt_regex
       for (indx in 1:length(reattempt_regex)){
-        
         ## Attempt to match given the substitution
         match_missing[is.na(match_missing)] <- match(gsub(missing_stems[is.na(match_missing)], 
                                                           pattern = reattempt_regex[[indx]][1], 
