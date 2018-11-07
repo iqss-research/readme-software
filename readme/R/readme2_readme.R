@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 10,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 50,
+                   nboot = 10,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -215,11 +215,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
   
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  dropout_rate1 = 0.90 * dropout_rate  ##RATE FOR DROPPING NODES 
+  dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  dropout_rate2 = 0.10 * dropout_rate ##RATE FOR DROPPING CONNECTIONS 
+  dropout_rate2 = 0.10 ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
@@ -246,7 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf)  + 0.1 * tf$reduce_mean(tf$log(0.10+Spread_tf) ) )
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf)  + 2*tf$reduce_mean(tf$log(0.01+Spread_tf) ) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate=sdg_learning_rate,momentum = sgd_momentum ,use_nesterov = T)
@@ -348,7 +348,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             { 
               ### Normalize X and Y
               MM1 = colMeans(Y_); 
-              get_SD1 <- get_SD2 <- function(x,y){prod(x+0.10,y+0.10)}
+              get_SD1 <- get_SD2 <- function(x,y){max(max(x,y), 1/6)}
               MM2 = sapply(1:ncol(X_), function(x){x1 = sd(X_[,x]); x2 = sd(Y_[,x]); get_SD1(x1,x2) } )
               X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2); 
               
@@ -368,7 +368,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
          
               ### Carry out estimation on the matched samples
               min_size2 <- min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100))
-              est_readme2 = rowMeans(  replicate(30, { 
+              est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X_ = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
                 MM1_samp = colMeans(Y_);MM2_samp = sapply(1:ncol(X_), function(x){x1 = sd(X_[,x]); x2 = sd(Y_[,x]); get_SD2(x1,x2) } )
