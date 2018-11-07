@@ -186,9 +186,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
+    urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
     MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) )
+  browser()
   MultMat = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
   
@@ -219,7 +220,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  dropout_rate2 = 0.01 ##RATE FOR DROPPING CONNECTIONS 
+  dropout_rate2 = 0.05 ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
@@ -313,13 +314,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value =1# median(init_L2_squared_vec)
+      clip_value = 2 * summary(init_L2_squared_vec)[2]
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
       
       ## Inverse learning rate = clip value
-      inverse_learning_rate <- median( init_L2_squared_vec ) 
+      inverse_learning_rate <- 0.50 * median( init_L2_squared_vec ) 
       
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
@@ -442,6 +443,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## If no diagnostics wanted
   if(diagnostics == F){return( list(point_readme=colMeans(boot_readme, na.rm = T) , transformed_dfm = transformed_dfm) )  }
   ## If diagnostics wanted
+  browser() 
   if(diagnostics == T){return( list(point_readme = colMeans(boot_readme, na.rm = T) ,
                                     transformed_dfm = transformed_dfm, 
                                     diagnostics = list(OrigPrD_div = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
