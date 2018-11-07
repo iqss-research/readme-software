@@ -305,22 +305,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls <- list() 
-      browser() 
-      update_ls[[1]] =  c(rowMeans(  replicate(20, sess$run(IL_mu_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
-                                            IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)) ) )) )  )
-      update_ls[[2]] =  c(rowMeans( replicate(20, sess$run(IL_sigma_b,  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],#rmax = 1, dmax = 0,
-                                                                         IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)) ) )) )  )
+      d_ <- replicate(20, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
+                                                                               IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
+      update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
+      update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec = unlist(replicate(50,sess$run(list(L2_squared_unclipped),  
-                           feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],rmax = 1, dmax = 0,IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled))) )))
-      clip_value =  0.5*median(sqrt(init_L2_squared_vec))
+      init_L2_squared_vec = unlist( d_[3,] ) 
+      rm(d_)
+      clip_value = median(init_L2_squared_vec)
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
       
       ## Inverse learning rate = clip value
-      inverse_learning_rate <- 0.5 * median( init_L2_squared_vec ) 
+      inverse_learning_rate <- median( init_L2_squared_vec ) 
       
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
