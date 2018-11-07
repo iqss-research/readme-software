@@ -186,7 +186,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
+    urat = 0.000; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
     MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) )
   MultMat = MultMat  / rowSums( MultMat )
@@ -442,7 +442,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## If no diagnostics wanted
   if(diagnostics == F){return( list(point_readme=colMeans(boot_readme, na.rm = T) , transformed_dfm = transformed_dfm) )  }
   ## If diagnostics wanted
-  browser() 
   if(diagnostics == T){return( list(point_readme = colMeans(boot_readme, na.rm = T) ,
                                     transformed_dfm = transformed_dfm, 
                                     diagnostics = list(OrigPrD_div = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
