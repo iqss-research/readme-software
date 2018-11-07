@@ -189,7 +189,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
     MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) )
-  browser()
   MultMat = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
   
