@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 10,  sgd_iters = 500, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 2, nBoot_matching = 20,
+                   nboot = 4,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 1, minMatch = 5, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -186,7 +186,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.000; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
+    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
     MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) )
   MultMat = MultMat  / rowSums( MultMat )
@@ -246,7 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log(0.01 + Spread_tf))
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log(0.1 + Spread_tf))
   #https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -313,7 +313,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = 2 * summary(init_L2_squared_vec)[2]
+      clip_value = summary(init_L2_squared_vec)[2]
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
@@ -358,8 +358,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               ## If we're using matching
               if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
-                #MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-                MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
+                MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                #MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
