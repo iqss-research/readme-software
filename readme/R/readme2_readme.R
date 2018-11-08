@@ -225,7 +225,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat_drop0 = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
   WtsMat_drop = WtsMat_drop0 + tf$multiply(WtsMat_drop0, 
                                            tf$random_normal(list(nrow(WtsMat_drop0),ncol(WtsMat_drop0)), 
-                                                            mean=0.0,stddev=1.0))
+                                                            mean=0.0,stddev=0.50))
 
   ### Soft-max transformation
   nonLinearity_fxn = function(x){tf$nn$softsign(x)}
