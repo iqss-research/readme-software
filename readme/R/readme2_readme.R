@@ -219,7 +219,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  drop_probs = tf$clip_by_value( tf$reduce_mean(tf$sign(tf$nn$relu( tf$abs( WtsMat ) - 0.10 ) ), 1L), 0.01, 0.75)
+  drop_probs = tf$clip_by_value( tf$reduce_mean(tf$sign(tf$nn$relu( tf$abs( WtsMat ) - 0.01 ) ), 1L), 0.01, 0.50)
   dropout_rate2 = tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
