@@ -325,16 +325,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGD
       L2_squared_vec <- rep(NA, times = sgd_iters)
-      browser() 
-      sess$run( drop_probs )
-      sess$run( WtsMat )
-      sess$run( tf$reduce_mean(tf$sign(tf$nn$relu(  tf$abs( WtsMat ) - 0.10 ) ), 1L) )
-      drop_probs = 0.01 + tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
-      dropout_rate2 = tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
-      ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
-      MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
-      WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
-      
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
         update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOptimizer_tf_apply),
@@ -345,6 +335,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer] <- update_ls[[3]]
       }
       plot( L2_squared_vec )
+      browser() 
+      
+      c(sess$run( dropout_rate2 ))
+      rowMeans(abs(sess$run( WtsMat_drop ))>0.10)
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
