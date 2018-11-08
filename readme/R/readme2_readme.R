@@ -213,14 +213,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP WEIGHTS to be optimized
   WtsMat = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
-  
+
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  browser() 
-  dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
+  dropout_rate1 = 0.0001#dropout_rate  ##RATE FOR DROPPING NODES 
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  dropout_rate2 = 0.10 ##RATE FOR DROPPING CONNECTIONS 
+  drop_probs = tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
+  dropout_rate2 = tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
@@ -334,6 +334,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         inverse_learning_rate_vec[awer] <- inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
         L2_squared_vec[awer] <- update_ls[[3]]
       }
+      browser() 
+      drop_probs = tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
+      dropout_rate2 = tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
+      ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
+      MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
+      WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
       plot( L2_squared_vec )
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
