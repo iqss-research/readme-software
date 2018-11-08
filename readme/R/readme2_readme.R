@@ -219,8 +219,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  drop_probs = tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
-  dropout_rate2 = 0.001 + tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
+  drop_probs = 0.01 + tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
+  dropout_rate2 = tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
@@ -335,14 +335,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer] <- update_ls[[3]]
       }
       browser() 
-      sess$run(drop_probs)
-      sess$run( WtsMat )
-      
-      drop_probs = tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
+      drop_probs = 0.01 + tf$reduce_mean(tf$sign(tf$nn$relu( 0.10 - tf$abs( WtsMat ) ) ), 1L)
       dropout_rate2 = tf$reshape(drop_probs, list(dim(drop_probs), 1L)) ##RATE FOR DROPPING CONNECTIONS 
       ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
       MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
       WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
+      
       plot( L2_squared_vec )
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
