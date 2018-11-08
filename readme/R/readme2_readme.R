@@ -335,10 +335,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer] <- update_ls[[3]]
       }
       plot( L2_squared_vec )
-      browser() 
-      
-      c(sess$run( dropout_rate2 ))
-      rowMeans(abs(sess$run( WtsMat_drop ))>0.10)
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
