@@ -333,7 +333,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         inverse_learning_rate_vec[awer] <- inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
         L2_squared_vec[awer] <- update_ls[[3]]
       }
-      plot( L2_squared_vec )
+      #plot( L2_squared_vec )
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
@@ -354,7 +354,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Cat_ = categoryVec_labeled[indi_i]; X_ = out_dfm_labeled[indi_i,];Y_ = out_dfm_unlabeled #Category labels, Labeled Features (X), Unlabeled Features Y_ 
             { 
               ### Normalize X and Y
-              MM1 = colMeans(Y_); 
+              MM1 = colMeans(X_); 
               #combine_SDs <- function(x,y){r_clip_by_value(max(x,y), 1/3, 3)}
               MM2 = apply(X_, 2, sd)
               X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2);
@@ -377,8 +377,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
               est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
-                X_ = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
-                MM1_samp = colMeans(Y_);MM2_samp = apply(X_, 2, sd)
+                X__ = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
+                MM1_samp = colMeans(X__);MM2_samp = apply(X__, 2, sd)
                 X_ = FastScale(X_, MM1_samp, MM2_samp); Y_ = FastScale(Y_, MM1_samp, MM2_samp)
                 ESGivenD_sampled = do.call(cbind, tapply(1:length( categoryVec_labeled_matched_sampled ) , categoryVec_labeled_matched_sampled, function(x){colMeans(X_[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y_))[names(labeled_pd)],T) } ) )  
