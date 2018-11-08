@@ -219,13 +219,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  dropout_rate2 = 0.001 ##RATE FOR DROPPING CONNECTIONS 
+  dropout_rate2 = 0.0001 ##RATE FOR DROPPING CONNECTIONS 
   ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   WtsMat_drop0 = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
-  browser() 
   WtsMat_drop = WtsMat_drop0 + tf$multiply(WtsMat_drop0, 
-                                           tf$random_uniform())
+                                           tf$random_normal(list(nrow(WtsMat_drop0),ncol(WtsMat_drop0)), 
+                                                            mean=0.0,stddev=1.0))
 
   ### Soft-max transformation
   nonLinearity_fxn = function(x){tf$nn$softsign(x)}
