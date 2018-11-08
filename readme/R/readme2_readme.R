@@ -186,8 +186,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
+    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    #certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
     return( list(MM) )  } )) )
   MultMat = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
@@ -215,18 +215,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  dropout_rate1 = 0.0001#dropout_rate  ##RATE FOR DROPPING NODES 
+  dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
   ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  dropout_rate2 = 0.0001 ##RATE FOR DROPPING CONNECTIONS 
-  ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
-  MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
-  WtsMat_drop0 = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
-  WtsMat_drop = WtsMat_drop0 + tf$multiply(WtsMat_drop0, 
-                                           tf$random_normal(list(nrow(WtsMat_drop0),ncol(WtsMat_drop0)), 
-                                                            mean=0.0,stddev=0.50))
-
+  #dropout_rate2 = 0.0001 ##RATE FOR DROPPING CONNECTIONS 
+  #ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
+  #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
+  #WtsMat_drop0 = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
+  WtsMat_drop = tf$multiply(WtsMat, MASK_VEC1)
+  
   ### Soft-max transformation
   nonLinearity_fxn = function(x){tf$nn$softsign(x)}
   LFinal = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
