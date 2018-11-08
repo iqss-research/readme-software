@@ -247,7 +247,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log( Spread_tf))
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log(0.001 + Spread_tf))
   #https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -314,7 +314,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = summary(init_L2_squared_vec)[2]
+      clip_value = median(init_L2_squared_vec)
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
@@ -323,6 +323,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate <- 0.50 * median( init_L2_squared_vec ) 
       
       ### For each iteration of SGD
+      L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
         update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOptimizer_tf_apply),
@@ -330,7 +331,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] <- inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
+        L2_squared_vec[awer] <- update_ls[[3]]
       }
+      plot( L2_squared_vec )
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
@@ -340,9 +343,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### If we're also going to do estimation
       if(justTransform == F){ 
-        browser() 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size <- min(r_clip_by_value(as.integer( round( 0.90*(  nrow(dfm_labeled)*labeled_pd) )),10,100))
+          min_size <- min(r_clip_by_value(as.integer( round( 0.75 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun = nBoot_matching ; k_match = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           ### Sample indices for bootstrap by category
           indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )
@@ -353,15 +355,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             { 
               ### Normalize X and Y
               MM1 = colMeans(Y_); 
-              combine_SDs <- function(x,y){r_clip_by_value(max(x,y), 1/3, 3)}
-              MM2 = sapply(1:ncol(X_), function(x){ combine_SDs(sd(X_[,x]),Y_[,x]) } )
-              X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2); 
+              #combine_SDs <- function(x,y){r_clip_by_value(max(x,y), 1/3, 3)}
+              MM2 = apply(X_, 2, sd)
+              X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2);
               
               ## If we're using matching
               if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
-                MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-                #MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
+                #MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
@@ -372,11 +374,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               matched_list_indices_by_cat <- tapply(1:length(categoryVec_labeled_matched), categoryVec_labeled_matched, function(x){c(x) })
          
               ### Carry out estimation on the matched samples
-              min_size2 <- min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100))
+              min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
               est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X_ = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
-                MM1_samp = colMeans(Y_);MM2_samp = sapply(1:ncol(X_), function(x){ combine_SDs(X_[,x],Y_[,x]) } )
+                MM1_samp = colMeans(Y_);MM2_samp = apply(X_, 2, sd)
                 X_ = FastScale(X_, MM1_samp, MM2_samp); Y_ = FastScale(Y_, MM1_samp, MM2_samp)
                 ESGivenD_sampled = do.call(cbind, tapply(1:length( categoryVec_labeled_matched_sampled ) , categoryVec_labeled_matched_sampled, function(x){colMeans(X_[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y_))[names(labeled_pd)],T) } ) )  
