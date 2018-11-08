@@ -186,8 +186,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.1; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
-    MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    #urat = 0.10; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );
+    #MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    certainty_amt = 0.90
+    MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
     return( list(MM) )  } )) )
   MultMat = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
@@ -247,8 +249,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log( Spread_tf))
-  #https://en.wikipedia.org/wiki/Entropic_uncertainty  
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log( Spread_tf )  )
+  #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
