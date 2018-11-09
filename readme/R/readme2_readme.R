@@ -377,15 +377,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
          
               ### Carry out estimation on the matched samples
               min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
-              est_readme2 = rowMeans(  replicate(20, { 
+              est_readme2 = rowMeans(  replicate(100, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(X__);
                 MM2_samp                     = apply(X__, 2, sd)
-                #X__                          = FastScale(X__, MM1_samp, MM2_samp);
-                #Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
-                Y__ = Y_
+                X__                          = FastScale(X__, MM1_samp, MM2_samp);
+                Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } ) )  
               } 
