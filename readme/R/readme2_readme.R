@@ -312,7 +312,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = 0.50 * median( init_L2_squared_vec )
+      clip_value = 0.50 * median( sqrt(init_L2_squared_vec) )
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
@@ -332,8 +332,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer]            = update_ls[[3]]
         L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
-      plot( L2_squared_vec_unclipped ); abline(h = clip_value)
-      points( L2_squared_vec , pch = 2);
+      plot( sqrt( L2_squared_vec )   ); abline(h = sqrt( clip_value) )  
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
