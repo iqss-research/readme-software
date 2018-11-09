@@ -202,7 +202,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow
   IL_input        =  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
-  { #batch renormalization for the input layer
+  { #batch normalization for the input layer
     IL_m          = tf$nn$moments(IL_input, axes = 0L);
     IL_mu_b       = IL_m[[1]];
     IL_sigma2_b   = IL_m[[2]];
@@ -211,18 +211,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     IL_sigma_last = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
     IL_n          =  tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
   } 
-  OUTPUT_IL   = tf$placeholder(tf$float32, shape = list(NULL, nDim))
-  OUTPUT_IL_n =  tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
+  OUTPUT_IL       = tf$placeholder(tf$float32, shape = list(NULL, nDim))
+  OUTPUT_IL_n     =  tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.25/sqrt(nDim+nProj), 0.25/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
-  BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
+  WtsMat          = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.25/sqrt(nDim+nProj), 0.25/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  BiasVec         = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  dropout_rate1 = 0.10#dropout_rate  ##RATE FOR DROPPING NODES 
-  ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
-  MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
-  WtsMat_drop   = tf$multiply(WtsMat, MASK_VEC1)
+  dropout_rate1   = dropout_rate  ##RATE FOR DROPPING NODES 
+  ulim1           = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
+  MASK_VEC1       = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
+  WtsMat_drop     = tf$multiply(WtsMat, MASK_VEC1)
 
   #dropout_rate2 = 0.0001; ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
@@ -248,7 +248,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) +0* tf$reduce_mean(tf$log( Spread_tf) ) ) 
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
