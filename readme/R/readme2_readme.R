@@ -206,7 +206,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_sigma_b      = tf$sqrt(IL_sigma2_b)
   IL_mu_last      = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
   IL_sigma_last   = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
-  IL_n            = tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)} 
+  IL_n            = tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
   OUTPUT_IL       = tf$placeholder(tf$float32, shape = list(NULL, nDim))
   OUTPUT_IL_n     = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
@@ -311,7 +311,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec = rep(NA, times = sgd_iters) 
-      
       
       ### For each iteration of SGD
       L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
