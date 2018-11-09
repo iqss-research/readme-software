@@ -321,17 +321,19 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate <- 0.50 * median( init_L2_squared_vec ) 
       
       ### For each iteration of SGD
-      L2_squared_vec <- rep(NA, times = sgd_iters)
+      L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOptimizer_tf_apply),
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, L2_squared_unclipped, myOptimizer_tf_apply),
                              feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
         L2_squared_vec[awer]            = update_ls[[3]]
+        L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
-      plot( L2_squared_vec ); abline(h = clip_value)
+      plot( L2_squared_vec_unclipped ); abline(h = clip_value)
+      points( L2_squared_vec , pch = 2);
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
