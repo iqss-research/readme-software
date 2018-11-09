@@ -219,7 +219,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  dropout_rate1 = tf$reshape(tf$nn$sigmoid(tf$Variable(rep(0, times = nDim), trainable = T, dtype = tf$float32)), list(nDim, 1L) )##RATE FOR DROPPING NODES 
+  dropout_rate1 = tf$reshape(0.60*tf$nn$sigmoid(tf$Variable(rep(0, times = nDim)+0.20, trainable = T, dtype = tf$float32)), list(nDim, 1L) )##RATE FOR DROPPING NODES 
   ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop   = tf$multiply(WtsMat, MASK_VEC1)
@@ -345,10 +345,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer]            = update_ls[[3]]
         L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
-      browser() 
-      sess$run( dropout_rate1 )
       plot( sqrt( L2_squared_vec_unclipped ), cex = 0.10   );
       points( sqrt( L2_squared_vec ), cex = 0.90   ); abline(h =  clip_value) 
+      print(  summary( sess$run( dropout_rate1 ) )  )  
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
