@@ -332,6 +332,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer]            = update_ls[[3]]
         L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
+      browser() 
       plot( sqrt( L2_squared_vec )   ); abline(h = sqrt( clip_value) )  
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
