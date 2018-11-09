@@ -222,11 +222,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dropout_rate1 = tf$reshape(tf$nn$sigmoid(tf$Variable(rep(0, times = nDim), trainable = T, dtype = tf$float32)), list(nDim, 1L) )##RATE FOR DROPPING NODES 
   ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
-  WtsMat_drop = tf$multiply(WtsMat, MASK_VEC1)
-  LFinal           = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_           = nonLinearity_fxn(tf$matmul(IL_n, WtsMat) + BiasVec)
-  ad_obj = -tf$reduce_mean( tf$abs(LFinal_ - LFinal) ) + tf$reduce_mean( dropout_rate1 ) 
-  ad_optimizer = tf$train$AdamOptimizer(learning_rate = 0.005)$minimize(ad_obj)
+  WtsMat_drop   = tf$multiply(WtsMat, MASK_VEC1)
+  LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+  LFinal_       = nonLinearity_fxn(tf$matmul(IL_n, WtsMat) + BiasVec)
+  ad_obj        = -tf$reduce_mean( tf$abs(LFinal_ - LFinal) ) + tf$reduce_mean( dropout_rate1 )
+  ad_optimizer  = tf$train$AdamOptimizer(learning_rate = 0.005)$minimize(ad_obj)
   #dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
   #ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   #MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
@@ -337,7 +337,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, L2_squared_unclipped, myOptimizer_tf_apply),
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, L2_squared_unclipped, myOptimizer_tf_apply,ad_optimizer),
                              feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
