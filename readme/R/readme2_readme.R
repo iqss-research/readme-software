@@ -191,8 +191,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat    = t(do.call(rbind,sapply(1:nCat,function(x){
-    #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
+    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    #certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
     return( list(MM) )  } )) )
   MultMat    = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
@@ -202,15 +202,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   IL_input        =  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
-  { 
-    IL_m          = tf$nn$moments(IL_input, axes = 0L);
-    IL_mu_b       = IL_m[[1]];
-    IL_sigma2_b   = IL_m[[2]];
-    IL_sigma_b    = tf$sqrt(IL_sigma2_b)
-    IL_mu_last    = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
-    IL_sigma_last = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
-    IL_n          =  tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
-  } 
+  IL_m            = tf$nn$moments(IL_input, axes = 0L);
+  IL_mu_b         = IL_m[[1]];
+  IL_sigma2_b     = IL_m[[2]];
+  IL_sigma_b      = tf$sqrt(IL_sigma2_b)
+  IL_mu_last      = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
+  IL_sigma_last   = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
+  IL_n            =  tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)} 
   OUTPUT_IL       = tf$placeholder(tf$float32, shape = list(NULL, nDim))
   OUTPUT_IL_n     =  tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
@@ -231,18 +229,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Apply non-linearity + batch normalization 
   LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m      = tf$nn$moments(LFinal, axes = 0L);
-  LF_mu_b       = LFinal_m[[1]]; 
-  LF_sigma2_b   = LFinal_m[[2]];
-  LF_sigma_b    = tf$sqrt(LF_sigma2_b)
-  LF_mu_last    = tf$placeholder( tf$float32,shape(dim(LF_mu_b)) )
-  LF_sigma_last = tf$placeholder( tf$float32,shape(dim(LF_sigma_b)) )
-  LFinal_n      = tf$nn$batch_normalization(LFinal, mean = LF_mu_b, variance = LF_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
+  LFinal_n      = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
   ## Spread component of objective function
-  Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 
-                                   0, 0.25)
+  Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0, 0.5)
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   ## Feature discrimination (row-differences)
@@ -352,13 +344,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
-            indi_i = indices_list[[boot_iter]]; ## Extract indices associated with that iteration
-            Cat_   = categoryVec_labeled[indi_i]; X_ = out_dfm_labeled[indi_i,];Y_ = out_dfm_unlabeled #Category labels, Labeled Features (X), Unlabeled Features Y_ 
+            Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
+            X_     = out_dfm_labeled[indices_list[[boot_iter]],];
+            Y_     = out_dfm_unlabeled #Category labels, Labeled Features (X), Unlabeled Features Y_ 
             { 
               ### Normalize X and Y
               MM1  = colMeans(X_); 
-              MM2  = apply(X_, 2, sd)
-              X_   = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2);
+              MM2  = colSds(X_, center = MM1)
+              X_   = FastScale(X_, MM1, MM2);
+              Y_   = FastScale(Y_, MM1, MM2);
               
               ## If we're using matching
               if (k_match != 0){
@@ -381,7 +375,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(X__);
-                MM2_samp                     = apply(X__, 2, sd)
+                MM2_samp                     = colSds(X__, center = MM1)
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
                 Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
