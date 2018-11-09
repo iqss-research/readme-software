@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 10000, sgd_momentum = .9, numProjections = 10, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 1, minMatch = 5, nBoot_matching = 20,
+                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 10, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 1, minMatch = 5, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -248,7 +248,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) +0.10*tf$log( tf$sqrt(2 * pi* exp(1) * Spread_tf) )  )
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.10*tf$log( tf$sqrt(2 * pi* exp(1) * Spread_tf) )  )
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -259,6 +259,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Calculates the gradients from myOptimizer_tf
   myGradients = myOptimizer_tf$compute_gradients(myLoss_tf)
   
+  browser()
   L2_squared_unclipped =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   clip_tf =  tf$placeholder(tf$float32, shape = list()); 
   TEMP__ = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
