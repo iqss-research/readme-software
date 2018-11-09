@@ -325,7 +325,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
         update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared_unclipped, myOptimizer_tf_apply),
-                             feed_dict = dict(IL = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
+                             feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] <- inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
