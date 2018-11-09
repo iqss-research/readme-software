@@ -150,7 +150,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Setup information for SGD
   categoryVec_unlabeled <- as.factor(categoryVec)[labeledIndicator == 0]  
   categoryVec_labeled <- as.factor(categoryVec)[labeledIndicator == 1]
-  browser() 
   labeled_pd <- vec2prob( categoryVec_labeled ); unlabeled_pd <- vec2prob( categoryVec_unlabeled )
   dfm_labeled <- dfm[labeledIndicator==1,]; dfm_unlabeled <- dfm[labeledIndicator==0,]
   nCat <- as.integer( length(labeled_pd) ); nDim <- as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
@@ -249,7 +248,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.10*tf$log( tf$sqrt(2 * pi* exp(1) * Spread_tf) )  )
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) #+ 0.10*tf$log( tf$sqrt(2 * pi* exp(1) * Spread_tf) )  )
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -260,7 +259,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Calculates the gradients from myOptimizer_tf
   myGradients = myOptimizer_tf$compute_gradients(myLoss_tf)
   
-  browser()
   L2_squared_unclipped =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   clip_tf =  tf$placeholder(tf$float32, shape = list()); 
   TEMP__ = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
@@ -347,7 +345,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size <- min(r_clip_by_value(as.integer( round( 0.25 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
+          min_size <- min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
           nRun = nBoot_matching ; k_match = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           ### Sample indices for bootstrap by category
           indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )
@@ -377,7 +375,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               matched_list_indices_by_cat <- tapply(1:length(categoryVec_labeled_matched), categoryVec_labeled_matched, function(x){c(x) })
          
               ### Carry out estimation on the matched samples
-              min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.25,10,100)) )  
+              min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
               est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__ = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
