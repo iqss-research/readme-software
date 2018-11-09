@@ -161,8 +161,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
-  #NObsByCat             = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
-  NObsByCat             = rep(10, nCat) ## Number of observations to sample per category
+  NObsPerCat             = 5#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
   #Start SGD
@@ -188,12 +187,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Placeholder settings - to be filled when executing TF operations
   sdg_learning_rate = tf$placeholder(tf$float32, shape = c()) ## Placeholder for learning rate
   dmax              = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
-  NObsByCat_cumsum  = cumsum(NObsByCat) ## Cumulative sum of the number of observations to use per category when carrying out SGD optimization
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat    = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    #certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
+    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) )
   MultMat    = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
@@ -202,7 +199,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   list_indices_by_cat = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  IL_input        = tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
+  IL_input        = tf$placeholder(tf$float32, shape = list(NObsPerCat * nCat, nDim))
   IL_m            = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b         = IL_m[[1]];
   IL_sigma2_b     = IL_m[[2]];
@@ -222,9 +219,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   MASK_VEC1       = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop     = tf$multiply(WtsMat, MASK_VEC1)
 
-  #dropout_rate2 = 0.0001; ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
-  #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
-  #WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
+  #dropout_rate2  = 0.0001; ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
+  #MASK_VEC2      = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
+  #WtsMat_drop    = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
   
   ### Apply non-linearity + batch normalization 
   LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
@@ -233,18 +230,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
    
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
+  
   ## Spread component of objective function
   Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0, 0.5)
+  
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
+  
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
+  
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf) ) ) 
-  #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf = tf$train$MomentumOptimizer(learning_rate       = sdg_learning_rate,
+  myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum      = sgd_momentum, 
                                               use_nesterov  = T)
   
@@ -290,8 +290,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Function to generate bootstrap sample
-      sgd_grabSamp = function(){ unlist(sapply(1:nCat, function(ze){  sample(list_indices_by_cat[[ze]], NObsByCat[ze], replace = T )  } ))}
-      
+      sgd_grabSamp = function(){ unlist(sapply(1:nCat, function(ze){  sample(list_indices_by_cat[[ze]], NObsPerCat, replace = T )  } ))}
+
       ########
       ## Parameter initialization
       ########
