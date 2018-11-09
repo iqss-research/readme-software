@@ -254,12 +254,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ### Calculates the gradients from myOptimizer_tf
   myGradients          = myOptimizer_tf$compute_gradients(myLoss_tf)
+  myGradients_clipped  = myGradients
   
-  L2_squared_unclipped =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
-  clip_tf              =  tf$placeholder(tf$float32, shape = list()); 
+  L2_squared_unclipped = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  clip_tf              = tf$placeholder(tf$float32, shape = list()); 
   TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
-  for(jack in 1:length(myGradients)){ myGradients[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared           =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+  L2_squared           =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   ### applies the gradient updates
   myOptimizer_tf_apply = myOptimizer_tf$apply_gradients( myGradients )
 
