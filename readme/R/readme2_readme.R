@@ -150,8 +150,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Setup information for SGD
   categoryVec_unlabeled = as.factor(categoryVec)[labeledIndicator == 0]  
   categoryVec_labeled   = as.factor(categoryVec)[labeledIndicator == 1]
-  labeled_pd            = vec2prob( categoryVec_labeled ); unlabeled_pd <- vec2prob( categoryVec_unlabeled )
-  dfm_labeled           = dfm[labeledIndicator==1,]; dfm_unlabeled <- dfm[labeledIndicator==0,]
+  labeled_pd            = vec2prob( categoryVec_labeled ); 
+  unlabeled_pd          = vec2prob( categoryVec_unlabeled )
+  dfm_labeled           = dfm[labeledIndicator==1,]; 
+  dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); nDim <- as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
@@ -195,7 +197,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   list_indices_by_cat <- tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow
-  IL_input <-  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
+  IL_input        =  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
   { #batch renormalization for the input layer
     IL_m          = tf$nn$moments(IL_input, axes = 0L);
     IL_mu_b       = IL_m[[1]];
@@ -244,7 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.25*tf$reduce_mean(tf$log( Spread_tf) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf) ) ) 
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -280,8 +282,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   init = tf$global_variables_initializer()
  
   # Holding containers for results
-  boot_readme <- matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) <- names(labeled_pd)
-  hold_coef <- rep(0, nCat); names(hold_coef) <-  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  boot_readme    <- matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) <- names(labeled_pd)
+  hold_coef      <- rep(0, nCat); names(hold_coef) <-  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
   MatchedPrD_div <- OrigESGivenD_div <- MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
   ##  Estimate the parameters
@@ -312,13 +314,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = 0.50 * median( sqrt(init_L2_squared_vec) )
+      clip_value = 0.50 * min( sqrt(init_L2_squared_vec) )
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
       
       ## Inverse learning rate = clip value
-      inverse_learning_rate <- 0.50 * median( init_L2_squared_vec ) 
+      inverse_learning_rate <- 0.50 * min( init_L2_squared_vec ) 
       
       ### For each iteration of SGD
       L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
@@ -332,8 +334,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer]            = update_ls[[3]]
         L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
-      browser() 
-      plot( sqrt( L2_squared_vec )   ); abline(h = sqrt( clip_value) )  
+      plot( sqrt( L2_squared_vec_unclipped ), cex = 0.10   );
+      points( sqrt( L2_squared_vec ), cex = 0.90   ); abline(h =  clip_value) 
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
@@ -345,7 +347,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size     = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
-          nRun         = nBoot_matching ; k_match = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
+          nRun         = nBoot_matching ;
+          k_match      = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
           BOOTSTRAP_EST <- sapply(1:nRun, function(boot_iter){ 
             indi_i = indices_list[[boot_iter]]; ## Extract indices associated with that iteration
@@ -353,7 +356,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             { 
               ### Normalize X and Y
               MM1  = colMeans(X_); 
-              MM2  = apply(X_, 2, sd)#combine_SDs <- function(x,y){r_clip_by_value(max(x,y), 1/3, 3)}
+              MM2  = apply(X_, 2, sd)
               X_   = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2);
               
               ## If we're using matching
@@ -367,19 +370,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               }else{ ## Otherwise use all the indices
                 MatchIndices_i  = 1:nrow(X_)
               }
-              categoryVec_labeled_matched = Cat_[MatchIndices_i]; X_ = X_[MatchIndices_i,]
-              matched_list_indices_by_cat <- tapply(1:length(categoryVec_labeled_matched), categoryVec_labeled_matched, function(x){c(x) })
+              categoryVec_LabMatch = Cat_[MatchIndices_i]; X_ = X_[MatchIndices_i,]
+              matched_list_indices_by_cat <- tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
          
               ### Carry out estimation on the matched samples
               min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
               est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
-                X__                          = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
+                X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
+                categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(X__);
                 MM2_samp                     = apply(X__, 2, sd)
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
                 Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
-                ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_labeled_matched_sampled ) , categoryVec_labeled_matched_sampled, function(x){colMeans(X__[x,])}) ) 
+                ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } ) )  
               } 
               list(est_readme2 = est_readme2) 
