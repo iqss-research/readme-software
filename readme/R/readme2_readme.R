@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 20,
+                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 10, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -135,14 +135,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn    = function(x){tf$nn$softsign(x)}
+  nonLinearity_fxn     = function(x){tf$nn$softsign(x)}
   
   ## Generic winsorization function 
-  r_clip_by_value     = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
+  r_clip_by_value      = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
   
   # Winsorize the columns of the document-feature matrix
   if(winsorize == T){
-  dfm                 = apply(dfm, 2, function(x){ 
+  dfm                   = apply(dfm, 2, function(x){ 
                                     sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
                                     x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_; 
                                     return( x ) })
