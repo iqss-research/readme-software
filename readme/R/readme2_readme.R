@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 10, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 20,
+                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -189,11 +189,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dmax              = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
-  MultMat    = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.02; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    return( list(MM) )  } )) )
-  MultMat    = MultMat  / rowSums( MultMat )
-  MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
+  MultMat           = t(do.call(rbind,sapply(1:nCat,function(x){
+                          urat = 0.10; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          return( list(MM) )  } )) )
+  MultMat           = MultMat  / rowSums( MultMat )
+  MultMat_tf        = tf$constant(MultMat, dtype = tf$float32)
   
   ## Which indices in the labeled set are associated with each category
   list_indices_by_cat = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
