@@ -220,7 +220,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
   dropout_rate1 = tf$nn$sigmoid(tf$Variable(rep(0, times = nDim), trainable = T, dtype = tf$float32))  ##RATE FOR DROPPING NODES 
-  #ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
+  ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop = tf$multiply(WtsMat, MASK_VEC1)
   LFinal           = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
