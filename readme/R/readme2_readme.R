@@ -352,8 +352,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             { 
               ### Normalize X and Y
               MM1 = colMeans(X_); 
-              #combine_SDs <- function(x,y){r_clip_by_value(max(x,y), 1/3, 3)}
-              MM2 = apply(X_, 2, sd)
+              MM2 = apply(X_, 2, sd)#combine_SDs <- function(x,y){r_clip_by_value(max(x,y), 1/3, 3)}
               X_ = FastScale(X_, MM1, MM2); Y_ = FastScale(Y_, MM1, MM2);
               
               ## If we're using matching
