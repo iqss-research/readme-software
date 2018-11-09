@@ -161,8 +161,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
-  NObsByCat = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
-  nProj     = as.integer(max(numProjections,nCat+2) ); ## Number of projections
+  NObsByCat             = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
+  nProj                 = as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
   #Start SGD
   if (verbose == T){
@@ -191,8 +191,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat    = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    #certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
+    #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
     return( list(MM) )  } )) )
   MultMat    = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
@@ -200,9 +200,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Which indices in the labeled set are associated with each category
   list_indices_by_cat = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
-  #SET UP INPUT layer to TensorFlow
+  #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   IL_input        =  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
-  { #batch normalization for the input layer
+  { 
     IL_m          = tf$nn$moments(IL_input, axes = 0L);
     IL_mu_b       = IL_m[[1]];
     IL_sigma2_b   = IL_m[[2]];
@@ -252,13 +252,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  #myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
-                                              #momentum      = sgd_momentum, 
-                                              #use_nesterov  = T)
-  myOptimizer_tf = tf$train$AdamOptimizer(learning_rate = 0.005)
+  myOpt_tf = tf$train$MomentumOptimizer(learning_rate       = sdg_learning_rate,
+                                              momentum      = sgd_momentum, 
+                                              use_nesterov  = T)
+  #myOpt_tf = tf$train$AdamOptimizer(learning_rate = 0.005)
   
-  ### Calculates the gradients from myOptimizer_tf
-  myGradients          = myOptimizer_tf$compute_gradients(myLoss_tf) 
+  ### Calculates the gradients from myOpt_tf
+  myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
   myGradients_clipped  = myGradients
   
   L2_squared_unclipped = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
@@ -268,7 +268,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   L2_squared           =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   
   ### applies the gradient updates
-  myOptimizer_tf_apply = myOptimizer_tf$apply_gradients( myGradients_clipped )
+  myOpt_tf_apply  = myOpt_tf$apply_gradients( myGradients_clipped )
 
   #Updates for the batch normalization moments
   Moments_learn   = mLearn
@@ -325,8 +325,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
-        ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, L2_squared_unclipped, myOptimizer_tf_apply),
+        ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, L2_squared_unclipped, myOpt_tf_apply),
                              feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
