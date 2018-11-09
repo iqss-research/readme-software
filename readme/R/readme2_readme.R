@@ -161,7 +161,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
-  NObsByCat             = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
+  #NObsByCat             = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
+  NObsByCat             = rep(10, nCat) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
   #Start SGD
@@ -201,24 +202,23 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   list_indices_by_cat = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  IL_input        =  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
+  IL_input        = tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
   IL_m            = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b         = IL_m[[1]];
   IL_sigma2_b     = IL_m[[2]];
   IL_sigma_b      = tf$sqrt(IL_sigma2_b)
   IL_mu_last      = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
   IL_sigma_last   = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
-  IL_n            =  tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)} 
+  IL_n            = tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)} 
   OUTPUT_IL       = tf$placeholder(tf$float32, shape = list(NULL, nDim))
-  OUTPUT_IL_n     =  tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
+  OUTPUT_IL_n     = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
   WtsMat          = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.25/sqrt(nDim+nProj), 0.25/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec         = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation 
-  dropout_rate1   = dropout_rate 
-  ulim1           = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
+  ulim1           = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
   MASK_VEC1       = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop     = tf$multiply(WtsMat, MASK_VEC1)
 
@@ -247,7 +247,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf = tf$train$MomentumOptimizer(learning_rate       = sdg_learning_rate,
                                               momentum      = sgd_momentum, 
                                               use_nesterov  = T)
-  #myOpt_tf = tf$train$AdamOptimizer(learning_rate = 0.005)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
