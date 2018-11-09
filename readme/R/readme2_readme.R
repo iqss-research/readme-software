@@ -255,7 +255,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               #momentum      = sgd_momentum, 
                                               #use_nesterov  = T)
-  myOptimizer_tf = tf$train$Adam(learning_rate = 0.005)
+  myOptimizer_tf = tf$train$AdamOptimizer(learning_rate = 0.005)
   
   ### Calculates the gradients from myOptimizer_tf
   myGradients          = myOptimizer_tf$compute_gradients(myLoss_tf) 
