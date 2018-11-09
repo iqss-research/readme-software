@@ -216,7 +216,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #SET UP WEIGHTS to be optimized
   #WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.25/sqrt(nDim+nProj), 0.25/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
-  WtsMat  = 0.25/sqrt(nDim+nProj)* tf$sign(tf$Variable(tf$random_uniform(list(nDim,nProj),-1, 1,dtype = tf$float32, trainable = T)))
+  WtsMat  = tf$Variable( 0.25/sqrt(nDim+nProj) *tf$sign(tf$random_uniform(list(nDim,nProj),-1, 1,dtype = tf$float32)), trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
