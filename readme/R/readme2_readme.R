@@ -363,7 +363,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
          
               ### Carry out estimation on the matched samples
               min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
-              est_readme2 = rowMeans(  replicate(20, { 
+              est_readme2 = try(rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
@@ -375,7 +375,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } ) )  
               } 
               list(est_readme2 = est_readme2) 
-          } )
+          } ), T) 
+          if(class(est_readme2) == "try-error"){browser()}
         print("peach")
         ### Average the bootstrapped estimates
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
