@@ -334,10 +334,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer]            = update_ls[[3]]
         L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
-      browser() 
       plot( sqrt( L2_squared_vec_unclipped ), cex = 0.10   );
       points( sqrt( L2_squared_vec ), cex = 0.90   ); abline(h =  clip_value) 
-      print(  summary( sess$run( dropout_rate1 ) )  )  
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
