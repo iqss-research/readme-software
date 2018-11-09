@@ -180,16 +180,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #Placeholder settings - to be filled when executing TF operations
   sdg_learning_rate = tf$placeholder(tf$float32, shape = c()) ## Placeholder for learning rate
-  
-  dmax = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
+  dmax             = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
   NObsByCat_cumsum = cumsum(NObsByCat) ## Cumulative sum of the number of observations to use per category when carrying out SGD optimization
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
-  MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
+  MultMat    = t(do.call(rbind,sapply(1:nCat,function(x){
     urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     #certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
     return( list(MM) )  } )) )
-  MultMat = MultMat  / rowSums( MultMat )
+  MultMat    = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
   
   ## Which indices in the labeled set are associated with each category
@@ -245,7 +244,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 1*tf$reduce_mean(tf$log( Spread_tf) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.25*tf$reduce_mean(tf$log( Spread_tf) ) ) 
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -312,7 +311,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = min(init_L2_squared_vec)
+      clip_value = 0.5 * median(init_L2_squared_vec)
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
@@ -324,7 +323,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared_unclipped, myOptimizer_tf_apply),
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOptimizer_tf_apply),
                              feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
