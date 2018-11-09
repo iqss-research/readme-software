@@ -268,7 +268,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #Setup the outputs 
   OUTPUT_LFinal   = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
-  OUTPUT_LFinal_n = tf$nn$batch_normalization(OUTPUT_LFinal, mean = LF_mu_last,variance = tf$square(LF_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   # Initialize global variables in TensorFlow Graph
   init            = tf$global_variables_initializer()
