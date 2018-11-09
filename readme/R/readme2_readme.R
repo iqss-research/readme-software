@@ -336,35 +336,36 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
+          browser() 
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled #Category labels, Labeled Features (X), Unlabeled Features Y_ 
-            { 
-              ### Normalize X and Y
-              MM1  = colMeans(X_); 
-              MM2  = colSds(X_, center = MM1)
-              X_   = FastScale(X_, MM1, MM2);
-              Y_   = FastScale(Y_, MM1, MM2);
+            
+            ### Normalize X and Y
+            MM1  = colMeans(X_); 
+            MM2  = colSds(X_, center = MM1)
+            X_   = FastScale(X_, MM1, MM2);
+            Y_   = FastScale(Y_, MM1, MM2);
               
-              ## If we're using matching
-              if (k_match != 0){
+            ## If we're using matching
+            if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
                 MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
                 #MatchIndices_i = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
-              }else{ ## Otherwise use all the indices
+            }else{ ## Otherwise use all the indices
                 MatchIndices_i  = 1:nrow(X_)
-              }
-              categoryVec_LabMatch = Cat_[MatchIndices_i]; X_ = X_[MatchIndices_i,]
-              matched_list_indices_by_cat <- tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
+            }
+            categoryVec_LabMatch = Cat_[MatchIndices_i]; X_ = X_[MatchIndices_i,]
+            matched_list_indices_by_cat <- tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
          
-              ### Carry out estimation on the matched samples
-              min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
-              browser() 
-              est_readme2 = try(rowMeans(  replicate(20, { 
+            ### Carry out estimation on the matched samples
+            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
+            browser() 
+            est_readme2 = try(rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
@@ -373,10 +374,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
                 Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
-                try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )
-              list(est_readme2 = est_readme2) 
-          }), T) 
-          if(class(est_readme2) == "try-error"){browser()}
+                try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )), T)
+              if(class(est_readme2) == "try-error"){browser()}
+              return( est_readme2 )
+          })
         print("peach")
         ### Average the bootstrapped estimates
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
