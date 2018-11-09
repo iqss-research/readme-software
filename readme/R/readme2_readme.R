@@ -135,20 +135,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn = function(x){tf$nn$softsign(x)}
+  nonLinearity_fxn    = function(x){tf$nn$softsign(x)}
   
   ## Generic winsorization function 
-  r_clip_by_value = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
+  r_clip_by_value     = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
   
   # Winsorize the columns of the document-feature matrix
   if(winsorize == T){
-    dfm <- apply(dfm, 2, function(x){ 
-      sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
-      x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_; 
-      return( x ) })
+  dfm                 = apply(dfm, 2, function(x){ 
+                                    sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
+                                    x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_; 
+                                    return( x ) })
   }
   ## Drop invariant columns
-  dfm <- dfm[,apply(dfm,2,sd)>0]
+  dfm                   = dfm[,apply(dfm,2,sd)>0]
   
   #Setup information for SGD
   categoryVec_unlabeled = as.factor(categoryVec)[labeledIndicator == 0]  
@@ -241,7 +241,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.01*tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -291,10 +291,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Function to generate bootstrap sample
       sgd_grabSamp = function(){ unlist(sapply(1:nCat, function(ze){  sample(list_indices_by_cat[[ze]], NObsPerCat, replace = T )  } ))}
 
-      ########
-      ## Parameter initialization
-      ########
-      
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
       d_             = replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
