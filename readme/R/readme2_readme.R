@@ -232,7 +232,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0, 0.5)
+  Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0, 1)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -241,7 +241,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.01*tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -336,7 +336,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
-          browser() 
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -364,7 +363,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
          
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
-            browser() 
             est_readme2 = try(rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
@@ -376,7 +374,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )), T)
               if(class(est_readme2) == "try-error"){browser()}
-              return( est_readme2 )
+              return( list(est_readme2) )
           })
         print("peach")
         ### Average the bootstrapped estimates
