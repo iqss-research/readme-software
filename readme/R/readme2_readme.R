@@ -334,6 +334,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_vec[awer]            = update_ls[[3]]
         L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
+      browser() 
       plot( sqrt( L2_squared_vec_unclipped ), cex = 0.10   );
       points( sqrt( L2_squared_vec ), cex = 0.90   ); abline(h =  clip_value) 
       print(  summary( sess$run( dropout_rate1 ) )  )  
