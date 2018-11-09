@@ -161,7 +161,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
-  NObsPerCat             = 5#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = 5#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
   #Start SGD
@@ -199,7 +199,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   list_indices_by_cat = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  IL_input        = tf$placeholder(tf$float32, shape = list(NObsPerCat * nCat, nDim))
+  IL_input        = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m            = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b         = IL_m[[1]];
   IL_sigma2_b     = IL_m[[2]];
