@@ -161,7 +161,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
-  NObsPerCat            = 5#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
   #Start SGD
@@ -241,7 +241,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
