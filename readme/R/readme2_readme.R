@@ -219,24 +219,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  dropout_rate1 = tf$reshape(0.20*tf$nn$sigmoid(tf$Variable(rep(0, times = nDim), trainable = T, dtype = tf$float32))+0.40, list(nDim, 1L) )##RATE FOR DROPPING NODES 
+  dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
   ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop   = tf$multiply(WtsMat, MASK_VEC1)
-  LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_       = nonLinearity_fxn(tf$matmul(IL_n, WtsMat) + BiasVec)
-  ad_obj        = -tf$reduce_mean( tf$abs(LFinal_ - LFinal) ) + tf$reduce_mean( dropout_rate1 )
-  ad_optimizer  = tf$train$AdamOptimizer(learning_rate = 0.005)$minimize(ad_obj)
-  #dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
-  #ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
-  #MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
   #dropout_rate2 = 0.0001; ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
-  #WtsMat_drop0 = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
-  #WtsMat_drop = tf$multiply(WtsMat, MASK_VEC1)
+  #WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
   
-  ### Soft-max transformation
+  ### Apply non-linearity
   LFinal           = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
 
   #batch renormalization for output layer
@@ -266,7 +258,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                               use_nesterov  = T)
   
   ### Calculates the gradients from myOptimizer_tf
-  myGradients          = myOptimizer_tf$compute_gradients(myLoss_tf,list( WtsMat, BiasVec)) 
+  myGradients          = myOptimizer_tf$compute_gradients(myLoss_tf) 
   myGradients_clipped  = myGradients
   
   L2_squared_unclipped = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
@@ -282,9 +274,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   Moments_learn = mLearn ## 
   IL_mu_        = Moments_learn  * IL_mu_b +  (1-Moments_learn) * IL_mu_last; 
   IL_sigma_     = Moments_learn * IL_sigma_b + (1-Moments_learn) * IL_sigma_last
-  
-  LF_mu_    = Moments_learn * LF_mu_b + (1-Moments_learn) * LF_mu_last;
-  LF_sigma_ = Moments_learn * LF_sigma_b + (1-Moments_learn) * LF_sigma_last
   
   #Setup the outputs 
   OUTPUT_LFinal   = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
