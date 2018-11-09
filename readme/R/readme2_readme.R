@@ -334,7 +334,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         inverse_learning_rate_vec[awer] <- inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
         L2_squared_vec[awer] <- update_ls[[3]]
       }
-      plot( L2_squared_vec )
+      plot( L2_squared_vec ); abline(h = clip_value)
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
