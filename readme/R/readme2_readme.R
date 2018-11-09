@@ -225,7 +225,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat_drop   = tf$multiply(WtsMat, MASK_VEC1)
   LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_       = nonLinearity_fxn(tf$matmul(IL_n, WtsMat) + BiasVec)
-  ad_obj        = -tf$reduce_mean( tf$abs(LFinal_ - LFinal) ) + tf$reduce_mean( dropout_rate1 )
+  ad_obj        = -tf$reduce_mean( tf$abs(LFinal_ - LFinal) ) + 0.10*tf$reduce_mean( dropout_rate1 )
   ad_optimizer  = tf$train$AdamOptimizer(learning_rate = 0.005)$minimize(ad_obj)
   #dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
   #ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
