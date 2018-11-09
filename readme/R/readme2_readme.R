@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 1000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 1, minMatch = 5, nBoot_matching = 20,
+                   nboot = 4,  sgd_iters = 10000, sgd_momentum = .9, numProjections = 10, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 1, minMatch = 5, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -186,8 +186,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    #certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
+    #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsByCat[x],ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    certainty_amt = 0.90; MM = matrix((1-certainty_amt)/(nCat -1), nrow = NObsByCat[x],ncol = nCat); MM[,x] = certainty_amt
     return( list(MM) )  } )) )
   MultMat = MultMat  / rowSums( MultMat )
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
@@ -242,13 +242,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf = tf$matmul(MultMat_tf,LFinal_n)
   ## Spread component of objective function
   #Spread_tf = tf$sqrt(tf$maximum(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf), 0.001) )
-  Spread_tf = tf$sqrt(tf$clip_by_value(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf), 0.01, 0.25^2) )
+  Spread_tf = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01 )
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$log( Spread_tf )  )
+  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) +0.10*tf$log( tf$sqrt(2 * pi* exp(1) * Spread_tf) )  )
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -327,7 +327,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOptimizer_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOptimizer_tf_apply),
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared_unclipped, myOptimizer_tf_apply),
                              feed_dict = dict(IL = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
@@ -345,7 +345,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size <- min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
+          min_size <- min(r_clip_by_value(as.integer( round( 0.25 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun = nBoot_matching ; k_match = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           ### Sample indices for bootstrap by category
           indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )
@@ -363,8 +363,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               ## If we're using matching
               if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
-                #MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-                MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
+                MatchIndices_i <- knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                #MatchIndices_i <- c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_ = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
@@ -375,7 +375,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               matched_list_indices_by_cat <- tapply(1:length(categoryVec_labeled_matched), categoryVec_labeled_matched, function(x){c(x) })
          
               ### Carry out estimation on the matched samples
-              min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
+              min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.25,10,100)) )  
               est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__ = X_[unlist(matched_list_indices_by_cat_),]; categoryVec_labeled_matched_sampled = categoryVec_labeled_matched[unlist(matched_list_indices_by_cat_)]
@@ -386,6 +386,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               } 
               list(est_readme2 = est_readme2) 
           } )
+        print("peach")
         ### Average the bootstrapped estimates
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
         #sum(abs(est_readme2-unlabeled_pd))
@@ -440,9 +441,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ### Close the TensorFlow session
   sess$close()
-  if(verbose==T){
-    cat("Finished!")
-  }
+  if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
   if(diagnostics == F){return( list(point_readme=colMeans(boot_readme, na.rm = T) , transformed_dfm = transformed_dfm) )  }
