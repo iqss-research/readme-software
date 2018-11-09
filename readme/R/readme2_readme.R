@@ -215,7 +215,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n =  tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  #WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.25/sqrt(nDim+nProj), 0.25/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
@@ -228,10 +229,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   #WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
   
-  ### Apply non-linearity
-  LFinal           = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-
-  #batch renormalization for output layer
+  ### Apply non-linearity + do batch normalization again 
+  LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m      = tf$nn$moments(LFinal, axes = 0L);
   LF_mu_b       = LFinal_m[[1]]; 
   LF_sigma2_b   = LFinal_m[[2]];
@@ -244,7 +243,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
   ## Spread component of objective function
   Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 
-                                   0, 0.5)
+                                   0, 1)
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   ## Feature discrimination (row-differences)
@@ -377,7 +376,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
          
               ### Carry out estimation on the matched samples
               min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
-              est_readme2 = rowMeans(  replicate(100, { 
+              est_readme2 = rowMeans(  replicate(20, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
