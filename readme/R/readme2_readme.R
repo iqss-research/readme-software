@@ -218,6 +218,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
+  browser() 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
   dropout_rate1 = tf$nn$sigmoid(tf$Variable(rep(0, times = nDim), trainable = T, dtype = tf$float32))  ##RATE FOR DROPPING NODES 
   ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
