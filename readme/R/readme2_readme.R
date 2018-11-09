@@ -154,7 +154,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   dfm_labeled           = dfm[labeledIndicator==1,]; 
   dfm_unlabeled         = dfm[labeledIndicator==0,]
-  nCat                  = as.integer( length(labeled_pd) ); nDim <- as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
+  nCat                  = as.integer( length(labeled_pd) ); 
+  nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
   NObsByCat = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
@@ -174,16 +175,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
-  contrasts_mat =  combn(1:nCat, 2) - 1; contrast_indices1 <- as.integer(contrasts_mat[1,]); contrast_indices2 <- as.integer(contrasts_mat[2,])
+  contrasts_mat     =  combn(1:nCat, 2) - 1; contrast_indices1 <- as.integer(contrasts_mat[1,]); contrast_indices2 <- as.integer(contrasts_mat[2,])
   
   ## For calculating feature novelty - how many possible cross-feature contrasts are there
-  redund_mat       = combn(1:nProj, 2) - 1; redund_indices1 <- as.integer(redund_mat[1,]); redund_indices2 <- as.integer(redund_mat[2,])
-  axis_FeatDiscrim = as.integer(nCat!=2)
+  redund_mat        = combn(1:nProj, 2) - 1; redund_indices1 <- as.integer(redund_mat[1,]); redund_indices2 <- as.integer(redund_mat[2,])
+  axis_FeatDiscrim  = as.integer(nCat!=2)
     
   #Placeholder settings - to be filled when executing TF operations
   sdg_learning_rate = tf$placeholder(tf$float32, shape = c()) ## Placeholder for learning rate
-  dmax             = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
-  NObsByCat_cumsum = cumsum(NObsByCat) ## Cumulative sum of the number of observations to use per category when carrying out SGD optimization
+  dmax              = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
+  NObsByCat_cumsum  = cumsum(NObsByCat) ## Cumulative sum of the number of observations to use per category when carrying out SGD optimization
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat    = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -194,7 +195,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   MultMat_tf = tf$constant(MultMat, dtype = tf$float32)
   
   ## Which indices in the labeled set are associated with each category
-  list_indices_by_cat <- tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
+  list_indices_by_cat = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow
   IL_input        =  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
@@ -215,6 +216,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
+  browser()
   dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
   ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
@@ -305,22 +307,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ########
       
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      update_ls <- list() 
-      d_ <- replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
+      update_ls      = list() 
+      d_             = replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
                                                                                IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec = unlist( d_[3,] ) 
+      init_L2_squared_vec   = unlist( d_[3,] ) 
+      clip_value            = 0.50 * min( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = 0.50 * min( init_L2_squared_vec ) 
       rm(d_)
-      clip_value = 0.50 * min( sqrt(init_L2_squared_vec) )
       
       ## Initialize vector to store learning rates
-      inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
+      inverse_learning_rate_vec = rep(NA, times = sgd_iters) 
       
-      ## Inverse learning rate = clip value
-      inverse_learning_rate <- 0.50 * min( init_L2_squared_vec ) 
       
       ### For each iteration of SGD
       L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
@@ -338,19 +339,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       points( sqrt( L2_squared_vec ), cex = 0.90   ); abline(h =  clip_value) 
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
-      out_dfm_labeled <- out_dfm[1:nrow(dfm_labeled), ]; out_dfm_unlabeled <- out_dfm[-c(1:nrow(dfm_labeled)),]
+      out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
+      out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled), ]; 
+      out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size     = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
-          nRun         = nBoot_matching ;
-          k_match      = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
-          indices_list = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
-          BOOTSTRAP_EST <- sapply(1:nRun, function(boot_iter){ 
+          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
+          nRun          = nBoot_matching ;
+          k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
+          indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
+          BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             indi_i = indices_list[[boot_iter]]; ## Extract indices associated with that iteration
             Cat_   = categoryVec_labeled[indi_i]; X_ = out_dfm_labeled[indi_i,];Y_ = out_dfm_unlabeled #Category labels, Labeled Features (X), Unlabeled Features Y_ 
             { 
