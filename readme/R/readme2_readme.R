@@ -348,8 +348,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          #min_size     = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
-          min_size      = 50
+          min_size     = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
@@ -384,8 +383,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(X__);
                 MM2_samp                     = apply(X__, 2, sd)
-                X__                          = FastScale(X__, MM1_samp, MM2_samp);
-                Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
+                #X__                          = FastScale(X__, MM1_samp, MM2_samp);
+                #Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
+                Y__ = Y_
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } ) )  
               } 
