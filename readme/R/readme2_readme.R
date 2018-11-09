@@ -100,11 +100,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
-  nDocuments <- nrow(dfm)
-  nFeat <- ncol(dfm)
-  nLabeled <- sum(labeledIndicator == 1)
-  nUnlabeled <- sum(labeledIndicator == 0)
-  labeledCt <- table(categoryVec[labeledIndicator == 1])
+  nDocuments  =  nrow(dfm)
+  nFeat       =  ncol(dfm)
+  nLabeled    = sum(labeledIndicator == 1)
+  nUnlabeled  = sum(labeledIndicator == 0)
+  labeledCt   = table(categoryVec[labeledIndicator == 1])
 
   ### Sanity checks
   if (nDocuments != nLabeled + nUnlabeled){
@@ -148,15 +148,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm <- dfm[,apply(dfm,2,sd)>0]
   
   #Setup information for SGD
-  categoryVec_unlabeled <- as.factor(categoryVec)[labeledIndicator == 0]  
-  categoryVec_labeled <- as.factor(categoryVec)[labeledIndicator == 1]
-  labeled_pd <- vec2prob( categoryVec_labeled ); unlabeled_pd <- vec2prob( categoryVec_unlabeled )
-  dfm_labeled <- dfm[labeledIndicator==1,]; dfm_unlabeled <- dfm[labeledIndicator==0,]
-  nCat <- as.integer( length(labeled_pd) ); nDim <- as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
+  categoryVec_unlabeled = as.factor(categoryVec)[labeledIndicator == 0]  
+  categoryVec_labeled   = as.factor(categoryVec)[labeledIndicator == 1]
+  labeled_pd            = vec2prob( categoryVec_labeled ); unlabeled_pd <- vec2prob( categoryVec_unlabeled )
+  dfm_labeled           = dfm[labeledIndicator==1,]; dfm_unlabeled <- dfm[labeledIndicator==0,]
+  nCat                  = as.integer( length(labeled_pd) ); nDim <- as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
 
   #Parameters for Batch-SGD
   NObsByCat = rep(min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)), nCat) ## Number of observations to sample per category
-  nProj <- as.integer(max(numProjections,nCat+2) ); ## Number of projections
+  nProj     = as.integer(max(numProjections,nCat+2) ); ## Number of projections
   
   #Start SGD
   if (verbose == T){
@@ -172,10 +172,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
-  contrasts_mat <-  combn(1:nCat, 2) - 1; contrast_indices1 <- as.integer(contrasts_mat[1,]); contrast_indices2 <- as.integer(contrasts_mat[2,])
+  contrasts_mat =  combn(1:nCat, 2) - 1; contrast_indices1 <- as.integer(contrasts_mat[1,]); contrast_indices2 <- as.integer(contrasts_mat[2,])
   
   ## For calculating feature novelty - how many possible cross-feature contrasts are there
-  redund_mat <- combn(1:nProj, 2) - 1; redund_indices1 <- as.integer(redund_mat[1,]); redund_indices2 <- as.integer(redund_mat[2,])
+  redund_mat       = combn(1:nProj, 2) - 1; redund_indices1 <- as.integer(redund_mat[1,]); redund_indices2 <- as.integer(redund_mat[2,])
   axis_FeatDiscrim = as.integer(nCat!=2)
     
   #Placeholder settings - to be filled when executing TF operations
@@ -197,58 +197,55 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow
   IL_input <-  tf$placeholder(tf$float32, shape = list(sum(NObsByCat), nDim))
-  IL = IL_input 
   { #batch renormalization for the input layer
-    IL_m = tf$nn$moments(IL, axes = 0L);
-    IL_mu_b = IL_m[[1]];
-    IL_sigma2_b = IL_m[[2]];
-    IL_sigma_b = tf$sqrt(IL_sigma2_b)
-    IL_mu_last = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
+    IL_m          = tf$nn$moments(IL_input, axes = 0L);
+    IL_mu_b       = IL_m[[1]];
+    IL_sigma2_b   = IL_m[[2]];
+    IL_sigma_b    = tf$sqrt(IL_sigma2_b)
+    IL_mu_last    = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
     IL_sigma_last = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
-    IL_n =  tf$nn$batch_normalization(IL, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
+    IL_n          =  tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
   } 
-  OUTPUT_IL = tf$placeholder(tf$float32, shape = list(NULL, nDim))
+  OUTPUT_IL   = tf$placeholder(tf$float32, shape = list(NULL, nDim))
   OUTPUT_IL_n =  tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  WtsMat  = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
   dropout_rate1 = dropout_rate  ##RATE FOR DROPPING NODES 
-  ulim1 = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
-  MASK_VEC1 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
+  ulim1         = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
+  MASK_VEC1     = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
 
-  #dropout_rate2 = 0.0001 ##RATE FOR DROPPING CONNECTIONS 
-  #ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
+  #dropout_rate2 = 0.0001; ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
   #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   #WtsMat_drop0 = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
   WtsMat_drop = tf$multiply(WtsMat, MASK_VEC1)
   
   ### Soft-max transformation
   nonLinearity_fxn = function(x){tf$nn$softsign(x)}
-  LFinal = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+  LFinal           = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
 
   #batch renormalization for output layer
-  LFinal_m = tf$nn$moments(LFinal, axes = 0L);
-  LF_mu_b = LFinal_m[[1]]; 
-  LF_sigma2_b = LFinal_m[[2]];
-  LF_sigma_b = tf$sqrt(LF_sigma2_b)
-  LF_mu_last = tf$placeholder( tf$float32,shape(dim(LF_mu_b)) )
+  LFinal_m      = tf$nn$moments(LFinal, axes = 0L);
+  LF_mu_b       = LFinal_m[[1]]; 
+  LF_sigma2_b   = LFinal_m[[2]];
+  LF_sigma_b    = tf$sqrt(LF_sigma2_b)
+  LF_mu_last    = tf$placeholder( tf$float32,shape(dim(LF_mu_b)) )
   LF_sigma_last = tf$placeholder( tf$float32,shape(dim(LF_sigma_b)) )
-  LFinal_n = tf$nn$batch_normalization(LFinal, mean = LF_mu_b, variance = LF_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
-  
+  LFinal_n      = tf$nn$batch_normalization(LFinal, mean = LF_mu_b, variance = LF_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
+   
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf = tf$matmul(MultMat_tf,LFinal_n)
+  ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
   ## Spread component of objective function
-  #Spread_tf = tf$sqrt(tf$maximum(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf), 0.001) )
-  Spread_tf = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 )
+  Spread_tf     = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 )
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 1*tf$reduce_mean(tf$log( Spread_tf) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 1*tf$reduce_mean(tf$log( Spread_tf) ) ) 
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -260,23 +257,23 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myGradients = myOptimizer_tf$compute_gradients(myLoss_tf)
   
   L2_squared_unclipped =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
-  clip_tf =  tf$placeholder(tf$float32, shape = list()); 
-  TEMP__ = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
+  clip_tf              =  tf$placeholder(tf$float32, shape = list()); 
+  TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
   for(jack in 1:length(myGradients)){ myGradients[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  L2_squared           =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   ### applies the gradient updates
   myOptimizer_tf_apply = myOptimizer_tf$apply_gradients( myGradients )
 
   #Updates for the batch normalization moments
-  Moments_learn <- mLearn ## 
-  IL_mu_ = Moments_learn  * IL_mu_b +  (1-Moments_learn) * IL_mu_last; 
-  IL_sigma_ = Moments_learn * IL_sigma_b + (1-Moments_learn) * IL_sigma_last
+  Moments_learn = mLearn ## 
+  IL_mu_        = Moments_learn  * IL_mu_b +  (1-Moments_learn) * IL_mu_last; 
+  IL_sigma_     = Moments_learn * IL_sigma_b + (1-Moments_learn) * IL_sigma_last
   
-  LF_mu_ = Moments_learn * LF_mu_b + (1-Moments_learn) * LF_mu_last;
+  LF_mu_    = Moments_learn * LF_mu_b + (1-Moments_learn) * LF_mu_last;
   LF_sigma_ = Moments_learn * LF_sigma_b + (1-Moments_learn) * LF_sigma_last
   
   #Setup the outputs 
-  OUTPUT_LFinal = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
+  OUTPUT_LFinal   = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   OUTPUT_LFinal_n = tf$nn$batch_normalization(OUTPUT_LFinal, mean = LF_mu_last,variance = tf$square(LF_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   # Initialize global variables in TensorFlow Graph
@@ -315,7 +312,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec = unlist( d_[3,] ) 
       rm(d_)
-      clip_value = median(init_L2_squared_vec)
+      clip_value = min(init_L2_squared_vec)
       
       ## Initialize vector to store learning rates
       inverse_learning_rate_vec <- rep(NA, times = sgd_iters) 
