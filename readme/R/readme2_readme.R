@@ -150,6 +150,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Setup information for SGD
   categoryVec_unlabeled <- as.factor(categoryVec)[labeledIndicator == 0]  
   categoryVec_labeled <- as.factor(categoryVec)[labeledIndicator == 1]
+  browser() 
   labeled_pd <- vec2prob( categoryVec_labeled ); unlabeled_pd <- vec2prob( categoryVec_unlabeled )
   dfm_labeled <- dfm[labeledIndicator==1,]; dfm_unlabeled <- dfm[labeledIndicator==0,]
   nCat <- as.integer( length(labeled_pd) ); nDim <- as.integer( ncol(dfm_labeled) )  #nDim = Number of features total
