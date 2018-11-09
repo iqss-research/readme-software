@@ -218,8 +218,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat          = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.25/sqrt(nDim+nProj), 0.25/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec         = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
-  ### Drop-out transformation (technically, dropconnect is used, with both nodes and connections being removed). 
-  dropout_rate1   = dropout_rate  ##RATE FOR DROPPING NODES 
+  ### Drop-out transformation 
+  dropout_rate1   = dropout_rate 
   ulim1           = -0.5 * (1-dropout_rate1) / ( (1-dropout_rate1)-1)
   MASK_VEC1       = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop     = tf$multiply(WtsMat, MASK_VEC1)
@@ -228,7 +228,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #MASK_VEC2 <- tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
   #WtsMat_drop = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
   
-  ### Apply non-linearity + do batch normalization again 
+  ### Apply non-linearity + batch normalization 
   LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m      = tf$nn$moments(LFinal, axes = 0L);
   LF_mu_b       = LFinal_m[[1]]; 
@@ -242,19 +242,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
   ## Spread component of objective function
   Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 
-                                   0, 1)
+                                   0, 0.25)
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) +0* tf$reduce_mean(tf$log( Spread_tf) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf) ) ) 
   #see https://en.wikipedia.org/wiki/Entropic_uncertainty  
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
-                                              momentum      = sgd_momentum, 
-                                              use_nesterov  = T)
+  #myOptimizer_tf = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
+                                              #momentum      = sgd_momentum, 
+                                              #use_nesterov  = T)
+  myOptimizer_tf = tf$train$Adam(learning_rate = 0.005)
   
   ### Calculates the gradients from myOptimizer_tf
   myGradients          = myOptimizer_tf$compute_gradients(myLoss_tf) 
@@ -270,16 +271,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOptimizer_tf_apply = myOptimizer_tf$apply_gradients( myGradients_clipped )
 
   #Updates for the batch normalization moments
-  Moments_learn = mLearn ## 
-  IL_mu_        = Moments_learn  * IL_mu_b +  (1-Moments_learn) * IL_mu_last; 
-  IL_sigma_     = Moments_learn * IL_sigma_b + (1-Moments_learn) * IL_sigma_last
+  Moments_learn   = mLearn
+  IL_mu_          = Moments_learn  * IL_mu_b +  (1-Moments_learn) * IL_mu_last; 
+  IL_sigma_       = Moments_learn * IL_sigma_b + (1-Moments_learn) * IL_sigma_last
   
   #Setup the outputs 
   OUTPUT_LFinal   = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   OUTPUT_LFinal_n = tf$nn$batch_normalization(OUTPUT_LFinal, mean = LF_mu_last,variance = tf$square(LF_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   # Initialize global variables in TensorFlow Graph
-  init = tf$global_variables_initializer()
+  init            = tf$global_variables_initializer()
  
   # Holding containers for results
   boot_readme    <- matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) <- names(labeled_pd)
