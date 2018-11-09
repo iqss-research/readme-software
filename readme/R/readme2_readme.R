@@ -219,10 +219,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   MASK_VEC1       = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop     = tf$multiply(WtsMat, MASK_VEC1)
 
-  #dropout_rate2  = 0.0001; ulim2 = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1);
-  #MASK_VEC2      = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2))), 1 / (ulim2/(ulim2+0.5)))
-  #WtsMat_drop    = tf$multiply(WtsMat, tf$multiply(MASK_VEC1,MASK_VEC2))
-  
   ### Apply non-linearity + batch normalization 
   LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m      = tf$nn$moments(LFinal, axes = 0L);
@@ -273,9 +269,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   init            = tf$global_variables_initializer()
  
   # Holding containers for results
-  boot_readme    <- matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) <- names(labeled_pd)
-  hold_coef      <- rep(0, nCat); names(hold_coef) <-  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
-  MatchedPrD_div <- OrigESGivenD_div <- MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
+  boot_readme     = matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) = names(labeled_pd)
+  hold_coef       = rep(0, nCat); names(hold_coef) =  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  MatchedPrD_div  <- OrigESGivenD_div <- MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
   ##  Estimate the parameters
   if (verbose == T){
@@ -300,7 +296,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = summary( sqrt(init_L2_squared_vec) )[2]
+      clip_value            = 0.50 * min( sqrt(init_L2_squared_vec) )
       inverse_learning_rate = 0.50 * min( init_L2_squared_vec ) 
       rm(d_)
       
