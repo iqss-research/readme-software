@@ -296,8 +296,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 0.75 * median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 0.75 * median( init_L2_squared_vec ) 
+      clip_value            = 0.75 * summary( sqrt(init_L2_squared_vec) )[2]
+      inverse_learning_rate = 0.75 * summary( init_L2_squared_vec )[2]
       rm(d_)
       
       ## Initialize vector to store learning rates
