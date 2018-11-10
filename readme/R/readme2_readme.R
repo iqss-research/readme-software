@@ -190,7 +190,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat           = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat           = MultMat  / rowSums( MultMat )
   MultMat_tf        = tf$constant(MultMat, dtype = tf$float32)
@@ -296,8 +296,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 0.50 * min( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 0.50 * min( init_L2_squared_vec ) 
+      clip_value            = 1 * median( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = 1 * median( init_L2_squared_vec ) 
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -359,14 +359,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
          
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(matched_list_indices_by_cat, length))*0.90,10,100)) )  
-            est_readme2 = try(rowMeans(  replicate(20, { 
+            est_readme2 = try(rowMeans(  replicate(30, { 
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
+                Y__                          = Y_
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(X__);
                 MM2_samp                     = colSds(X__, center = MM1)
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
-                Y__                          = FastScale(Y_, MM1_samp, MM2_samp)
+                Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )), T)
               if(class(est_readme2) == "try-error"){browser()}
