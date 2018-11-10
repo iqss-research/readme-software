@@ -211,7 +211,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n     = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat          = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.1/sqrt(nDim+nProj), 0.1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  WtsMat          = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec         = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation 
@@ -296,8 +296,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 0.75 * summary( sqrt(init_L2_squared_vec) )[2]
-      inverse_learning_rate = 0.75 * summary( init_L2_squared_vec )[2]
+      clip_value            = median( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = median( init_L2_squared_vec )
       rm(d_)
       
       ## Initialize vector to store learning rates
