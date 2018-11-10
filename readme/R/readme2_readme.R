@@ -296,8 +296,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 1 * median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 1 * median( init_L2_squared_vec ) 
+      clip_value            = 0.75 * median( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = 0.75 * median( init_L2_squared_vec ) 
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -320,7 +320,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
-      out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled), ]; 
+      out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
       ### Here ends the SGD for generating optimal document-feature matrix.
