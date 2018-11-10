@@ -366,8 +366,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(X__);
                 MM2_samp                     = colSds(X__, center = MM1)
-                X__                          = FastScale(X__, MM1_samp, MM2_samp);
-                Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
+                #X__                          = FastScale(X__, MM1_samp, MM2_samp);
+                #Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )), T)
               if(class(est_readme2) == "try-error"){browser()}
