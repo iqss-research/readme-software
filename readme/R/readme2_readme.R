@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 5, nBoot_matching = 40,
+                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 40,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -190,7 +190,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat           = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          certainty_amt = 0.90;MM = matrix((1-certainty_amt)/(nCat - 1), nrow = NObsPerCat,ncol = nCat); MM[,x] = certainty_amt
                           return( list(MM) )  } )) )
   MultMat           = MultMat  / rowSums( MultMat )
   MultMat_tf        = tf$constant(MultMat, dtype = tf$float32)
@@ -228,7 +229,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf     = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 )
+  Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2 ), 
+                                   0.001,0.50)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -237,7 +239,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.50 * tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -296,8 +298,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = median( init_L2_squared_vec )
+      clip_value            = 0.50 * median( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -328,7 +330,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,50))
+          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
@@ -339,15 +341,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             
             ### Normalize X and Y
             MM1  = colMeans(Y_); 
-            MM2  = colSds(X_, center = colMeans(X_))
+            MM2  = colSds(X_, center = colMeans(Y_))
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
             ## If we're using matching
             if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
-                MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-                #MatchIndices_i = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
+                #MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                MatchIndices_i = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
@@ -365,7 +367,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 Y__                          = Y_
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(Y__);
-                MM2_samp                     = colSds(X__, center = colMeans(X__))
+                MM2_samp                     = colSds(X__, center = colMeans(Y__))
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
                 Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
