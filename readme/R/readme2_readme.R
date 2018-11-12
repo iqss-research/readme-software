@@ -375,7 +375,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               if(class(est_readme2) == "try-error"){browser()}
               return( list(est_readme2) )
           })
-        print("peach")
+        print("peach1")
         ### Average the bootstrapped estimates
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
         #sum(abs(est_readme2-unlabeled_pd))
