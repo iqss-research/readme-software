@@ -335,7 +335,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
           MM1  = colMeans(out_dfm_unlabeled); 
-          MM2  = colSds(out_dfm_unlabeled, center = colMeans(MM1))
+          MM2  = colSds(out_dfm_unlabeled, center = colMeans(out_dfm_unlabeled))
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
