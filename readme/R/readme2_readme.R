@@ -343,10 +343,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Normalize X and Y
             #MM2  = colSds(Y_, center = colMeans(Y_))
             indicesCat_ = tapply(1:length(Cat_), Cat_, c)
-            browser() 
-            MM2 = c(abs(do.call(cbind, lapply(indicesCat_, function(sa){ 
+            MM2 = rowMeans(  replicate(100, c(abs(do.call(cbind, lapply(indicesCat_, function(sa){ 
               colMeans(  X_[sa,] )  
-              } ) ) %*% rep(1/nCat, nCat) - colMeans( Y_ )  ))
+              } ) ) %*% rdirichlet(1, rep(1, times = nCat)) - colMeans( Y_ )  ))) )  
             print( summary(  MM2)  )  
             MM2  = r_clip_by_value(MM2, 0.001, 10)
             X_   = FastScale(X_, MM1, MM2);
