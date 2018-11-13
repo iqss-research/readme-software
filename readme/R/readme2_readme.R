@@ -97,7 +97,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 40,
-                   verbose = F, diagnostics = F, justTransform = F, winsorize=F){ 
+                   verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
   nDocuments  =  nrow(dfm)
@@ -190,8 +190,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat           = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          #certainty_amt = 0.90;MM = matrix((1-certainty_amt)/(nCat - 1), nrow = NObsPerCat,ncol = nCat); MM[,x] = certainty_amt
+                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          certainty_amt = 0.90;MM = matrix((1-certainty_amt)/(nCat - 1), nrow = NObsPerCat,ncol = nCat); MM[,x] = certainty_amt
                           return( list(MM) )  } )) )
   MultMat           = MultMat  / rowSums( MultMat )
   MultMat_tf        = tf$constant(MultMat, dtype = tf$float32)
@@ -341,7 +341,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             
             ### Normalize X and Y
             MM1  = colMeans(Y_); 
-            MM2  = 1/colSds(X_, center = colMeans(Y_))
+            MM2  = colSds(Y_, center = colMeans(X_))
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
@@ -367,7 +367,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 Y__                          = Y_
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(Y__);
-                MM2_samp                     = 1/colSds(X__, center = colMeans(Y__))
+                MM2_samp                     = colSds(Y__, center = colMeans(X__))
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
                 Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
