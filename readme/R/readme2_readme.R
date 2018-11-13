@@ -346,6 +346,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MM2 = c(abs(do.call(cbind, lapply(indicesCat_, function(sa){ 
               colMeans(  X_[sa,] )  
               } ) ) %*% rep(1/nCat, nCat) - colMeans( Y_ )  ))
+            print( summary(  MM2)  )  
+            MM2  = r_clip_by_value(MM2, 0.001, 10)
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
