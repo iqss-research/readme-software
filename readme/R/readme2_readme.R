@@ -334,23 +334,26 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
+          MM1  = colMeans(out_dfm_unlabeled); 
+          indicesCat_ = tapply(1:length(Cat_), Cat_, c)
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
-            browser()
             ### Normalize X and Y
-            #MM1  = colMeans(Y_); 
             #MM2  = colSds(Y_, center = colMeans(Y_))
+            MM2 = c(abs(do.call(cbind, lapply(indicesCat_, function(sa){ 
+              colMeans(  X_[sa,] )  
+              } ) ) %*% rep(1/nCat, nCat) - colMeans( Y_ )  ))
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
             ## If we're using matching
             if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
-                #MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-                MatchIndices_i = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
+                MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
+                #MatchIndices_i = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
