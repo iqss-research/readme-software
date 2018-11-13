@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 3000, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 40,
+                   nboot = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -239,7 +239,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + 0.50 * tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -334,14 +334,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(list_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
+          MM1  = colMeans(out_dfm_unlabeled); 
+          MM2  = colSds(out_dfm_unlabeled, center = colMeans(MM1))
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM1  = colMeans(Y_); 
-            MM2  = colSds(Y_, center = colMeans(Y_))
+            #MM1  = colMeans(Y_); 
+            #MM2  = colSds(Y_, center = colMeans(Y_))
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
@@ -366,10 +368,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 Y__                          = Y_
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
-                MM1_samp                     = colMeans(Y__);
-                MM2_samp                     = colSds(Y__, center = colMeans(Y__))
-                X__                          = FastScale(X__, MM1_samp, MM2_samp);
-                Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
+                #MM1_samp                     = colMeans(Y__);
+                #MM2_samp                     = colSds(Y__, center = colMeans(Y__))
+                #X__                          = FastScale(X__, MM1_samp, MM2_samp);
+                #Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )), T)
               if(class(est_readme2) == "try-error"){browser()}
