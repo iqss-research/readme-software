@@ -341,7 +341,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             
             ### Normalize X and Y
             MM1  = colMeans(Y_); 
-            MM2  = colSds(X_, center = colMeans(Y_))
+            MM2  = 1/colSds(X_, center = colMeans(Y_))
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
@@ -367,7 +367,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 Y__                          = Y_
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
                 MM1_samp                     = colMeans(Y__);
-                MM2_samp                     = colSds(X__, center = colMeans(Y__))
+                MM2_samp                     = 1/colSds(X__, center = colMeans(Y__))
                 X__                          = FastScale(X__, MM1_samp, MM2_samp);
                 Y__                          = FastScale(Y__, MM1_samp, MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
