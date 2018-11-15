@@ -331,7 +331,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       
-      browser() 
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
@@ -414,15 +413,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
     ## If we're saving diagnostics, do some processing
     if(diagnostics == T){
-      ESGivenD_div <- try({ 
-        OldMat       = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
-        PreESGivenD  =  do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
-                               tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
-          colMeans(OldMat[za,]) }))
-        
-        NewMat       = apply(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,-1], 2, f2n)
-        PostESGivenD = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1]),
-                                tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1], function(za){colMeans(NewMat[za,])}))
+      ESGivenD_div               = try({ 
+        OldMat                   = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
+        PreESGivenD              =  do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
+                                            tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
+                                            colMeans(OldMat[za,]) }))
+                                          
+        NewMat                    = apply(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,-1], 2, f2n)
+        PostESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1]),
+                                    tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1], function(za){colMeans(NewMat[za,])}))
         
         unlabeled_transformed_dfm = apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
         TrueESGivenD              = do.call(cbind,tapply(1:nrow(unlabeled_transformed_dfm), categoryVec_unlabeled, function(za){
@@ -433,7 +432,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         MatchedESGivenD_div_      = mean(abs(c(PostESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
         return__                  = t( data.frame(OrigESGivenD_div_    = OrigESGivenD_div_, 
                                                   MatchedESGivenD_div_ = MatchedESGivenD_div_ ) ) 
-        return( return__ ) 
+        return__
       }, T)
       MatchedPrD_div[iter_i]      = sum(abs(vec2prob(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1])[names(unlabeled_pd)] - unlabeled_pd))
       OrigESGivenD_div[iter_i]    = try(ESGivenD_div["OrigESGivenD_div_",1], T) 
