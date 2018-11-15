@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
+                   nboot = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 15, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -145,7 +145,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm                   = apply(dfm, 2, function(x){ 
                                     sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
                                     x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_; 
-                                    return( x ) })
+                              return( x ) })
   }
   ## Drop invariant columns
   dfm                   = dfm[,apply(dfm,2,sd)>0]
@@ -178,20 +178,24 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
-  contrasts_mat     =  combn(1:nCat, 2) - 1; contrast_indices1 <- as.integer(contrasts_mat[1,]); contrast_indices2 <- as.integer(contrasts_mat[2,])
+  contrasts_mat     =  combn(1:nCat, 2) - 1
+  contrast_indices1 = as.integer(contrasts_mat[1,])
+  contrast_indices2 = as.integer(contrasts_mat[2,])
   
   ## For calculating feature novelty - how many possible cross-feature contrasts are there
-  redund_mat        = combn(1:nProj, 2) - 1; redund_indices1 <- as.integer(redund_mat[1,]); redund_indices2 <- as.integer(redund_mat[2,])
+  redund_mat        = combn(1:nProj, 2) - 1
+  redund_indices1   = as.integer(redund_mat[1,])
+  redund_indices2   = as.integer(redund_mat[2,])
   axis_FeatDiscrim  = as.integer(nCat!=2)
     
   #Placeholder settings - to be filled when executing TF operations
-  sdg_learning_rate = tf$placeholder(tf$float32, shape = c()) ## Placeholder for learning rate
-  dmax              = tf$placeholder(tf$float32, shape = c()); rmax = tf$placeholder(tf$float32, shape = c())
+  sdg_learning_rate = tf$placeholder(tf$float32, shape = c())
+  dmax              = tf$placeholder(tf$float32, shape = c())
+  rmax              = tf$placeholder(tf$float32, shape = c())
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat           = t(do.call(rbind,sapply(1:nCat,function(x){
                           urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          #certainty_amt = 0.90;MM = matrix((1-certainty_amt)/(nCat - 1), nrow = NObsPerCat,ncol = nCat); MM[,x] = certainty_amt
                           return( list(MM) )  } )) )
   MultMat           = MultMat  / rowSums( MultMat )
   MultMat_tf        = tf$constant(MultMat, dtype = tf$float32)
@@ -221,28 +225,28 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat_drop     = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
-  LFinal        = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_m      = tf$nn$moments(LFinal, axes = 0L);
-  LFinal_n      = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  LFinal          = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+  LFinal_m        = tf$nn$moments(LFinal, axes = 0L);
+  LFinal_n        = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf   = tf$matmul(MultMat_tf,LFinal_n)
+  ESGivenD_tf     = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf     = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2 ), 
+  Spread_tf       = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2 ), 
                                    0.001,0.50)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
-  CatDiscrim_tf = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
+  CatDiscrim_tf   = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   
   ## Feature discrimination (row-differences)
-  FeatDiscrim_tf = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
+  FeatDiscrim_tf  = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf      = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  myLoss_tf       = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf       = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
+  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum      = sgd_momentum, 
                                               use_nesterov  = T)
   
@@ -257,7 +261,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   L2_squared           =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   
   ### applies the gradient updates
-  myOpt_tf_apply  = myOpt_tf$apply_gradients( myGradients_clipped )
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
   #Updates for the batch normalization moments
   Moments_learn   = mLearn
@@ -273,7 +277,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # Holding containers for results
   boot_readme     = matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) = names(labeled_pd)
   hold_coef       = rep(0, nCat); names(hold_coef) =  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
-  MatchedPrD_div  <- OrigESGivenD_div <- MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
+  MatchedPrD_div  = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
   ##  Estimate the parameters
   if (verbose == T){
@@ -333,7 +337,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
-          indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here 
+          indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
@@ -349,7 +353,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             if (k_match != 0){
                 ### KNN matching - find k_match matches in X_ to Y_
                 #MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = k_match)$return_indices
-                MatchIndices_i = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
+                MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = k_match)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[MatchIndices_i] ) ; t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
@@ -367,12 +371,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
-                #MM2_samp                     = colSds(X__, center = colMeans( X__ )  )
+                #MM2_samp                    = colSds(X__, center = colMeans( X__ )  )
                 MM2_samp                     = sqrt( colMeans(X__^2) ) 
                 X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
                 Y__                          = FastScale(Y__, rep(0, times = ncol(X__)), MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) ) 
-                try(readme_est_fxn(X = ESGivenD_sampled, Y =  rep(0, times = ncol(X__)))[names(labeled_pd)],T)
+                try(readme_est_fxn(X         = ESGivenD_sampled,
+                                   Y         =  rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 } )), T)
               if(class(est_readme2) == "try-error"){browser()}
               return( list(est_readme2) )
@@ -382,12 +387,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
         #sum(abs(est_readme2-unlabeled_pd))
         ### Save them as tf_est_results
-        tf_est_results <- list(est_readme2 = est_readme2, transformed_unlabeled_dfm = out_dfm_unlabeled,
-                               transformed_labeled_dfm = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),matched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
+        tf_est_results <- list(est_readme2               = est_readme2,
+                               transformed_unlabeled_dfm = out_dfm_unlabeled,
+                               transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
+                                                                matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
       }
       ## If we're just doing the transformation
       else if(justTransform == T){ 
-        tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,transformed_labeled_dfm = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) ) }    
+        tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
+                               transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) ) }    
 
     ## if it's the first iteration
     if(iter_i == 1){ 
@@ -399,34 +407,36 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if(justTransform == T){sess$close(); return(list(transformed_dfm=transformed_dfm))} 
     }
     ## Save results 
-    est_readme <- tf_est_results$est_readme
-    temp_est_readme <- hold_coef 
-    temp_est_readme[names(est_readme)] <- est_readme
-    boot_readme[iter_i,names(temp_est_readme)] <- temp_est_readme
+    est_readme                                 = tf_est_results$est_readme
+    temp_est_readme                            = hold_coef 
+    temp_est_readme[names(est_readme)]         = est_readme
+    boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
     ## If we're saving diagnostics, do some processing
     if(diagnostics == T){
       ESGivenD_div <- try({ 
-        OldMat <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
-        PreESGivenD <-  do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
+        OldMat       = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
+        PreESGivenD  =  do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
                                tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
           colMeans(OldMat[za,]) }))
         
-        NewMat <- apply(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,-1], 2, f2n)
-        PostESGivenD <-  do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1]),
+        NewMat       = apply(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,-1], 2, f2n)
+        PostESGivenD = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1]),
                                 tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1], function(za){colMeans(NewMat[za,])}))
         
-        unlabeled_transformed_dfm <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
-        TrueESGivenD <-  do.call(cbind,tapply(1:nrow(unlabeled_transformed_dfm), categoryVec_unlabeled, function(za){
-                        colMeans(unlabeled_transformed_dfm[za,]) }))
-        sharedCols <- intersect(colnames(TrueESGivenD), colnames(PostESGivenD))
+        unlabeled_transformed_dfm = apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
+        TrueESGivenD              = do.call(cbind,tapply(1:nrow(unlabeled_transformed_dfm), categoryVec_unlabeled, function(za){
+                                            colMeans(unlabeled_transformed_dfm[za,]) }))
+        sharedCols                = intersect(colnames(TrueESGivenD),  colnames(PostESGivenD))
         
-        OrigESGivenD_div_ = mean(abs(c(PreESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
-        MatchedESGivenD_div_ = mean(abs(c(PostESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
-        t( data.frame(OrigESGivenD_div_ = OrigESGivenD_div_, MatchedESGivenD_div_ = MatchedESGivenD_div_ ) ) 
+        OrigESGivenD_div_         = mean(abs(c(PreESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
+        MatchedESGivenD_div_      = mean(abs(c(PostESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
+        return__                  = t( data.frame(OrigESGivenD_div_    = OrigESGivenD_div_, 
+                                                  MatchedESGivenD_div_ = MatchedESGivenD_div_ ) ) 
+        return( return__ ) 
       }, T)
-      MatchedPrD_div[iter_i] <- sum(abs(vec2prob(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1])[names(unlabeled_pd)] - unlabeled_pd))
-      OrigESGivenD_div[iter_i] <- try(ESGivenD_div["OrigESGivenD_div_",1], T) 
-      MatchedESGivenD_div[iter_i] <- try(ESGivenD_div["MatchedESGivenD_div_",1], T)  
+      MatchedPrD_div[iter_i]      = sum(abs(vec2prob(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1])[names(unlabeled_pd)] - unlabeled_pd))
+      OrigESGivenD_div[iter_i]    = try(ESGivenD_div["OrigESGivenD_div_",1], T) 
+      MatchedESGivenD_div[iter_i] = try(ESGivenD_div["MatchedESGivenD_div_",1], T)  
     } 
   }
   
@@ -435,13 +445,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
-  if(diagnostics == F){return( list(point_readme=colMeans(boot_readme, na.rm = T) , transformed_dfm = transformed_dfm) )  }
+  if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
+                                    transformed_dfm = transformed_dfm) )  }
   ## If diagnostics wanted
-  if(diagnostics == T){return( list(point_readme = colMeans(boot_readme, na.rm = T) ,
+  if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     transformed_dfm = transformed_dfm, 
-                                    diagnostics = list(OrigPrD_div = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
-                                    MatchedPrD_div = mean(MatchedPrD_div, na.rm = T), 
-                                    OrigESGivenD_div = mean(OrigESGivenD_div, na.rm = T), 
-                                    MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
+                                    diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
+                                                           MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
+                                                           OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
+                                                           MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
 }
 
