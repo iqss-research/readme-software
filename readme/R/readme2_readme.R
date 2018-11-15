@@ -178,7 +178,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
-  contrasts_mat     =  combn(1:nCat, 2) - 1
+  contrasts_mat     = combn(1:nCat, 2) - 1
   contrast_indices1 = as.integer(contrasts_mat[1,])
   contrast_indices2 = as.integer(contrasts_mat[2,])
   
@@ -331,6 +331,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       
+      browser() 
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
