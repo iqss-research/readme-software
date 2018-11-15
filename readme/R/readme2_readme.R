@@ -100,8 +100,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
-  nDocuments  =  nrow(dfm)
-  nFeat       =  ncol(dfm)
+  nDocuments  = nrow(dfm)
+  nFeat       = ncol(dfm)
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
@@ -151,8 +151,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm                   = dfm[,apply(dfm,2,sd)>0]
   
   #Setup information for SGD
-  categoryVec_unlabeled = as.factor(categoryVec)[labeledIndicator == 0]  
-  categoryVec_labeled   = as.factor(categoryVec)[labeledIndicator == 1]
+  categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]  
+  categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
   labeled_pd            = vec2prob( categoryVec_labeled ); 
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   dfm_labeled           = dfm[labeledIndicator==1,]; 
@@ -297,8 +297,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped),  feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],
-                                                                               IL_mu_last =  rep(0, times = ncol(dfm_labeled)), IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
+      d_             = replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped), 
+                                              feed_dict = dict(IL_input      = dfm_labeled[sgd_grabSamp(),],
+                                                               IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
+                                                               IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
       
@@ -315,14 +317,19 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
         update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
-                             feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
-                                              clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
+                             feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
+                                              sdg_learning_rate = 1/inverse_learning_rate,
+                                              clip_tf           = clip_value,
+                                              IL_mu_last        = update_ls[[1]], 
+                                              IL_sigma_last     = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
       }
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
+      out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
+                                                                      IL_mu_last    = update_ls[[1]], 
+                                                                      IL_sigma_last = update_ls[[2]])), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
@@ -365,12 +372,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
             est_readme2 = try(rowMeans(  replicate(30, { 
+                browser() 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
-                #MM2_samp                    = colSds(X__, center = colMeans( X__ )  )
                 MM2_samp                     = sqrt( colMeans(X__^2) ) 
                 X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
                 Y__                          = FastScale(Y__, rep(0, times = ncol(X__)), MM2_samp)
@@ -414,7 +421,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     if(diagnostics == T){
       ESGivenD_div               = try({ 
         OldMat                   = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
-        PreESGivenD              =  do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
+        PreESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
                                             tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
                                             colMeans(OldMat[za,]) }))
                                           
