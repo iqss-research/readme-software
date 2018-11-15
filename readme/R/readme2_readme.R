@@ -366,15 +366,24 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             }else{ ## Otherwise use all the indices
                 MatchIndices_i  = 1:nrow(X_)
             }
-            categoryVec_LabMatch = Cat_[MatchIndices_i]; X_ = X_[MatchIndices_i,]
-            MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
+            tab_ = table(MatchIndices_i)
+            tab_ = tapply(1:length(tab_), Cat_[as.numeric(names(tab_))], function(xa){
+              tab_[xa] })
+            #categoryVec_LabMatch = Cat_[MatchIndices_i]; X__ = X_[MatchIndices_i,]
+            #MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
+          
          
             ### Carry out estimation on the matched samples
-            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
+            #min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
+            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(tab_, function(x){length(unique(x))}))*0.90,2,100)) )  
             est_readme2 = try(rowMeans(  replicate(30, { 
-                browser() 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
-                categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
+                MatchIndices_byCat_ <- lapply(1:length(tab_), function(sae){ 
+                    matched_ <- tab_[[sae]]
+                    t__ <- matched_[sample(as.character(unique(names(matched_))), min_size2, replace = F)]
+                    as.numeric(  unlist(  sapply(1:length(t__), function(I_){rep(names(t__)[I_], times = t__[I_])}) )  )  
+                })
+                #MatchIndices_byCat_         = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
+                categoryVec_LabMatch_        = Cat_[unlist(MatchIndices_byCat_)]
                 X__                          = X_[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
