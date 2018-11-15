@@ -341,7 +341,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2  = colSds(Y_, center = colMeans(Y_))
+            MM2  = colSds(X_, center = colMeans(X_))
             X_   = FastScale(X_, MM1, MM2);
             Y_   = FastScale(Y_, MM1, MM2);
               
@@ -365,8 +365,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 matched_list_indices_by_cat_ = lapply(matched_list_indices_by_cat, function(sae){ sample(sae, min_size2, replace = T) })
                 X__                          = X_[unlist(matched_list_indices_by_cat_),]; 
                 Y__                          = Y_
+
                 categoryVec_LabMatchSamp     = categoryVec_LabMatch[unlist(matched_list_indices_by_cat_)]
-                MM2_samp                     = colSds(X__, center = colMeans( X__ )  )  
+                MM2_samp_                    = colSds(X__, center = colMeans( X__ )  )  
+                MM2_samp__                   = colSds(Y__, center = colMeans( Y__ )  )  
+                MM2_samp                     = MM2_samp__ / (MM2_samp_+MM2_samp__)
                 X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
                 Y__                          = FastScale(Y__, rep(0, times = ncol(X__)), MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatchSamp ) , categoryVec_LabMatchSamp, function(x){colMeans(X__[x,])}) ) 
@@ -374,7 +377,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               if(class(est_readme2) == "try-error"){browser()}
               return( list(est_readme2) )
           })
-        print("peach1")
+        print("peach2")
         ### Average the bootstrapped estimates
         est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
         #sum(abs(est_readme2-unlabeled_pd))
