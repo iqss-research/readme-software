@@ -234,7 +234,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Spread component of objective function
   Spread_tf            = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 
-                                   0.001,0.50)
+                                   0.001,1/nCat)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -243,13 +243,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  #myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
-                                              #momentum            = sgd_momentum, 
-                                              #use_nesterov        = T)
-  myOpt_tf             = tf$train$AdamOptimizer(learning_rate = 0.001)
+  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
+                                              momentum            = sgd_momentum, 
+                                              use_nesterov        = T)
+  #myOpt_tf             = tf$train$AdamOptimizer(learning_rate = 0.001)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
