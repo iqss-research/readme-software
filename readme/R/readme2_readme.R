@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
+                   nboot   = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -162,7 +162,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   #Parameters for Batch-SGD
   NObsPerCat            = min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
-  nProj                 = as.integer(max(numProjections,nCat+2) ); ## Number of projections
+  nProj                 = as.integer(max(numProjections,nCat*2) ); ## Number of projections
   
   #Start SGD
   if (verbose == T){
@@ -246,9 +246,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf)+tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
-                                              momentum            = sgd_momentum, 
-                                              use_nesterov        = T)
+  #myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
+                                              #momentum            = sgd_momentum, 
+                                              #use_nesterov        = T)
+  myOpt_tf             = tf$train$AdamOptimizer(learning_rate = 0.001)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
@@ -275,8 +276,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   init                 = tf$global_variables_initializer()
  
   # Holding containers for results
-  boot_readme          = matrix(nrow=nboot, ncol=nCat);colnames(boot_readme) = names(labeled_pd)
-  hold_coef            = rep(0, nCat); names(hold_coef) =  names(labeled_pd) ## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  boot_readme          = matrix(nrow=nboot, ncol=nCat, dimnames = list(NULL, names(labeled_pd)))
+  hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  hold_coef[]          = 0
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
   ##  Estimate the parameters
@@ -310,19 +312,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate_vec = rep(NA, times = sgd_iters) 
       
       ### For each iteration of SGD
-      L2_squared_vec_unclipped <- L2_squared_vec <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, L2_squared_unclipped, myOpt_tf_apply),
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, myOpt_tf_apply),
                              feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
-        L2_squared_vec[awer]            = update_ls[[3]]
-        L2_squared_vec_unclipped[awer]  = update_ls[[4]]
       }
-      plot( sqrt( L2_squared_vec_unclipped ), cex = 0.10   );
-      points( sqrt( L2_squared_vec ), cex = 0.90   ); abline(h =  clip_value) 
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL = rbind(dfm_labeled, dfm_unlabeled), IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]])), T)
