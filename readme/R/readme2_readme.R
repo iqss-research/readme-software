@@ -372,14 +372,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             #categoryVec_LabMatch = Cat_[MatchIndices_i]; X__ = X_[MatchIndices_i,]
             #MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
-         
             ### Carry out estimation on the matched samples
             #min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
-            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(tab_, function(x){length(unique(x))}))*0.90,2,100)) )  
+            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(tab_, function(x){length(unique(x))}))*0.90,5,100)) )  
             est_readme2 = try(rowMeans(  replicate(30, { 
                 MatchIndices_byCat_ <- lapply(1:length(tab_), function(sae){ 
                     matched_ <- tab_[[sae]]
-                    t__ <- matched_[sample(as.character(unique(names(matched_))), min_size2, replace = F)]
+                    temp_ = as.character(unique(names(matched_)))
+                    t__ <- matched_[sample(temp_, min_size2, replace = (min_size2 > length(temp_)) )]
                     as.numeric(  unlist(  sapply(1:length(t__), function(I_){rep(names(t__)[I_], times = t__[I_])}) )  )  
                 })
                 #MatchIndices_byCat_         = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
@@ -387,12 +387,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
-                MM2_samp                     = sqrt( colMeans(X__^2) ) 
-                X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
-                Y__                          = FastScale(Y__, rep(0, times = ncol(X__)), MM2_samp)
+                #MM2_samp                     = sqrt( colMeans(X__^2) ) 
+                #X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
+                #Y__                          = FastScale(Y__, rep(0, times = ncol(X__)), MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) ) 
                 try(readme_est_fxn(X         = ESGivenD_sampled,
-                                   Y         =  rep(0, times = ncol(X__)))[names(labeled_pd)],T)
+                                   Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 } )), T)
               if(class(est_readme2) == "try-error"){browser()}
               return( list(est_readme2) )
