@@ -314,7 +314,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, myGradients_clipped, myOpt_tf_apply),
+        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
                              feed_dict = dict(IL_input = dfm_labeled[sgd_grabSamp(),],sdg_learning_rate = 1/inverse_learning_rate,
                                               clip_tf = clip_value,IL_mu_last =  update_ls[[1]], IL_sigma_last = update_ls[[2]]))
         ### Update the learning rate
