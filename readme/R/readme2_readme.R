@@ -333,18 +333,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun          = nBoot_matching ;
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
-          indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = T) }) ) ) )### Sample indices for bootstrap by category
-          MM1  = colMeans(out_dfm_unlabeled); 
+          indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here 
+          MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2  = colSds(X_, center = colMeans(X_))
-            X_   = FastScale(X_, MM1, MM2);
-            Y_   = FastScale(Y_, MM1, MM2);
-            browser()  
+            MM2    = colSds(X_, center = colMeans(X_))
+            X_     = FastScale(X_, MM1, MM2);
+            Y_     = FastScale(Y_, MM1, MM2);
               
             ## If we're using matching
             if (k_match != 0){
@@ -368,13 +367,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
-                MM2_samp_                    = colSds(X__, center = colMeans( X__ )  )  
-                MM2_samp__                   = colSds(Y__, center = colMeans( Y__ )  )  
-                MM2_samp                     = MM2_samp__ / (MM2_samp_+MM2_samp__)
+                #MM2_samp                     = colSds(X__, center = colMeans( X__ )  )
+                MM2_samp                     = sqrt( colMeans(X__^2) ) 
                 X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
                 Y__                          = FastScale(Y__, rep(0, times = ncol(X__)), MM2_samp)
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) ) 
-                try(readme_est_fxn(X = ESGivenD_sampled, Y = colMeans(Y__))[names(labeled_pd)],T) } )), T)
+                try(readme_est_fxn(X = ESGivenD_sampled, Y =  rep(0, times = ncol(X__)))[names(labeled_pd)],T)
+                } )), T)
               if(class(est_readme2) == "try-error"){browser()}
               return( list(est_readme2) )
           })
