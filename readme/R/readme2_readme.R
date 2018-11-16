@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 10, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 20,
+                   nboot   = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 15, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -106,11 +106,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
   nCat = length(labeledCt)
-  cand_ <- (nCat+2):30
-  numProjections = cand_[ min(sapply(labeledCt, function(x){
-      which.min(abs((1/x)^(1/cand_)-0.75))
-  })) ]
-  print(c(numProjections,nCat))
+  #cand_ <- (nCat+2):30
+  #numProjections = cand_[ min(sapply(labeledCt, function(x){which.min(abs((1/x)^(1/cand_)-0.75))})) ]
+  #print(c(numProjections,nCat))
 
   ### Sanity checks
   if (nDocuments != nLabeled + nUnlabeled){
@@ -398,6 +396,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ESGivenD_sampled_averraged) )
           })
           
+          browser()
           est_readme2 <- try(readme_est_fxn(X         = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )  ,
                                             Y         = rep(0, times = nProj))[names(labeled_pd)],T)
           print("peach3")
