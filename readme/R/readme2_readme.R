@@ -372,7 +372,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
-            est_readme2_old = try(rowMeans(  replicate(30, { 
+            est_readme2 = try(rowMeans(  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
