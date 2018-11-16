@@ -349,8 +349,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            #MM2    = colSds(X_, center = colMeans(X_))
-            MM2    = colSds(Y_, center = colMeans(Y_))
+            MM2    = colSds(X_, center = colMeans(X_))
+            #MM2    = colSds(Y_, center = colMeans(Y_))
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
