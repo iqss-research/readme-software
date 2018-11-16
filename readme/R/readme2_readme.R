@@ -366,26 +366,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             }else{ ## Otherwise use all the indices
                 MatchIndices_i  = 1:nrow(X_)
             }
-            tab_ = table(MatchIndices_i)
-            tab_ = tapply(1:length(tab_), Cat_[as.numeric(names(tab_))], function(xa){
-              tab_[xa] })
-            #categoryVec_LabMatch = Cat_[MatchIndices_i]; X__ = X_[MatchIndices_i,]
-            #MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
+            categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
+            MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
-            #min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
-            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(tab_, function(x){length(unique(x))}))*0.90,5,100)) )
-            browser()
+            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
             est_readme2 = try(rowMeans(  replicate(30, { 
-                MatchIndices_byCat_ <- lapply(1:length(tab_), function(sae){ 
-                    matched_ <- tab_[[sae]]
-                    temp_ = as.character(unique(names(matched_)))
-                    t__ <- matched_[sample(temp_, min_size2, replace = (min_size2 > length(temp_)) )]
-                    as.numeric(  unlist(  sapply(1:length(t__), function(I_){rep(names(t__)[I_], times = t__[I_])}) )  )  
-                })
-                #MatchIndices_byCat_         = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
-                categoryVec_LabMatch_        = Cat_[unlist(MatchIndices_byCat_)]
-                X__                          = X_[unlist(MatchIndices_byCat_),]; 
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
+                categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
+                X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
                 #MM2_samp                     = sqrt( colMeans(X__^2) ) 
@@ -395,17 +384,38 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 try(readme_est_fxn(X         = ESGivenD_sampled,
                                    Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 } )), T)
+            
+              est_readme2_ = try((  replicate(30, { 
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
+                categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
+                X__                          = X_m[unlist(MatchIndices_byCat_),]; 
+                Y__                          = Y_
+                
+                #MM2_samp                     = sqrt( colMeans(X__^2) ) 
+                #X__                          = FastScale(X__, rep(0, times = ncol(X__)), MM2_samp)
+                ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) ) 
+                return( ESGivenD_sampled )  
+              } )), T)
+              ESGivenD_sampled_averraged = apply(est_readme2_, MARGIN=c(1, 2), mean)
+              
+              #est_readme2 <- try(readme_est_fxn(X         = ESGivenD_sampled_averraged,Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
               if(class(est_readme2) == "try-error"){browser()}
-              return( list(est_readme2) )
+              #return( list(est_readme2) )
+              return( list(ESGivenD_sampled_averraged) )
           })
-        print("peach2")
-        ### Average the bootstrapped estimates
-        est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
-        #sum(abs(est_readme2-unlabeled_pd))
-        ### Save them as tf_est_results
-        tf_est_results <- list(est_readme2               = est_readme2,
-                               transformed_unlabeled_dfm = out_dfm_unlabeled,
-                               transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
+          
+          est_readme2 <- try(readme_est_fxn(X         = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )  ,
+                                            Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
+          
+          
+          print("peach3")
+          ### Average the bootstrapped estimates
+          #est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
+          #sum(abs(est_readme2-unlabeled_pd))
+          ### Save them as tf_est_results
+          tf_est_results <- list(est_readme2               = est_readme2,
+                                 transformed_unlabeled_dfm = out_dfm_unlabeled,
+                                 transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
                                                                 matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
       }
       ## If we're just doing the transformation
@@ -471,4 +481,3 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
 }
-
