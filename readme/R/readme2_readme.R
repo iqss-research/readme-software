@@ -387,7 +387,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               ESGivenD_sampled_averraged = apply(est_readme2_, MARGIN=c(1, 2), mean)
               
               #est_readme2 <- try(readme_est_fxn(X         = ESGivenD_sampled_averraged,Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
-              if(class(est_readme2) == "try-error"){browser()}
               #return( list(est_readme2) )
               return( list(ESGivenD_sampled_averraged) )
           })
