@@ -393,17 +393,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ESGivenD_sampled_averraged) )
           })
           
-        
-          ESGivenD_averaged <- BOOTSTRAP_EST[[1]]
-          ESGivenD_averaged[] <- NA
-          for(ear in 1:length(BOOTSTRAP_EST[[1]])){
-            t__ <- rep(NA, length(BOOTSTRAP_EST))
-            for(ear2 in 1:length(BOOTSTRAP_EST)){
-              t__[ear2] <- BOOTSTRAP_EST[[ear2]][ear]
-            }
-            ESGivenD_averaged[ear] <- mean(Winsorize_fxn(t__))
-          }
-          #ESGivenD_averaged = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )
+          ESGivenD_averaged = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )
           est_readme2 <- try(readme_est_fxn(X         = ESGivenD_averaged  ,
                                             Y         = rep(0, times = nProj))[names(labeled_pd)],T)
           print("peach3")
