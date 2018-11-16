@@ -403,7 +403,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             }
             ESGivenD_averaged[ear] <- mean(Winsorize_fxn(t__))
           }
-          browser()
           #ESGivenD_averaged = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )
           est_readme2 <- try(readme_est_fxn(X         = ESGivenD_averaged  ,
                                             Y         = rep(0, times = nProj))[names(labeled_pd)],T)
