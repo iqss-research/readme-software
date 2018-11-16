@@ -349,7 +349,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2    = colSds(X_, center = colMeans(X_))
+            #MM2    = colSds(X_, center = colMeans(X_))
+            MM2    = colSds(Y_, center = colMeans(Y_))
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
@@ -371,8 +372,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
-            est_readme2 = try(rowMeans(  replicate(30, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
+            est_readme2_old = try(rowMeans(  replicate(30, { 
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
@@ -404,11 +405,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ESGivenD_sampled_averraged) )
           })
           
-          browser()
           est_readme2 <- try(readme_est_fxn(X         = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )  ,
-                                            Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
-          
-          
+                                            Y         = rep(0, times = nProj))[names(labeled_pd)],T)
           print("peach3")
           ### Average the bootstrapped estimates
           #est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
