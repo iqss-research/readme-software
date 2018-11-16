@@ -341,7 +341,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          MM2           = colSds(out_dfm_unlabeled, center = MM1)
+          #MM2           = colSds(out_dfm_unlabeled, center = colMeans(out_dfm_unlabeled))
+          MM2           = colSds(out_dfm_labeled, center = colMeans(out_dfm_labeled))
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -372,9 +373,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
             
-              est_readme2_ = try((  replicate(30, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
-                MatchIndices_byCat_          = 1:length(categoryVec_LabMatch)
+              est_readme2_ = try((  replicate(100, { 
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
