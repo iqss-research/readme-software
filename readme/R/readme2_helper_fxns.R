@@ -7,6 +7,13 @@
 #' @return A vector of character strings with the processed texts, each token is separated by a space.
 #' 
 #' @export 
+#' 
+#' 
+Winsorize_fxn <- function(x){ 
+  sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
+  x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_; 
+}
+
 cleanText <- function(my_text){ 
   finalEncoding <- "ASCII"
   

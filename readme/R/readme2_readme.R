@@ -146,10 +146,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   # Winsorize the columns of the document-feature matrix
   if(winsorize          == T){
-  dfm                   = apply(dfm, 2, function(x){ 
-                                    sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
-                                    x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_; 
-                              return( x ) })
+  dfm                   = apply(dfm, 2, Winsorize_fxn )
   }
   ## Drop invariant columns
   dfm                   = dfm[,apply(dfm,2,sd)>0]
@@ -396,8 +393,19 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ESGivenD_sampled_averraged) )
           })
           
+        
+          ESGivenD_averaged <- BOOTSTRAP_EST[[1]]
+          ESGivenD_averaged[] <- NA
+          for(ear in 1:length(BOOTSTRAP_EST[[1]])){
+            t__ <- rep(NA, length(BOOTSTRAP_EST))
+            for(ear2 in 1:length(BOOTSTRAP_EST)){
+              t__[ear2] <- BOOTSTRAP_EST[[ear2]][ear]
+            }
+            ESGivenD_averaged[ear] <- mean(Winsorize_fxn(t__))
+          }
           browser()
-          est_readme2 <- try(readme_est_fxn(X         = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )  ,
+          #ESGivenD_averaged = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )
+          est_readme2 <- try(readme_est_fxn(X         = ESGivenD_averaged  ,
                                             Y         = rep(0, times = nProj))[names(labeled_pd)],T)
           print("peach3")
           ### Average the bootstrapped estimates
