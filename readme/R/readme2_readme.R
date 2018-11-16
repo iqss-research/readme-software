@@ -404,6 +404,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ESGivenD_sampled_averraged) )
           })
           
+          browser()
           est_readme2 <- try(readme_est_fxn(X         = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )  ,
                                             Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
           
