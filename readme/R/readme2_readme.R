@@ -370,7 +370,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
-            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.50,10,100)) )  
+            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
             est_readme2 = try(rowMeans(  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
@@ -391,7 +391,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) ) 
                 return( ESGivenD_sampled )  
               } )), T)
-              ESGivenD_sampled_averraged = apply(est_readme2_, MARGIN=c(1, 2), median)
+              ESGivenD_sampled_averraged = apply(est_readme2_, MARGIN=c(1, 2), mean)
               
               #est_readme2 <- try(readme_est_fxn(X         = ESGivenD_sampled_averraged,Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
               if(class(est_readme2) == "try-error"){browser()}
