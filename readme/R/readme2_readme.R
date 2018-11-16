@@ -106,8 +106,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
   nCat = length(labeledCt)
-  numProjections = (nCat:30)[ min(sapply(1/labeledCt, function(x){
-      which.min(abs(x^(1/nCat:30)-0.50))
+  cand_ <- (nCat+2):30
+  numProjections = cand_[ min(sapply(labeledCt, function(x){
+      which.min(abs((1/x)^(1/cand_)-0.75))
   })) ]
   print(c(numProjections,nCat))
 
