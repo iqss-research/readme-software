@@ -233,8 +233,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf            = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 
-                                   0.001,1/nCat)
+  Spread_tf            = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0.01,1)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -249,7 +248,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
                                               use_nesterov        = T)
-  #myOpt_tf             = tf$train$AdamOptimizer(learning_rate = 0.001)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
@@ -373,6 +371,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,100)) )  
+            browser() 
             est_readme2 = try(rowMeans(  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
