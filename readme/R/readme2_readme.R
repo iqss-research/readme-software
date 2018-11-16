@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
+                   nboot   = 4,  sgd_iters = 3300, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 100,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -379,8 +379,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
 
-                #ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){apply(X__[x,],2,median)}) ) 
+                ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
                 #try(readme_est_fxn(X         = ESGivenD_sampled,
                                    #Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 return( ESGivenD_sampled )  
