@@ -293,7 +293,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Function to generate bootstrap sample
-      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = T )  } ))}
+      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = F )  } ))}
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
@@ -316,12 +316,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
-                             feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
-                                              sdg_learning_rate = 1/inverse_learning_rate,
-                                              clip_tf           = clip_value,
-                                              IL_mu_last        = update_ls[[1]], 
-                                              IL_sigma_last     = update_ls[[2]]))
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
+                                                 feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
+                                                                  sdg_learning_rate = 1/inverse_learning_rate,
+                                                                  clip_tf           = clip_value,
+                                                                  IL_mu_last        = update_ls[[1]], 
+                                                                  IL_sigma_last     = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
       }
@@ -376,7 +376,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
               est_readme2_ = try((  replicate(20, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T) })
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 Y__                          = Y_
