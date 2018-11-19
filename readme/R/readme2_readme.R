@@ -192,8 +192,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -241,9 +241,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   #myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) )
-  myLoss_tf            = -(tf$reduce_mean(tf$log(tf$clip_by_value(CatDiscrim_tf,0.001, 2))) +
+  myLoss_tf            = -(  tf$reduce_mean(tf$log(tf$clip_by_value(CatDiscrim_tf,0.001, 2))) +
                              tf$reduce_mean(tf$log(tf$clip_by_value(FeatDiscrim_tf,0.001,2))) + 
-                             0.10*tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0.001,1) )) )
+                             tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0.001,2) )) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
