@@ -379,6 +379,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
 
+                browser()
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
                 ae__ <- c(abs(ESGivenD_sampled %*% labeled_pd))
                 ESGivenD_sampled             = t(sapply(1:nProj, function(aerw){ 
