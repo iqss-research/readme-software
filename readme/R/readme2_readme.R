@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters = 3500, sgd_momentum = .9, numProjections = 20, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 10, nBoot_matching = 20,
+                   nboot   = 4,  sgd_iters = 3500, sgd_momentum = .9, numProjections = 50, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 10, nBoot_matching = 20,
                    verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -242,9 +242,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   #myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) )
-  myLoss_tf            = -(tf$reduce_mean(tf$clip_by_value(CatDiscrim_tf,0,1)) +
-                             tf$reduce_mean(tf$clip_by_value(FeatDiscrim_tf,0,1)) + 
-                             tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0,1) )) )
+  myLoss_tf            = -(tf$reduce_mean(tf$clip_by_value(CatDiscrim_tf,0,2)) +
+                             tf$reduce_mean(tf$clip_by_value(FeatDiscrim_tf,0,2)) + 
+                             tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0.001,1) )) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -343,14 +343,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          #MM2           = colSds(out_dfm_unlabeled, MM1); 
-          MM2          = colSds(out_dfm_labeled, colMeans(out_dfm_labeled)); 
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
+            MM2    = colSds(X_, colMeans(X_)); 
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
@@ -375,16 +374,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
             est_readme2_ = try((  replicate(20, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T ) })
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
 
-                browser()
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ae__ <- c(abs(ESGivenD_sampled %*% labeled_pd))
-                ESGivenD_sampled             = t(sapply(1:nProj, function(aerw){ 
-                  ESGivenD_sampled[aerw,] / r_clip_by_value(ae__[aerw], 1/10, 10)
-                  }))
+                ESGivenD_sampled             = t(apply(ESGivenD_sampled, 1, function(x){ x / sd(x)}))
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 return( ED_sampled )  
