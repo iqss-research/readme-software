@@ -192,8 +192,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -231,7 +231,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf            = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0.001,0.50)
+  #Spread_tf            = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0.001,)
+  Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -240,7 +241,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) ) 
+  #myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) )
+  myLoss_tf            = -(tf$reduce_mean(tf$clip_by_value(CatDiscrim_tf,0,2)) +
+                             tf$reduce_mean(tf$clip_by_value(FeatDiscrim_tf,0,2)) + 
+                             tf$reduce_mean( tf$clip_by_value(Spread_tf,0,2) )) 
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -370,7 +374,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
             est_readme2_ = try((  replicate(20, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T ) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(X__, 2, sd));
