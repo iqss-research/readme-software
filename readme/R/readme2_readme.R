@@ -340,11 +340,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun          = nBoot_matching ;
-          k_match       = max(1,round(min_size*0.10))#kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
+          k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          MM2           = colSds(out_dfm_unlabeled, MM1); 
-          browser()  
+          #MM2           = colSds(out_dfm_unlabeled, MM1); 
+          MM2          = colSds(out_dfm_labeled, colMeans(out_dfm_labeled)); 
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -378,10 +378,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T ) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                #X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(abs(X__), 2, max));
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                #ESGivenD_sampled             = apply(ESGivenD_sampled, 
+                ae__ <- c(abs(ESGivenD_sampled %*% labeled_pd))
+                ESGivenD_sampled             = t(sapply(1:nProj, function(aerw){ 
+                  ESGivenD_sampled[aerw,] / r_clip_by_value(ae__[aerw], 1/10, 10)
+                  }))
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 return( ED_sampled )  
