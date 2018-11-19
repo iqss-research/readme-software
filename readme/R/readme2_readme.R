@@ -343,13 +343,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           k_match       = max(1,round(min_size*0.10))#kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
+          MM2           = colSds(out_dfm_unlabeled, MM1); 
+          browser()  
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2    = r_clip_by_value(1/colSds(X_, center = MM1), 1/10,10)
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
@@ -377,9 +378,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T ) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(abs(X__), 2, max));
+                #X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(abs(X__), 2, max));
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                #ESGivenD_sampled             = apply(ESGivenD_sampled, 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 return( ED_sampled )  
