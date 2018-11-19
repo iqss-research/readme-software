@@ -294,7 +294,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(30, sess$run(list(IL_mu_b,IL_sigma_b,L2_squared_unclipped), 
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_unclipped), 
                                               feed_dict = dict(IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
@@ -376,6 +376,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                browser()
+                
+                #ESGivenD_sampled %*% matrix(rnorm(floor(nProj/2), ncol = )
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 return( ED_sampled )  
