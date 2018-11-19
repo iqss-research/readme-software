@@ -96,8 +96,8 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters = 3500, sgd_momentum = .9, numProjections = 50, minBatch = 3, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 10, nBoot_matching = 20,
-                   verbose = F, diagnostics = F, justTransform = F, winsorize=T){ 
+                   nboot   = 4,  sgd_iters   = 3500, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 20,
+                   verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
   nDocuments  = nrow(dfm)
@@ -158,8 +158,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
 
   #Parameters for Batch-SGD
-  NObsPerCat            = min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
-  nProj                 = as.integer(max(numProjections,nCat*2) ); ## Number of projections
+  NObsPerCat            = as.integer(10)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
   
   #Start SGD
   if (verbose == T){
@@ -192,8 +192,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -231,8 +231,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  #Spread_tf            = tf$clip_by_value(tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2 ), 0.001,)
-  Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
+  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -242,9 +241,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   #myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( Spread_tf ) ) )
-  myLoss_tf            = -(tf$reduce_mean(tf$clip_by_value(CatDiscrim_tf,0,2)) +
-                             tf$reduce_mean(tf$clip_by_value(FeatDiscrim_tf,0,2)) + 
-                             tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0.001,1) )) )
+  myLoss_tf            = -(tf$reduce_mean(tf$log(tf$minimum(CatDiscrim_tf,2))) +
+                             tf$reduce_mean(tf$log(tf$minimum(FeatDiscrim_tf,2))) + 
+                             0.10*tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0.001,1) )) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -379,7 +378,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ESGivenD_sampled             = t(apply(ESGivenD_sampled, 1, function(x){ x / sd(x)}))
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
                 return( ED_sampled )  
@@ -389,7 +387,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ED_sampled_averaged) )
           })
           
-          print("peach4")
+          print("peach5")
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd))
