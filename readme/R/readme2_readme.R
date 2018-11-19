@@ -333,22 +333,19 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### If we're also going to do estimation
       if(justTransform == F){ 
-          browser()
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           nRun          = nBoot_matching ;
-          k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
+          k_match       = max(1,round(min_size*0.10))#kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
           indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          MM2           = colSds(out_dfm_unlabeled, center = colMeans(out_dfm_unlabeled))
           BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            #MM2    = colSds(X_, center = colMeans(X_))
-            #MM2    = colSds(Y_, center = colMeans(Y_))
+            MM2    = r_clip_by_value(1/colSds(Y_, center = MM1), 1/10,10)
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
@@ -372,30 +369,25 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
-              est_readme2_ = try((  replicate(20, { 
+            est_readme2_ = try((  replicate(20, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                Y__                          = Y_
+                X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(X__, 2, sd));
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                #try(readme_est_fxn(X         = ESGivenD_sampled,
-                                   #Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
-                return( ESGivenD_sampled )  
+                ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
+                                                                  Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
+                return( ED_sampled )  
               } )), T)
-              ESGivenD_sampled_averraged = apply(est_readme2_, MARGIN=c(1, 2), mean)
+              ED_sampled_averaged = rowMeans(est_readme2_)
               
-              #est_readme2 <- try(readme_est_fxn(X         = ESGivenD_sampled_averraged,Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
-              #return( list(est_readme2) )
-              return( list(ESGivenD_sampled_averraged) )
+              return( list(ED_sampled_averaged) )
           })
           
-          ESGivenD_averaged = Reduce("+", BOOTSTRAP_EST) / length( BOOTSTRAP_EST )
-          est_readme2 <- try(readme_est_fxn(X         = ESGivenD_averaged  ,
-                                            Y         = rep(0, times = nProj))[names(labeled_pd)],T)
-          print("peach3")
+          print("peach4")
           ### Average the bootstrapped estimates
-          #est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
+          est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd))
           ### Save them as tf_est_results
           tf_est_results <- list(est_readme2               = est_readme2,
