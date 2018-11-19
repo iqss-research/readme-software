@@ -349,7 +349,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2    = r_clip_by_value(1/colSds(Y_, center = MM1), 1/10,10)
+            MM2    = r_clip_by_value(1/colSds(X_, center = MM1), 1/10,10)
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
@@ -377,7 +377,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = T ) })
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(X__, 2, sd));
+                X__                          = FastScale(X__, rep(0,times=ncol(X__)), apply(abs(X__), 2, max));
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
