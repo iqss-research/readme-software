@@ -376,11 +376,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                browser()
+                ESGivenD_sampled             = matrix(rnorm( (nCat+1)*nProj), ncol=nProj) %*% ESGivenD_sampled
                 
-                #ESGivenD_sampled %*% matrix(rnorm(floor(nProj/2), ncol = )
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
-                                                                  Y         = rep(0, times = ncol(X__)))[names(labeled_pd)],T)
+                                                                  Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
               } )), T)
               ED_sampled_averaged = rowMeans(est_readme2_)
