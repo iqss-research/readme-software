@@ -158,7 +158,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
 
   #Parameters for Batch-SGD
-  NObsPerCat            = as.integer(5)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = as.integer(10)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
   
   #Start SGD
@@ -335,10 +335,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
+          #min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
+          min_size      = 10
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          browser()
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -371,10 +371,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
             est_readme2_ = try((  replicate(20, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
-                categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
+                categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
