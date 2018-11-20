@@ -241,12 +241,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) + tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ) )
-  #myLoss_tf            = -(  tf$reduce_mean(tf$log(tf$clip_by_value(CatDiscrim_tf,0.001, 2))) + tf$reduce_mean(tf$log(tf$clip_by_value(FeatDiscrim_tf,0.001,2))) + tf$reduce_mean( tf$log(tf$clip_by_value(Spread_tf,0.001,2) )) )
-  
+
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
                                               use_nesterov        = T)
+  myOpt_tf_Adam             = tf$train$AdamOptimizer(learning_rate = 0.005)$minimize(myLoss_tf)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
@@ -313,7 +313,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_Adam),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf           = clip_value,
@@ -376,8 +376,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:length( categoryVec_LabMatch_ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ESGivenD_sampled             = matrix(rnorm( (nCat+1)*nProj), ncol=nProj) %*% ESGivenD_sampled
-                
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
