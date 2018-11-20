@@ -246,7 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
                                               use_nesterov        = T)
-  myOpt_tf_Adam             = tf$train$AdamOptimizer(learning_rate = 0.005)$minimize(myLoss_tf)
+  #myOpt_tf_Adam        = tf$train$AdamOptimizer(learning_rate     = 0.005)$minimize(myLoss_tf)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
@@ -313,7 +313,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_Adam),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf           = clip_value,
@@ -336,11 +336,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
-          nRun          = nBoot_matching ;
-          k_match       = kMatch ## Initialize parameters - number of runs = nBoot_matching, k_match = number of matches
-          indices_list  = replicate(nRun,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
+          indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = F) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          BOOTSTRAP_EST = sapply(1:nRun, function(boot_iter){ 
+          BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
@@ -351,14 +349,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = FastScale(Y_, MM1, MM2);
               
             ## If we're using matching
-            if (k_match != 0){
-                ### KNN matching - find k_match matches in X_ to Y_
+            if (kMatch != 0){
+                ### KNN matching - find kMatch matches in X_ to Y_
                 #MatchIndices_i  = knn_adapt(reweightSet = X_, 
                                              #fixedSet = Y_, 
-                                             #k = k_match)$return_indices
+                                             #k = kMatch)$return_indices
                 MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
                                                   query = Y_, 
-                                                  k     = k_match)$nn.index) 
+                                                  k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[MatchIndices_i] ); t_ = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
