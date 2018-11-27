@@ -158,7 +158,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
 
   #Parameters for Batch-SGD
-  NObsPerCat            = as.integer(30)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = as.integer(10)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
   
   #Start SGD
@@ -255,7 +255,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
                                               use_nesterov        = T)
-  #myOpt_tf_Adam        = tf$train$AdamOptimizer(learning_rate     = 0.005)$minimize(myLoss_tf)
+  myOpt_tf_Adam        = tf$train$AdamOptimizer(learning_rate     = 0.005)$minimize(myLoss_tf)
   
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
@@ -322,7 +322,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_Adam),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf           = clip_value,
