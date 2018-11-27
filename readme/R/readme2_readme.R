@@ -158,7 +158,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
 
   #Parameters for Batch-SGD
-  NObsPerCat            = as.integer(10)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = as.integer(30)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
   
   #Start SGD
@@ -192,7 +192,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.02; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
@@ -299,7 +299,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Function to generate bootstrap sample
-      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = F )  } ))}
+      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) < NObsPerCat)  } ))}
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
@@ -380,7 +380,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             est_readme2_ = try((  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                X__                          = FastScale(X__, rep(0,times=ncol(X__)), colSds(Y_, MM1));
+                X__                          = FastScale(X__, rep(0,times=ncol(X__)), colSds(X__, colMeans(X__)));
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
