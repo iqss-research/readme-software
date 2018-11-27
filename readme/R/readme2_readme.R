@@ -380,7 +380,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             est_readme2_ = try((  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                X__                          = FastScale(X_, rep(0,times=ncol(X__)), colSds(Y_, MM1));
+                X__                          = FastScale(X__, rep(0,times=ncol(X__)), colSds(Y_, MM1));
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
