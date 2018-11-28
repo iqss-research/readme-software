@@ -192,7 +192,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
@@ -235,7 +235,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -2, 2)
+  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
   #Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
@@ -249,7 +249,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf, 2)) + tf$reduce_mean(tf$minimum(FeatDiscrim_tf, 2)) +
-                             0.10*tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) )
+                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,0.50) ) )
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -379,7 +379,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             est_readme2_ = try((  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                X__                          = FastScale(X__, rep(0,times=ncol(X__)), colSds(X__, colMeans(X__)));
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
