@@ -235,7 +235,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -2, 2)
   
   ## Spread component of objective function
   #Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
@@ -248,7 +248,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf, 1)) + tf$reduce_mean(tf$minimum(FeatDiscrim_tf, 1)) +
+  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf, 2)) + tf$reduce_mean(tf$minimum(FeatDiscrim_tf, 2)) +
                              0.10*tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) )
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
