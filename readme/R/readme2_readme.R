@@ -249,14 +249,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + tf$reduce_mean(FeatDiscrim_tf) +
-                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ) )
+                             0.10*tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ) + 
+                             0.10*tf$reduce_mean(tf$abs(ESGivenD_tf))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
                                               use_nesterov        = T)
-  myOpt_tf_Adam        = tf$train$AdamOptimizer(learning_rate     = 0.005)$minimize(myLoss_tf)
-  
+
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
   myGradients_clipped  = myGradients
@@ -322,7 +322,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_Adam),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf           = clip_value,
