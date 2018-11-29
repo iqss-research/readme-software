@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters   = 3000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 20,
+                   nboot   = 4,  sgd_iters   = 3000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 5,
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -250,9 +250,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,0.50) ) ) -
-                             0.10*tf$reduce_mean(tf$abs(LFinal_n)))
-
+                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
@@ -351,17 +349,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
+            X_     = apply(X_, 2, Winsorize_fxn )
             Y_     = out_dfm_unlabeled
             
-            est_ = colMeans(predict(glmnet::cv.glmnet(X_, Cat_,family = "multinomial", nfolds = 5), 
-                           Y_, s = "lambda.min", type = "response" )[,,1])
-            
-            WE_ = do.call(cbind,tapply(1:nrow(X_), Cat_, function(x){colMeans(X_[x,])}))
-            MM2 = c(abs(colMeans(Y_) - WE_ %*% est_))
-            MM2 = MM2/mean(MM2)
-            
             ### Normalize X and Y
-            #MM2    = colSds(X_, colMeans(X_)); 
+            MM2    = colSds(X_, colMeans(X_)); 
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
