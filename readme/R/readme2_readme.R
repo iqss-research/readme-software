@@ -352,6 +352,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             X_     = apply(X_, 2, Winsorize_fxn )
             Y_     = out_dfm_unlabeled
             
+            browser() 
             ### Normalize X and Y
             MM2    = colSds(X_, colMeans(X_)); 
             X_     = FastScale(X_, MM1, MM2);
