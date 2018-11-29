@@ -346,17 +346,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),15,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          #temp     = predict(glmnet::cv.glmnet(out_dfm_labeled, categoryVec_labeled, family = "multinomial"), 
-                              #s = "lambda.1se", type = "response", newx = out_dfm_labeled)[,,1]
+          temp_mod     = glmnet::cv.glmnet(out_dfm_labeled, categoryVec_labeled, family = "multinomial")
+          temp = predict(temp_mod, s = "lambda.1se", type = "response", newx = out_dfm_labeled)[,,1]
           #smoothing_amt = median( apply(temp, 1, function(x){ mean(x) /  max(x) }) )
           #smoothing_amt = max(median( apply(temp, 1, function(x){ max(x) }) ) ,0.5)
-             #mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
-          browser()
+          smoothing_amt = mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             X_     = apply(X_, 2, Winsorize_fxn )
             Y_     = out_dfm_unlabeled
+          
             
             ### Normalize X and Y
             MM2    = colSds(X_, colMeans(X_));
@@ -382,14 +382,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
+            tampa = temp[indices_list[[boot_iter]][MatchIndices_i], ]
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
-            InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-              urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-              #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
-              return( list(MM) )  } )) )
-            InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
+                InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
+                  urat = 0.00; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
+                  #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
+                  MM = (1  - smoothing_amt) * MM + smoothing_amt * tampa[MatchIndices_byCat_[[x_]],]
+                  return( list(MM) )  } )) )
+                InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
