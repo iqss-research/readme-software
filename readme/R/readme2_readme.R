@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters   = 3000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 5,
+                   nboot   = 4,  sgd_iters   = 3000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -192,7 +192,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.02; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
@@ -352,9 +352,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             X_     = apply(X_, 2, Winsorize_fxn )
             Y_     = out_dfm_unlabeled
             
-            browser() 
             ### Normalize X and Y
-            MM2    = colSds(X_, colMeans(X_)); 
+            MM2    = colSds(X_, colMeans(X_));
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2);
               
@@ -378,12 +377,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
+            InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
+              urat = 0.02; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+              return( list(MM) )  } )) )
+            InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                #ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
+                colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
@@ -397,6 +402,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd))
+          #sum(abs(labeled_pd-unlabeled_pd))
           ### Save them as tf_est_results
           tf_est_results <- list(est_readme2               = est_readme2,
                                  transformed_unlabeled_dfm = out_dfm_unlabeled,
