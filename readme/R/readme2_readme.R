@@ -350,7 +350,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           temp = predict(temp_mod, s = "lambda.1se", type = "response", newx = out_dfm_labeled)[,,1]
           #smoothing_amt = median( apply(temp, 1, function(x){ mean(x) /  max(x) }) )
           #smoothing_amt = max(median( apply(temp, 1, function(x){ max(x) }) ) ,0.5)
-          smoothing_amt = 1 - mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
+          smoothing_amt = 0.10#1 - mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
