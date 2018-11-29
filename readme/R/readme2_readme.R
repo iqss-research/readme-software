@@ -390,6 +390,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                   urat = 0.00; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
                   #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
                   MM = (1  - smoothing_amt) * MM + smoothing_amt * tampa[MatchIndices_byCat_[[x_]],]
+                  print(cor ((1  - smoothing_amt) * MM, smoothing_amt * tampa[MatchIndices_byCat_[[x_]],]) ) 
                   return( list(MM) )  } )) )
                 InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
