@@ -348,8 +348,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           MM1           = colMeans(out_dfm_unlabeled); 
           temp     = predict(glmnet::cv.glmnet(out_dfm_labeled, categoryVec_labeled, family = "multinomial"), 
                               s = "lambda.1se", type = "response", newx = out_dfm_labeled)[,,1]
-          smoothing_amt = median( apply(temp, 1, function(x){ mean(x) /  max(x) }) ) 
-            #mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
+          #smoothing_amt = median( apply(temp, 1, function(x){ mean(x) /  max(x) }) )
+          smoothing_amt = max(median( apply(temp, 1, function(x){ max(x) }) ) ,0.5)
+          print( smoothing_amt )
+             #mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -379,11 +381,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
-            browser()
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-              urat = smoothing_amt; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+              #urat = smoothing_amt; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+              #ct_amt = smoothing_amt; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
+              ct_amt = 1; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
+              MM2 = t(replicate(min_size2,c(labeled_pd)))
+              MM = (1-smoothing_amt) * MM2 + smoothing_amt * MM 
               return( list(MM) )  } )) )
             InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
