@@ -384,13 +384,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             tampa = temp[indices_list[[boot_iter]][MatchIndices_i], ]
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
+            browser()
             est_readme2_ = try((  replicate(30, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
                 InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
                   urat = 0.00; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
                   #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
                   MM = (1  - smoothing_amt) * MM + smoothing_amt * tampa[MatchIndices_byCat_[[x_]],]
-                  print(cor ((1  - smoothing_amt) * MM, smoothing_amt * tampa[MatchIndices_byCat_[[x_]],]) ) 
+                  print(cor (c((1  - smoothing_amt) * MM), c(smoothing_amt * tampa[MatchIndices_byCat_[[x_]],]) ) )
                   return( list(MM) )  } )) )
                 InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
