@@ -351,6 +351,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           #smoothing_amt = median( apply(temp, 1, function(x){ mean(x) /  max(x) }) )
           #smoothing_amt = max(median( apply(temp, 1, function(x){ max(x) }) ) ,0.5)
              #mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
+          browser()
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
