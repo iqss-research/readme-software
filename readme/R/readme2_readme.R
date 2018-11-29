@@ -192,7 +192,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.02; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
@@ -343,13 +343,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = min(r_clip_by_value(as.integer( round( 0.75 * (  nrow(dfm_labeled)*labeled_pd) )),15,100))
+          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),15,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          temp     = predict(glmnet::cv.glmnet(out_dfm_labeled, categoryVec_labeled, family = "multinomial"), 
-                              s = "lambda.1se", type = "response", newx = out_dfm_labeled)[,,1]
+          #temp     = predict(glmnet::cv.glmnet(out_dfm_labeled, categoryVec_labeled, family = "multinomial"), 
+                              #s = "lambda.1se", type = "response", newx = out_dfm_labeled)[,,1]
           #smoothing_amt = median( apply(temp, 1, function(x){ mean(x) /  max(x) }) )
-          smoothing_amt = max(median( apply(temp, 1, function(x){ max(x) }) ) ,0.5)
+          #smoothing_amt = max(median( apply(temp, 1, function(x){ max(x) }) ) ,0.5)
           print( smoothing_amt )
              #mean(abs(temp-model.matrix(~0+categoryVec_labeled)))
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
@@ -384,8 +384,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-              #urat = smoothing_amt; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-              ct_amt = smoothing_amt; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
+              urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+              #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
               return( list(MM) )  } )) )
             InnerMultMat             = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
