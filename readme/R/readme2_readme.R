@@ -366,7 +366,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               er[er > upper_limits] = upper_limits
               return( er ) 
             })
-            #MM1 = colMeans( Y_ )  
+            MM1 = colMeans( Y_ )  
             
             ### Normalize X and Y
             MM2    = colSds(X_, colMeans(X_));
