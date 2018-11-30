@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters   = 3000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 50,
+                   nboot   = 4,  sgd_iters   = 1500, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 25,
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -202,7 +202,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     ct_amt = 1; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
     return( list(MM) )  } )) )
   MultMat_jag             = MultMat_jag  / rowSums( MultMat_jag )
-  print(head(MultMat_jag))
   MultMat_jag_tf          = tf$constant(MultMat_jag, dtype = tf$float32)
   
   ## Which indices in the labeled set are associated with each category
@@ -399,7 +398,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ED_sampled_averaged) )
           })
           
-          print("peach5")
+          print("peach7")
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd))
