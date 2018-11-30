@@ -356,14 +356,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               upper_limit = my_s[5] + 1.5 * (my_s[5] - my_s[2])
             })
             X_ = sapply(1:ncol(X_), function(er){ 
-              print(length(X_[,er][X_[,er] > upper_limits[er]]))
+              aer= (length(X_[,er][X_[,er] > upper_limits[er]]))
+              if(aer!=0){print(aer)}
               X_[,er][X_[,er] < lower_limits[er]] = lower_limits[er]
               X_[,er][X_[,er] > upper_limits[er]] = upper_limits[er]
               return( X_[,er] ) 
             })
             Y_     = out_dfm_unlabeled
             Y_ = sapply(1:ncol(Y_), function(er){ 
-              print(length(Y_[,er][Y_[,er] > upper_limits[er]]))
+              ae = length(Y_[,er][Y_[,er] > upper_limits[er]])
+              if(ae!=0){print(ae)}
               Y_[,er][Y_[,er] < lower_limits[er]] = lower_limits[er]
               Y_[,er][Y_[,er] > upper_limits[er]] = upper_limits[er]
               return( Y_[,er] ) 
