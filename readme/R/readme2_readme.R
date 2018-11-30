@@ -349,7 +349,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
-            X_     = apply(X_, 2, Winsorize_fxn )
+            #X_     = apply(X_, 2, Winsorize_fxn )
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
