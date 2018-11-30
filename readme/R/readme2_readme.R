@@ -366,6 +366,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               er[er > upper_limits] = upper_limits
               return( er ) 
             })
+            browser()
             MM1 = colMeans( Y_ )  
             
             ### Normalize X and Y
