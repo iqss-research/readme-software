@@ -356,7 +356,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               upper_limit = my_s[5] + 1.5 * (my_s[5] - my_s[2])
             })
             X_ = sapply(1:ncol(X_), function(er){ 
-              print(length(X_[,er][Y_[,er] > upper_limits[er]]))
+              print(length(X_[,er][X_[,er] > upper_limits[er]]))
               X_[,er][X_[,er] < lower_limits[er]] = lower_limits[er]
               X_[,er][X_[,er] > upper_limits[er]] = upper_limits[er]
               return( X_[,er] ) 
