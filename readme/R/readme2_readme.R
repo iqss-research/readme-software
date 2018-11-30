@@ -344,7 +344,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          #MM1           = colMeans(out_dfm_unlabeled); 
+          MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -366,7 +366,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               er[er > upper_limits] = upper_limits
               return( er ) 
             })
-            MM1 = colMeans( Y_ )  
+            #MM1 = colMeans( Y_ )  
             
             ### Normalize X and Y
             MM2    = colSds(X_, colMeans(X_));
