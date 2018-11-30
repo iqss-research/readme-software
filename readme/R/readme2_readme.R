@@ -344,7 +344,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          MM1           = colMeans(out_dfm_unlabeled); 
+          #MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -355,18 +355,19 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               my_s = summary( er ) ; lower_limit = my_s[2] - 1.5 * (my_s[5] - my_s[2])
               upper_limit = my_s[5] + 1.5 * (my_s[5] - my_s[2])
             })
-            X_ = apply(X_, 2, function(er){ 
-              er[er < lower_limits] = lower_limits
-              er[er > upper_limits] = upper_limits
-              return( er ) 
+            X_ = sapply(1:ncol(X_), function(er){ 
+              print(length(X_[,er][Y_[,er] > upper_limits[er]]))
+              X_[,er][X_[,er] < lower_limits[er]] = lower_limits[er]
+              X_[,er][X_[,er] > upper_limits[er]] = upper_limits[er]
+              return( X_[,er] ) 
             })
             Y_     = out_dfm_unlabeled
-            Y_ = apply(Y_, 2, function(er){ 
-              er[er < lower_limits] = lower_limits
-              er[er > upper_limits] = upper_limits
-              return( er ) 
+            Y_ = sapply(1:ncol(Y_), function(er){ 
+              print(length(Y_[,er][Y_[,er] > upper_limits[er]]))
+              Y_[,er][Y_[,er] < lower_limits[er]] = lower_limits[er]
+              Y_[,er][Y_[,er] > upper_limits[er]] = upper_limits[er]
+              return( Y_[,er] ) 
             })
-            browser()
             MM1 = colMeans( Y_ )  
             
             ### Normalize X and Y
