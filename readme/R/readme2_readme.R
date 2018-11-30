@@ -199,7 +199,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
   
   MultMat_jag             = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.000001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x]
+    ct_amt = 1; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
     return( list(MM) )  } )) )
   MultMat_jag             = MultMat_jag  / rowSums( MultMat_jag )
   print(head(MultMat_jag))
