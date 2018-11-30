@@ -158,7 +158,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
 
   #Parameters for Batch-SGD
-  NObsPerCat            = as.integer(10)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = as.integer(5)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
   
   #Start SGD
@@ -192,15 +192,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
   
   MultMat_jag             = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.00; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-    #ct_amt = 0.99; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+    urat = 0.00; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x]
     return( list(MM) )  } )) )
   MultMat_jag             = MultMat_jag  / rowSums( MultMat_jag )
   MultMat_jag_tf          = tf$constant(MultMat_jag, dtype = tf$float32)
@@ -238,8 +237,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
-  #Spread_tf            = tf$sqrt(tf$matmul(MultMat_jag_tf,tf$square(LFinal_n)) - tf$square(tf$matmul(MultMat_jag_tf,LFinal_n))+0.001^2)
+  #Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
+  Spread_tf            = tf$sqrt(tf$matmul(MultMat_jag_tf,tf$square(LFinal_n)) - tf$square(tf$matmul(MultMat_jag_tf,LFinal_n))+0.001^2)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -264,7 +263,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   clip_tf              = tf$placeholder(tf$float32, shape = list()); 
   TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
   for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared           =  eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  L2_squared           = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
@@ -349,7 +348,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
-            X_     = apply(X_, 2, Winsorize_fxn )
+            #X_     = apply(X_, 2, Winsorize_fxn )
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
@@ -378,8 +377,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
-                  urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
-                  #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
+                  #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
+                  ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x] = ct_amt
                   return( list(MM) )  } )) )
             InnerMultMat                  = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
