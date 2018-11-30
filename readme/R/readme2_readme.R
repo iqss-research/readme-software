@@ -348,8 +348,24 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
-            #X_     = apply(X_, 2, Winsorize_fxn )
+            lower_limits = apply(X_, 2, function(er){ 
+              my_s = summary( er ) ; lower_limit = my_s[2] - 1.5 * (my_s[5] - my_s[2])
+            })
+            upper_limits = apply(X_, 2, function(er){ 
+              my_s = summary( er ) ; lower_limit = my_s[2] - 1.5 * (my_s[5] - my_s[2])
+              upper_limit = my_s[5] + 1.5 * (my_s[5] - my_s[2])
+            })
+            X_ = apply(X_, 2, function(er){ 
+              er[er < lower_limits] = lower_limits
+              er[er > upper_limits] = upper_limits
+              return( er ) 
+            })
             Y_     = out_dfm_unlabeled
+            Y_ = apply(Y_, 2, function(er){ 
+              er[er < lower_limits] = lower_limits
+              er[er > upper_limits] = upper_limits
+              return( er ) 
+            })
             
             ### Normalize X and Y
             MM2    = colSds(X_, colMeans(X_));
