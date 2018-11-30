@@ -202,6 +202,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     urat = 0.000001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x]
     return( list(MM) )  } )) )
   MultMat_jag             = MultMat_jag  / rowSums( MultMat_jag )
+  print(head(MultMat_jag))
   MultMat_jag_tf          = tf$constant(MultMat_jag, dtype = tf$float32)
   
   ## Which indices in the labeled set are associated with each category
