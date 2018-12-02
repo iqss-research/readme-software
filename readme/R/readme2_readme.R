@@ -92,8 +92,8 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, 
-                   nBoot_matching = 100, minMatch = 20, batchSizePerCat = 20, 
+                   nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, nBoot_matching = 100,
+                   minMatch = 20, batchSizePerCat = 20, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -246,7 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             0.10*tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
+                             0.25*tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
