@@ -33,15 +33,11 @@
 #' 
 #' @param mLearn Learning parameter for moments in batch normalization (numeric value from 0-1). Default to 0.01 
 #' 
-#' @param minBatch What should the minimum per category batch size be in the sgd optimization? Input should be a positive number.   
-#' 
-#' @param maxBatch What should the maximum per category batch size be in the sgd optimization? Input should be a positive number.   
+#' @param batchSizePerCat What should the batch size per category be in the sgd optimization and knn matching? 
 #' 
 #' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
 #' 
 #' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
-#' 
-#' @param nBoot_matching How many times should matching with resampling be done?  Input should be a positive number.   
 #' 
 #' @param winsorize Should columns of the raw \code{dfm} be Windorized? 
 #' 
@@ -96,7 +92,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 30,
+                   nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,batchSizePerCat = 20, numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15,
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -158,7 +154,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
 
   #Parameters for Batch-SGD
-  NObsPerCat            = as.integer(15)#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
   
   #Start SGD
@@ -343,7 +339,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),minMatch,100))
+          min_size      = as.integer(batchSizePerCat)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
