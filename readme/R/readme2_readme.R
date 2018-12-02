@@ -363,9 +363,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                   query = Y_, 
                                                   k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
-                t_              = table( Cat_[MatchIndices_i] ); t_ = t_[t_<minMatch]
-                browser()
-                if(length(t_) > 0){ for(t__ in names(t_)){MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; MatchIndices_i = c(MatchIndices_i,which(Cat_ == t__ )) }}
+                t_              = table( Cat_[unique(MatchIndices_i)] ); t_ = t_[t_<minMatch]
+                if(length(t_) > 0){ for(t__ in names(t_)){
+                  MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; 
+                  MatchIndices_i = c(MatchIndices_i,
+                                     sample(which(Cat_ == t__ ), 
+                                            minMatch, replace = length(which(Cat_ == t__ )) < minMatch))
+                    }
+                  }
             }else{ ## Otherwise use all the indices
                 MatchIndices_i  = 1:nrow(X_)
             }
