@@ -96,7 +96,7 @@
 #' @export 
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
-                   nboot   = 4,  sgd_iters   = 1500, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 25,
+                   nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9, numProjections = 20, minBatch = 10, maxBatch = 20, mLearn= 0.01, dropout_rate = .5, kMatch = 3, minMatch = 15, nBoot_matching = 25,
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -192,8 +192,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -237,8 +237,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  #Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
-  Spread_tf            = tf$sqrt(tf$matmul(MultMat_jag_tf,tf$square(LFinal_n)) - tf$square(tf$matmul(MultMat_jag_tf,LFinal_n))+0.001^2)
+  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
+  #Spread_tf            = tf$sqrt(tf$matmul(MultMat_jag_tf,tf$square(LFinal_n)) - tf$square(tf$matmul(MultMat_jag_tf,LFinal_n))+0.001^2)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -250,6 +250,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
                              tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
+  
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                               momentum            = sgd_momentum, 
@@ -342,35 +343,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),10,100))
+          min_size      = min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),minMatch,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          #MM1           = colMeans(out_dfm_unlabeled); 
+          MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
-            lower_limits = apply(X_, 2, function(er){ 
-              my_s = summary( er ) ; lower_limit = my_s[2] - 1.5 * (my_s[5] - my_s[2])
-            })
-            upper_limits = apply(X_, 2, function(er){ 
-              my_s = summary( er ) ; lower_limit = my_s[2] - 1.5 * (my_s[5] - my_s[2])
-              upper_limit = my_s[5] + 1.5 * (my_s[5] - my_s[2])
-            })
-            X_ = sapply(1:ncol(X_), function(er){ 
-              aer= (length(X_[,er][X_[,er] > upper_limits[er]]))
-              if(aer!=0){print(aer)}
-              X_[,er][X_[,er] < lower_limits[er]] = lower_limits[er]
-              X_[,er][X_[,er] > upper_limits[er]] = upper_limits[er]
-              return( X_[,er] ) 
-            })
             Y_     = out_dfm_unlabeled
-            Y_ = sapply(1:ncol(Y_), function(er){ 
-              ae = length(Y_[,er][Y_[,er] > upper_limits[er]])
-              if(ae!=0){print(ae)}
-              Y_[,er][Y_[,er] < lower_limits[er]] = lower_limits[er]
-              Y_[,er][Y_[,er] > upper_limits[er]] = upper_limits[er]
-              return( Y_[,er] ) 
-            })
-            MM1 = colMeans( Y_ )  
             
             ### Normalize X and Y
             MM2    = colSds(X_, colMeans(X_));
@@ -396,10 +375,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
-            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,5,1000)) )  
+            min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
-                  urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
-                  #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = ct_amt
+                  #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
+                  ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = ct_amt
                   return( list(MM) )  } )) )
             InnerMultMat                  = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
