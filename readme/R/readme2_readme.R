@@ -93,7 +93,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, nBoot_matching = 100,
-                   minMatch = 20, batchSizePerCat = 20, 
+                   minMatch = 10, batchSizePerCat = 20, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
