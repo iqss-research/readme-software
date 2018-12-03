@@ -93,7 +93,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, nBoot_matching = 100,
-                   batchSizePerCat = 20, 
+                   batchSizePerCat = 10, 
                    batchSizePerCat_match = 20, minMatch = 5, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
@@ -309,7 +309,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 0.5 * median( sqrt(init_L2_squared_vec) )
+      clip_value            = 1 * median( sqrt(init_L2_squared_vec) )
       inverse_learning_rate = 0.1 * median( init_L2_squared_vec )
       rm(d_)
       
