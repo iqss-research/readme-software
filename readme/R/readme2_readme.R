@@ -389,7 +389,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                   return( list(MM) )  } )) )
             InnerMultMat                  = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = F ) })
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, min_size2, replace = length(sae) - 5 < min_size2 ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
@@ -401,7 +401,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 return( ED_sampled )  
               } )), T)
               ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
-              if(class(ED_sampled_averaged) == "try-error"){browser()}
+              #if(class(ED_sampled_averaged) == "try-error"){browser()}
               
               return( list(ED_sampled_averaged) )
           })
