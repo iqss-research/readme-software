@@ -93,7 +93,8 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, nBoot_matching = 100,
-                   minMatch = 10, batchSizePerCat = 20, 
+                   batchSizePerCat = 20, 
+                   batchSizePerCat_match = 20, minMatch = 5, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -189,8 +190,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          #urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -246,7 +247,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             0.25*tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
+                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -340,7 +341,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = as.integer(batchSizePerCat)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
+          min_size      = as.integer(batchSizePerCat_match)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
@@ -389,8 +390,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                #ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
+                ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                #ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
