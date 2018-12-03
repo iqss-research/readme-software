@@ -93,8 +93,8 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot   = 4,  sgd_iters   = 2000, sgd_momentum  = .9,numProjections = 20,  mLearn= 0.01, dropout_rate = .5, kMatch = 3, nBoot_matching = 100,
-                   batchSizePerCat = 10, 
-                   batchSizePerCat_match = 20, minMatch = 5, 
+                   batchSizePerCat = 30, 
+                   batchSizePerCat_match = 30, minMatch = 10, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -218,7 +218,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.5/sqrt(nDim+nProj), 0.5/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation 
@@ -296,7 +296,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Function to generate bootstrap sample
-      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) < NObsPerCat)  } ))}
+      #sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) - 5 < NObsPerCat )  } ))}
+      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = T )  } ))}
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
@@ -310,7 +311,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
       clip_value            = 1 * median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 0.1 * median( init_L2_squared_vec )
+      inverse_learning_rate = 1 * median( init_L2_squared_vec )
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -342,7 +343,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = as.integer(batchSizePerCat_match)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
-          indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
+          indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) - 5 < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
