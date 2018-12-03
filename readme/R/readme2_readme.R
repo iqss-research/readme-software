@@ -400,7 +400,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
               } )), T)
-              ED_sampled_averaged = rowMeans(est_readme2_)
+              ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
+              if(class(ED_sampled_averaged) == "try-error"){browser()}
               
               return( list(ED_sampled_averaged) )
           })
