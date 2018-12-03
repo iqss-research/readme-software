@@ -101,8 +101,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   batchSizePerCat_match = 10, 
-                   minMatch       = 3, 
+                   batchSizePerCat_match = 20, 
+                   minMatch       = 5, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -203,13 +203,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
-  
-  MultMat_jag             = t(do.call(rbind,sapply(1:nCat,function(x){
-    ct_amt = 1; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
-    return( list(MM) )  } )) )
-  MultMat_jag             = MultMat_jag  / rowSums( MultMat_jag )
-  MultMat_jag_tf          = tf$constant(MultMat_jag, dtype = tf$float32)
-  
+
   ## Which indices in the labeled set are associated with each category
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
@@ -319,7 +313,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
       clip_value            = 1 * median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 1 * median( init_L2_squared_vec )
+      inverse_learning_rate = 2 * median( init_L2_squared_vec )
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -399,8 +393,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                #ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
+                ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                #ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
