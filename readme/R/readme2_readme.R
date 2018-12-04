@@ -348,15 +348,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_           = colSds(out_dfm_unlabeled,MM1); 
           MY_LASSO       = glmnet::cv.glmnet(x = out_dfm_labeled, y = categoryVec_labeled, family = "multinomial")
-          #MY_LASSO       = randomForest::randomForest(x = out_dfm_labeled, y = categoryVec_labeled)
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
-            X_PRED = predict(MY_LASSO, newx = X_, type = "response", s = "lambda.1se")[,,1]
-            Y_PRED = predict(MY_LASSO, newx = Y_, type = "response", s = "lambda.1se")[,,1]
-            #X_PRED = predict(MY_LASSO, X_, type = "prob")
-            #Y_PRED = predict(MY_LASSO, Y_, type = "prob")
+            X_PRED = predict(MY_LASSO, newx = X_,  s = "lambda.min")[,,1]
+            Y_PRED = predict(MY_LASSO, newx = Y_,  s = "lambda.min")[,,1]
             
             ### Normalize X and Y
             MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
