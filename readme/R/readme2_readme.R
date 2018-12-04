@@ -353,10 +353,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
-            #X_PRED = predict(MY_LASSO, newx = X_, type = "response", s = "lambda.1se")[,,1]
-            #Y_PRED = predict(MY_LASSO, newx = Y_, type = "response", s = "lambda.1se")[,,1]
-            X_PRED = predict(MY_LASSO, X_, type = "prob")
-            Y_PRED = predict(MY_LASSO, Y_, type = "prob")
+            X_PRED = predict(MY_LASSO, newx = X_, type = "response", s = "lambda.1se")[,,1]
+            Y_PRED = predict(MY_LASSO, newx = Y_, type = "response", s = "lambda.1se")[,,1]
+            #X_PRED = predict(MY_LASSO, X_, type = "prob")
+            #Y_PRED = predict(MY_LASSO, Y_, type = "prob")
             
             ### Normalize X and Y
             MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
