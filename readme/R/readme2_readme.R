@@ -381,6 +381,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
+            browser() 
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
