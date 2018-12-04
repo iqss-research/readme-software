@@ -369,8 +369,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 #MatchIndices_i  = knn_adapt(reweightSet = X_, 
                                              #fixedSet = Y_, 
                                              #k = kMatch)$return_indices
-                MatchIndices_i  = c(FNN::get.knnx(data  = X_PRED, 
-                                                  query = Y_PRED, 
+                MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
+                                                  query = Y_, 
                                                   k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); t_ = t_[t_<minMatch]
