@@ -354,6 +354,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             X_PRED = predict(MY_LASSO, newx = X_,  s = "lambda.min")[,,1]
             Y_PRED = predict(MY_LASSO, newx = Y_,  s = "lambda.min")[,,1]
+            X_     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd));
+            Y_     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd))
             
             ### Normalize X and Y
             MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
