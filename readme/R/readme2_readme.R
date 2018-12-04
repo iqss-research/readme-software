@@ -101,7 +101,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   batchSizePerCat_match = 20, 
+                   batchSizePerCat_match = 10, 
                    minMatch       = 5, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
@@ -238,8 +238,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Spread component of objective function
   Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
-  #Spread_tf            = tf$sqrt(tf$matmul(MultMat_jag_tf,tf$square(LFinal_n)) - tf$square(tf$matmul(MultMat_jag_tf,LFinal_n))+0.001^2)
-  
+
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   
@@ -249,7 +248,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
+                             tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)))
+                             #tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -312,8 +312,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 1 * median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 2 * median( init_L2_squared_vec )
+      clip_value            = 0.10 * median( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = 0.10 * median( init_L2_squared_vec )
       rm(d_)
       
       ## Initialize vector to store learning rates
