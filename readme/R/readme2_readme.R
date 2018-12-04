@@ -95,14 +95,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 2000,
                    sgd_momentum   = .9,
-                   numProjections = 20,
+                   numProjections = 15,
                    mLearn         = 0.01, 
                    dropout_rate   = .5, 
                    kMatch         = 3, 
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   batchSizePerCat_match = 10, 
-                   minMatch       = 5, 
+                   batchSizePerCat_match = 20, 
+                   minMatch       = 8, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -198,7 +198,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.10; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = ct_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
@@ -248,8 +248,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)) - 
-                             tf$reduce_mean(tf$abs(ESGivenD_tf)))
+                             tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)))
                              #tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -347,16 +346,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           min_size      = as.integer(batchSizePerCat_match)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) - 5 < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          MM1           = colMeans(out_dfm_unlabeled); 
+          MM1_           = colMeans(out_dfm_unlabeled); 
+          MM2_           = colSds(out_dfm_unlabeled,MM1); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2    = colSds(X_, colMeans(X_));
-            X_     = FastScale(X_, MM1, MM2);
-            Y_     = FastScale(Y_, MM1, MM2);
+            MM1 = colMeans(X_)
+            MM2    = colSds(X_, MM1);
+            INVERSE_WT =  1 / ( abs(MM1 - MM1_) / sqrt( 0.10 + MM2^2 + MM2_^2)  ) 
+            INVERSE_WT = INVERSE_WT / mean(INVERSE_WT)
+            X_     = FastScale(X_, MM1_, INVERSE_WT);
+            Y_     = FastScale(Y_, MM1_, INVERSE_WT)
               
             ## If we're using matching
             if (kMatch != 0){
@@ -382,11 +385,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
-            browser() 
             ### Carry out estimation on the matched samples
             min_size2 <- round(  min(r_clip_by_value(unlist(lapply(MatchIndices_byCat, length))*0.90,10,1000)) )  
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
-                  urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
+                  urat = 0.10; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
                   #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = ct_amt
                   return( list(MM) )  } )) )
             InnerMultMat                  = InnerMultMat  / rowSums( InnerMultMat )
