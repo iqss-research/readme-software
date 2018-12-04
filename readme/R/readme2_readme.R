@@ -333,6 +333,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
+      browser() 
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = update_ls[[1]], 
                                                                       IL_sigma_last = update_ls[[2]])), T)
