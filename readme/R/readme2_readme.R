@@ -354,8 +354,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             X_PRED = predict(MY_LASSO, newx = X_,  s = "lambda.min")[,,1]
             Y_PRED = predict(MY_LASSO, newx = Y_,  s = "lambda.min")[,,1]
-            X_     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd));
-            Y_     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd))
+            X_PRED     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd));
+            Y_PRED     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd))
             
             ### Normalize X and Y
             MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
@@ -368,8 +368,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 #MatchIndices_i  = knn_adapt(reweightSet = X_, 
                                              #fixedSet = Y_, 
                                              #k = kMatch)$return_indices
-                MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
-                                                  query = Y_, 
+                MatchIndices_i  = c(FNN::get.knnx(data  = X_PRED, 
+                                                  query = Y_PRED, 
                                                   k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); t_ = t_[t_<minMatch]
