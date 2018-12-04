@@ -95,7 +95,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 2000,
                    sgd_momentum   = .9,
-                   numProjections = 15,
+                   numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = .5, 
                    kMatch         = 3, 
@@ -351,13 +351,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
-            TEMP_  = prcomp(X_, center = T, scale = T)
-            X_PRED = as.matrix(predict(TEMP_, X_)[,1]); Y_PRED = as.matrix(predict(TEMP_, Y_)[,1])
-            X_PRED     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd));
-            Y_PRED     = FastScale(Y_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd))
             
             ### Normalize X and Y
             MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
+            browser()
             X_     = FastScale(X_, MM1, MM2);
             Y_     = FastScale(Y_, MM1, MM2)
               
