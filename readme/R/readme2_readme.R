@@ -347,13 +347,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, batchSizePerCat_match, replace = length(x) - 5 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_           = colSds(out_dfm_unlabeled,MM1); 
-          MY_LASSO       = glmnet::cv.glmnet(x = out_dfm_labeled, y = categoryVec_labeled, family = "multinomial")
+          #MY_LASSO       = glmnet::cv.glmnet(x = out_dfm_labeled, y = categoryVec_labeled, family = "multinomial")
+          browser() 
+          MY_LASSO       = randomForest::randomForest(x = out_dfm_labeled, y = categoryVec_labeled)
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
-            X_PRED = predict(MY_LASSO, newx = X_, type = "response", s = "lambda.1se")[,,1]
-            Y_PRED = predict(MY_LASSO, newx = Y_, type = "response", s = "lambda.1se")[,,1]
+            #X_PRED = predict(MY_LASSO, newx = X_, type = "response", s = "lambda.1se")[,,1]
+            #Y_PRED = predict(MY_LASSO, newx = Y_, type = "response", s = "lambda.1se")[,,1]
+            X_PRED = predict(MY_LASSO, newx = X_, type = "response")
+            Y_PRED = predict(MY_LASSO, newx = Y_, type = "response")
             
             ### Normalize X and Y
             MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
