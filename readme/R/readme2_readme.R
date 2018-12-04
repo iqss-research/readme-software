@@ -352,6 +352,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
+            browser() 
             X_PRED = predict(MY_LASSO, newx = X_,  s = "lambda.min")[,,1]
             Y_PRED = predict(MY_LASSO, newx = Y_,  s = "lambda.min")[,,1]
             X_PRED     = FastScale(X_PRED, colMeans(X_PRED), apply(X_PRED, 2, sd));
