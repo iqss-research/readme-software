@@ -347,7 +347,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           min_size      = as.integer(batchSizePerCat_match)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) - 5 < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1_           = colMeans(out_dfm_unlabeled); 
-          MM2_           = colSds(out_dfm_unlabeled,MM1); 
+          MM2_           = colSds(out_dfm_unlabeled,MM1_); 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
