@@ -102,7 +102,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
                    batchSizePerCat_match = 20, 
-                   minMatch       = 8, 
+                   minMatch       = 10, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -220,7 +220,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-0.5/sqrt(nDim+nProj), 0.5/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
+  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
 
   ### Drop-out transformation 
@@ -248,8 +248,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)))
-                             #tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
+                             #tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)))
+                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -312,8 +312,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 0.10 * median( sqrt(init_L2_squared_vec) )
-      inverse_learning_rate = 0.10 * median( init_L2_squared_vec )
+      clip_value            = 0.50 * median( sqrt(init_L2_squared_vec) )
+      inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -333,7 +333,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      browser() 
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = update_ls[[1]], 
                                                                       IL_sigma_last = update_ls[[2]])), T)
@@ -345,22 +344,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          min_size      = as.integer(batchSizePerCat_match)#min(r_clip_by_value(as.integer( round( 0.90 * (  nrow(dfm_labeled)*labeled_pd) )),batchSizePerCat,100))
-          indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, min_size, replace = length(x) - 5 < min_size  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          MM1_           = colMeans(out_dfm_unlabeled); 
-          MM2_           = colSds(out_dfm_unlabeled,MM1_); 
+          indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, batchSizePerCat_match, replace = length(x) - 5 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
+          MM1           = colMeans(out_dfm_unlabeled); 
+          MM2_           = colSds(out_dfm_unlabeled,MM1); 
+          MY_LASSO       = glmnet::cv.glmnet(x = out_dfm_labeled, y = categoryVec_labeled, family = "multinomial")
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_   = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_     = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_     = out_dfm_unlabeled
+            X_PRED = predict(MY_LASSO, newx = X_, type = "response", s = "lambda.1se")[,,1]
+            Y_PRED = predict(MY_LASSO, newx = Y_, type = "response", s = "lambda.1se")[,,1]
             
             ### Normalize X and Y
-            MM1 = colMeans(X_)
-            MM2    = colSds(X_, MM1);
-            INVERSE_WT =  1 / ( abs(MM1 - MM1_) / sqrt( 0.10 + MM2^2 + MM2_^2)  ) 
-            INVERSE_WT = INVERSE_WT / mean(INVERSE_WT)
-            X_     = FastScale(X_, MM1_, INVERSE_WT);
-            Y_     = FastScale(Y_, MM1_, INVERSE_WT)
+            MM2    = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
+            X_     = FastScale(X_, MM1, MM2);
+            Y_     = FastScale(Y_, MM1, MM2)
               
             ## If we're using matching
             if (kMatch != 0){
@@ -368,8 +366,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 #MatchIndices_i  = knn_adapt(reweightSet = X_, 
                                              #fixedSet = Y_, 
                                              #k = kMatch)$return_indices
-                MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
-                                                  query = Y_, 
+                MatchIndices_i  = c(FNN::get.knnx(data  = X_PRED, 
+                                                  query = Y_PRED, 
                                                   k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); t_ = t_[t_<minMatch]
@@ -398,8 +396,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                #ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
+                ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                #ESGivenD_sampled            = t( InnerMultMat %*% X__ ) 
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
