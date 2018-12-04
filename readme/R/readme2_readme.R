@@ -248,7 +248,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) +
-                             tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)))
+                             tf$reduce_mean(tf$clip_by_value(Spread_tf, 0.001, 1)) - 
+                             tf$reduce_mean(tf$abs(ESGivenD_tf)))
                              #tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -407,7 +408,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ED_sampled_averaged) )
           })
           
-          print("peach7")
+          print("peach1")
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd))
