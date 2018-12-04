@@ -353,7 +353,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_     = out_dfm_unlabeled
             
             ### Normalize X and Y
-            browser() 
             MM2_b <- MM2_a <-  MM2_orig     <- apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
             temp_ <- sample(1:length(MM2_orig), 10)
             MM2_a[temp_] <- 1e10
