@@ -247,7 +247,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
-                             tf$reduce_mean(FeatDiscrim_tf) +
+                             tf$reduce_mean(FeatDiscrim_tf) - 
+                             (tf$reduce_max(tf$reduce_mean(tf$abs(ESGivenD_tf), 1L)) -
+                                tf$reduce_min(tf$reduce_mean(tf$abs(ESGivenD_tf), 1L)) ) + 
                              0.10 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -257,7 +259,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
-  myGradients_clipped  = myGradients
+  myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
   
   L2_squared_unclipped = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   clip_tf              = tf$placeholder(tf$float32, shape = list()); 
@@ -393,7 +395,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 #ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
                 ESGivenD_sampled            = t( InnerMultMat %*% X__ ) 
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
-                browser()
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
