@@ -246,6 +246,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
+  browser() 
   myLoss_tf            = -(tf$reduce_mean(CatDiscrim_tf) + 
                              tf$reduce_mean(FeatDiscrim_tf) - 
                              (tf$reduce_max(tf$reduce_mean(tf$abs(ESGivenD_tf), 1L)) -
