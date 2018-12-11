@@ -344,6 +344,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, bootSizePerCat, replace = length(x) * 0.75 < bootSizePerCat  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_           = colSds(out_dfm_unlabeled,MM1); 
+          browser() 
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
