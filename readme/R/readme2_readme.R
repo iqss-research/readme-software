@@ -101,8 +101,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   bootSizePerCat = 20, 
-                   minMatch       = 10, 
+                   bootSizePerCat = 25, 
+                   minMatch       = 5, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -309,7 +309,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 0.50 * median( sqrt(init_L2_squared_vec) )
+      clip_value            = 1000 #0.50 * median( sqrt(init_L2_squared_vec) )
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       rm(d_)
       
@@ -358,14 +358,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                #MatchIndices_i  = knn_adapt(reweightSet = X_, 
-                                             #fixedSet = Y_, 
-                                             #k = kMatch)$return_indices
-                MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
-                                                  query = Y_, 
-                                                  k     = kMatch)$nn.index) 
+                #MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = kMatch)$return_indices
+                MatchIndices_i  = c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
-                t_              = table( Cat_[unique(MatchIndices_i)] ); t_ = t_[t_<minMatch]
+                t_              = table( Cat_[unique(MatchIndices_i)] ); 
+                t_              = t_[t_<minMatch]
                 if(length(t_) > 0){ for(t__ in names(t_)){
                   MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; 
                   MatchIndices_i = c(MatchIndices_i,
@@ -383,7 +380,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             min_size2 <- bootSizePerCat
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
                   urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
-                  #ct_amt = 0.90; uncertainty_amt = (1-ct_amt) /(nCat - 1 );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = ct_amt
                   return( list(MM) )  } )) )
             InnerMultMat                  = InnerMultMat  / rowSums( InnerMultMat )
             est_readme2_ = try((  replicate(30, { 
