@@ -342,6 +342,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, bootSizePerCat, replace = length(x) * 0.75 < bootSizePerCat  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
+          k_seq = 1:10
+          ratio_ = ((k_seq*nCat*bootSizePerCat) /nrow(out_dfm_unlabeled))
+          #ratio_ is synthetic L size / U size; target is 1:1
+          kMatch = k_seq[which.min(abs(ratio_ - 1))]
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_           = colSds(out_dfm_unlabeled,MM1);
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
