@@ -101,8 +101,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   bootSizePerCat = 25, 
-                   minMatch       = 5, 
+                   bootSizePerCat = 20, 
+                   minMatch       = 10, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -246,8 +246,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                             0.50 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
+                             0.10 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -345,7 +345,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           k_seq = 1:10
           ratio_ = ((k_seq*nCat*bootSizePerCat) /nrow(out_dfm_unlabeled))
           #ratio_ is synthetic L size / U size; target is 1:1
-          kMatch = k_seq[which.min(abs(ratio_ - 1))]
+          kMatch = k_seq[which.min(abs(ratio_ - 1))[1]]
+          print(kMatch)
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_           = colSds(out_dfm_unlabeled,MM1);
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
@@ -390,8 +391,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                #ESGivenD_sampled            = t( InnerMultMat %*% X__ ) 
+                #ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                ESGivenD_sampled            = t( InnerMultMat %*% X__ ) 
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
