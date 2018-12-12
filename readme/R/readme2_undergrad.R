@@ -8,8 +8,7 @@
 #' @param documentText A vector in which each entry corresponds to a ``clean'' document. 
 #' Note that the function will take as a ``word'' all whitespace-separated elements in each vector entry. For example,
 #' \code{"star."} would have to have an exact analogue in the vector corpus, otherwise
-#' it will be dropped in the calculations. It will be more common to space separate punctuation marks (i.e. 
-#' \code{"star."} would become \code{"star ."}), since punctuation marks often have their own entries in the vector database. 
+#' it will be dropped in the calculations. 
 #' 
 #' @param wordVecs A matrix where each row denotes a word and each column a word vector. Words should be stored as the rownames of the matrix.
 #' 

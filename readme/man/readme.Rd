@@ -34,7 +34,11 @@ The entires of this vector should correspond with the rows of \code{dtm}. If \co
 
 \item{batchSizePerCat}{What should the batch size per category be in the sgd optimization and knn matching?}
 
+\item{nboot_match}{How many bootstrap samples should we aggregiate when doing the knn matching?}
+
 \item{kMatch}{What should k be in the k-nearest neighbor matching? Input should be a positive number.}
+
+\item{batchSizePerCat_match}{What should the batch size per category be in the bagged knn matching?}
 
 \item{winsorize}{Should columns of the raw \code{dfm} be Windorized?}
 
