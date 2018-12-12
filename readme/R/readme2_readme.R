@@ -102,7 +102,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
                    bootSizePerCat = 20, 
-                   minMatch       = 10, 
+                   minMatch       = 5, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -326,7 +326,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
-                                                                  #clip_tf           = clip_value,
                                                                   IL_mu_last        = update_ls[[1]], 
                                                                   IL_sigma_last     = update_ls[[2]]))
         ### Update the learning rate
