@@ -4,11 +4,11 @@
 \alias{readme}
 \title{readme}
 \usage{
-readme(dfm, labeledIndicator, categoryVec, nboot = 10,
-  sgd_iters = 1000, numProjections = 20, minBatch = 3,
-  maxBatch = 20, dropout_rate = 0.5, kMatch = 3,
-  nBoot_matching = 50, verbose = F, diagnostics = F,
-  justTransform = F, winsorize = T)
+readme(dfm, labeledIndicator, categoryVec, nboot = 4, sgd_iters = 2000,
+  sgd_momentum = 0.9, numProjections = 20, mLearn = 0.01,
+  dropout_rate = 0.5, kMatch = 3, nBoot_matching = 100,
+  batchSizePerCat = 10, bootSizePerCat = 20, minMatch = 10,
+  verbose = F, diagnostics = F, justTransform = F, winsorize = T)
 }
 \arguments{
 \item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature.}
@@ -20,21 +20,21 @@ readme(dfm, labeledIndicator, categoryVec, nboot = 10,
 The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
 \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia.}
 
-\item{nboot}{A scalar indicating the number of times the estimation will be re-run (useful for reducing the variance of the final output).}
+\item{nboot}{A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).}
 
 \item{sgd_iters}{How many stochastic gradient descent iterations should be used? Input should be a positive number.}
 
-\item{numProjections}{How many projections should be calculated? Input should be a positive number.}
+\item{sgd_momentum}{Momentum parameter for stochastic gradient descent (default = 0.90)}
 
-\item{minBatch}{What should the minimum per category batch size be in the sgd optimization? Input should be a positive number.}
+\item{numProjections}{How many projections should be calculated? Input should be a positive number. Minimum number of projections = number of categories + 2.}
 
-\item{maxBatch}{What should the maximum per category batch size be in the sgd optimization? Input should be a positive number.}
+\item{mLearn}{Learning parameter for moments in batch normalization (numeric value from 0-1). Default to 0.01}
 
 \item{dropout_rate}{What should the dropout rate be in the sgd optimization? Input should be a positive number.}
 
 \item{kMatch}{What should k be in the k-nearest neighbor matching? Input should be a positive number.}
 
-\item{nBoot_matching}{How many times should matching with resampling be done?  Input should be a positive number.}
+\item{batchSizePerCat}{What should the batch size per category be in the sgd optimization and knn matching?}
 
 \item{verbose}{Should progress updates be given? Input should be a Boolean.}
 
