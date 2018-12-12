@@ -6,9 +6,9 @@
 \usage{
 readme(dfm, labeledIndicator, categoryVec, nboot = 4, sgd_iters = 2000,
   sgd_momentum = 0.9, numProjections = 20, mLearn = 0.01,
-  dropout_rate = 0.5, kMatch = 3, nBoot_matching = 100,
-  batchSizePerCat = 10, bootSizePerCat = 20, minMatch = 10,
-  verbose = F, diagnostics = F, justTransform = F, winsorize = T)
+  dropout_rate = 0.5, batchSizePerCat = 10, nboot_match = 100,
+  kMatch = 3, batchSizePerCat_match = 20, winsorize = T,
+  justTransform = F, verbose = F, diagnostics = F)
 }
 \arguments{
 \item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature.}
@@ -32,18 +32,18 @@ The entires of this vector should correspond with the rows of \code{dtm}. If \co
 
 \item{dropout_rate}{What should the dropout rate be in the sgd optimization? Input should be a positive number.}
 
-\item{kMatch}{What should k be in the k-nearest neighbor matching? Input should be a positive number.}
-
 \item{batchSizePerCat}{What should the batch size per category be in the sgd optimization and knn matching?}
 
-\item{verbose}{Should progress updates be given? Input should be a Boolean.}
+\item{kMatch}{What should k be in the k-nearest neighbor matching? Input should be a positive number.}
 
-\item{diagnostics}{Should diagnostics be returned? Input should be a Boolean.}
+\item{winsorize}{Should columns of the raw \code{dfm} be Windorized?}
 
 \item{justTransform}{A Boolean indicating whether the user wants to extract the quanficiation-optimized 
 features only.}
 
-\item{winsorize}{Should columns of the raw \code{dfm} be Windorized?}
+\item{verbose}{Should progress updates be given? Input should be a Boolean.}
+
+\item{diagnostics}{Should diagnostics be returned? Input should be a Boolean.}
 }
 \value{
 A list consiting of \itemize{

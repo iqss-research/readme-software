@@ -37,6 +37,10 @@
 #' 
 #' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
 #' 
+#' @param batchSizePerCat_match What should the batch size per category be in the bagged knn matching? 
+#' 
+#' @param nboot_match How many bootstrap samples should we aggregiate when doing the knn matching? 
+#' 
 #' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
 #' 
 #' @param winsorize Should columns of the raw \code{dfm} be Windorized? 
