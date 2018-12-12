@@ -102,8 +102,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot_match = 100,
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
-                   winsorize      = T
-                   justTransform = F, 
+                   winsorize      = T, 
+                   justTransform = F,
                    verbose = F,  diagnostics = F){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
