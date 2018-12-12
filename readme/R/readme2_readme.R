@@ -252,7 +252,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
-                             0.01 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
+                             0.01 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -261,13 +261,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Calculates the gradients from myOpt_tf
   myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
-  myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
+  L2_squared = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   
-  L2_squared_unclipped = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
-  clip_tf              = tf$placeholder(tf$float32, shape = list()); 
-  TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
-  for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared           = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  #myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
+  #clip_tf              = tf$placeholder(tf$float32, shape = list()); 
+  #TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
+  #for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+  #L2_squared           = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients )  
@@ -305,7 +305,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_unclipped), 
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared), 
                                               feed_dict = dict(IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
@@ -314,7 +314,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      clip_value            = 1000 #0.50 * median( sqrt(init_L2_squared_vec) )
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       rm(d_)
       
@@ -348,7 +347,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, bootSizePerCat, replace = length(x) * 0.75 < bootSizePerCat  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
-          MM2_           = colSds(out_dfm_unlabeled,MM1);
+          MM2_          = colSds(out_dfm_unlabeled,MM1);
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -362,7 +361,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                #MatchIndices_i  = knn_adapt(reweightSet = X_, fixedSet = Y_, k = kMatch)$return_indices
                 MatchIndices_i  = c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index) 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
