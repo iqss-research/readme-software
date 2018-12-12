@@ -102,7 +102,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
                    bootSizePerCat = 20, 
-                   minMatch       = 5, 
+                   minMatch       = 10, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -163,11 +163,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
   
-  #### sdafdsflk
-  #e3
-  batchSizePerCat = ceiling( 50 / nCat ) 
-  bootSizePerCat = ceiling( 100 / nCat ) 
-    
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
@@ -251,8 +246,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
-                             0.01 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
+                             0.50 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -331,7 +326,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         ### Update the learning rate
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
       }
-      
+      browser()
+      CatDiscrim_tf
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = update_ls[[1]], 
