@@ -15,7 +15,7 @@ Winsorize_fxn <- function(x){
   return(x)
 }
 
-cleanText <- function(my_text){ 
+cleanme <- function(my_text){ 
   finalEncoding <- "ASCII"
   
   ### Convert to ASCII encoding

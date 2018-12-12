@@ -3,9 +3,7 @@
 #require("e1071")
 
 toDTM <- function(myText){
-  myText_ <- tolower(myText)
-  myText_ <- gsub('[[:punct:]]+','',myText_)
-  myText_ = tokenizers::tokenize_word_stems(myText_)
+  myText_ = tokenizers::tokenize_word_stems(myText)
   myText_ = lapply(myText_, function(x){unique(x)})
   myStems_tab = table(unlist(myText_))
   myStems_keep <- names( myStems_tab[myStems_tab > 0.005 * length(myText)] )
@@ -69,10 +67,12 @@ EnsembleMethod <- function(train_cats, train_feat, test_feat, labeled_pd){
   SVM_est_count <- try(predict(SVM_method , test_feat , probability = F), T) 
   SVM_est_count <- try(table(SVM_est_count)/sum(table(SVM_est_count)))
   
-  NaiveBayes_method <- try(e1071::naiveBayes(x = DF1[,-1], y = as.factor(DF1[,1]), laplace = 1), T)  
-  NaiveBayes_est <- try(colMeans(predict(NaiveBayes_method, test_feat, type = "raw", laplace = 0.5) ), T)  
-  NaiveBayes_est_count <- try(predict(NaiveBayes_method, test_feat, type = "class", laplace = 0.5), T)  
+  NaiveBayes_est <- try(predict(e1071::naiveBayes(x = DF1[,-1], y = as.factor(DF1[,1]), laplace = 1),
+                                test_feat, type = c("raw") ), T)  
+  NaiveBayes_est_count <- factor(apply(NaiveBayes_est, 1, function(x){names(which.max(x)[1]) }), 
+                                  levels = unique(as.factor(DF1[,1])))
   NaiveBayes_est_count <- try(table(NaiveBayes_est_count)/sum(table(NaiveBayes_est_count)))
+  NaiveBayes_est <- try(colMeans(NaiveBayes_est), T)  
   
   method_names <- c("Regression", "Forest", "SVM", "NaiveBayes")
   for(method_name in method_names){ 
