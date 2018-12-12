@@ -152,7 +152,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   ## Drop invariant columns
   dfm                   = dfm[,apply(dfm,2,sd)>0]
-  
+
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]  
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
@@ -162,7 +162,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
-
+  
+  #### sdafdsflk
+  #e3
+  batchSizePerCat = ceiling( 50 / nCat ) 
+  bootSizePerCat = ceiling( 100 / nCat ) 
+    
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max(numProjections,nCat+1) ); ## Number of projections
@@ -247,7 +252,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
-                             0.10 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
+                             0.01 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.001,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -265,7 +270,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   L2_squared           = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients )  
 
   #Updates for the batch normalization moments
   Moments_learn        = mLearn
@@ -342,11 +347,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, bootSizePerCat, replace = length(x) * 0.75 < bootSizePerCat  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          k_seq = 1:10
-          ratio_ = ((k_seq*nCat*bootSizePerCat) /nrow(out_dfm_unlabeled))
-          #ratio_ is synthetic L size / U size; target is 1:1
-          kMatch = k_seq[which.min(abs(ratio_ - 1))[1]]
-          print(kMatch)
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_           = colSds(out_dfm_unlabeled,MM1);
           BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
@@ -406,8 +406,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           print("peach1")
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
-          #sum(abs(est_readme2-unlabeled_pd))
-          #sum(abs(labeled_pd-unlabeled_pd))
+          #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
           ### Save them as tf_est_results
           tf_est_results <- list(est_readme2               = est_readme2,
                                  transformed_unlabeled_dfm = out_dfm_unlabeled,
