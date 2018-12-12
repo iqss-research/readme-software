@@ -98,12 +98,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = .5, 
-                   kMatch         = 3, 
-                   nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   bootSizePerCat = 20, 
+                   nboot_match = 100,
+                   batchSizePerCat_match = 20, 
                    minMatch       = 10, 
-                   verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
+                   kMatch         = 3, 
+                   winsorize      = T
+                   justTransform = F, 
+                   verbose = F,  diagnostics = F){ 
   
   ## Get summaries of all of the document characteristics and labeled indicator
   nDocuments  = nrow(dfm)
@@ -339,10 +341,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          indices_list  = replicate(nBoot_matching,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, bootSizePerCat, replace = length(x) * 0.75 < bootSizePerCat  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
+          indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, batchSizePerCat_match, replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
-          BOOTSTRAP_EST = sapply(1:nBoot_matching, function(boot_iter){ 
+          BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_      = out_dfm_unlabeled
@@ -373,7 +375,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
-            min_size2 <- bootSizePerCat
+            min_size2 <- batchSizePerCat_match
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
                   urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = min_size2,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
                   return( list(MM) )  } )) )
