@@ -55,8 +55,12 @@
 #' my_wordVecs <- matrix(rnorm(11*25), ncol = 25)
 #' row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be")
 #' 
-#' #Generate 100 ``documents'' of between 5-10 words each. 
-#' my_documentText <- replicate(100, paste(sample(row.names(my_wordVecs), sample(5:10, 1), replace = T), collapse = " ") ) 
+#' #Generate 100 ``documents'' of 5-10 words each. 
+#' my_documentText <- replicate(100, 
+#'                              paste(sample(row.names(my_wordVecs), 
+#'                                           sample(5:10, 1), 
+#'                                           replace = T), 
+#'                                    collapse = " ") ) 
 #' 
 #' #Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled. 
 #' my_labeledIndicator <- rep(1, times = 100)
