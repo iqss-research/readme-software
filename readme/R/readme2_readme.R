@@ -101,7 +101,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    nBoot_matching = 100,
                    batchSizePerCat = 10, 
-                   bootSizePerCat = 25, 
+                   bootSizePerCat = 20, 
                    minMatch       = 10, 
                    verbose = F,  diagnostics = F,    justTransform = F,  winsorize      = T){ 
   
@@ -245,11 +245,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  #myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.75)  ) + 
-                             #tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.75)  ) + 
-  myLoss_tf            = -(tf$reduce_mean(tf$log(tf$clip_by_value(CatDiscrim_tf,0.01,1.75)  )) + 
-                        tf$reduce_mean(tf$log(tf$clip_by_value(FeatDiscrim_tf,0.01,1.75)  )) + 
-                             0.50 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
+  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1)  ) + 
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
+                             tf$reduce_mean(tf$minimum(Spread_tf, 1)))
+                             #0.25 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
