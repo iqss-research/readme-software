@@ -245,9 +245,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(tf$sqrt(tf$minimum(CatDiscrim_tf,2))  ) + 
-                             tf$reduce_mean(tf$sqrt(tf$minimum(FeatDiscrim_tf,2)  )) + 
-                             0.10*tf$reduce_mean(tf$sqrt(tf$minimum(Spread_tf, 1))))
+  myLoss_tf            = -(tf$reduce_mean(tf$sqrt(tf$clip_by_value(CatDiscrim_tf,0.01,2))  ) + 
+                             tf$reduce_mean(tf$sqrt(tf$clip_by_value(FeatDiscrim_tf,0.01, 2)  )) + 
+                             0.10*tf$reduce_mean(tf$sqrt(tf$clip_by_value(Spread_tf,0.01, 1))))
                              #0.25 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
