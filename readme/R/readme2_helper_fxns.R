@@ -19,6 +19,7 @@ cleanme <- function(my_text){
                       if(startingEncoding != "unknown"){ x<-iconv(x, from = startingEncoding, to = finalEncoding, sub = '', mark = T) }
                       return(x) })
   names(my_text) <- NULL 
+  
   ## Remove HTML/XML tags
   my_text <- gsub(my_text, pattern = "<.*?>", replace = " <html> ") 
   
