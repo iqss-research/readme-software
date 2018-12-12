@@ -1,4 +1,4 @@
-#' cleanText
+#' cleanme
 #' 
 #' Standard preprocessing code for ASCII texts. Removes HTML tags, URLs, linebreaks. Converts standard emoticons to tokens. Removes non-informative punctuation.
 #' 
