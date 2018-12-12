@@ -355,7 +355,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index) 
+                MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index) , T) 
+                if(class(MatchIndices_i) == "try-error"){browser()}
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
                 t_              = t_[t_<minMatch]
