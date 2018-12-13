@@ -24,16 +24,16 @@ setwd(mainDir)
 sampling_scheme <- "Historical"
 
 #How many iterations to use per corpus? For stable results, try iterations setting > 5. 
-iterations <- 2 
+iterations <- 1
 
 #where should we look for the word vector corpus? 
-wordVecs_pointer <- "~/Downloads/glove.twitter.27B.50d.txt" #from <http://nlp.stanford.edu/data/glove.twitter.27B.zip>
+wordVecs_pointer <- "~/Downloads/glove.twitter.27B.200d.txt" #from <http://nlp.stanford.edu/data/glove.twitter.27B.zip>
 
 #Run battery. 
 #For users interested in speeding up this protocol, 
 #the ``for(ijack in global_iter_seq){''loop in "./support/readme2_master_public.R"
 #loop can be modified to be run entirely in parallel. 
-source("./support/readme2_master_public.R")
+source("./support/readme2_sim_internals.R")
 
 #Check out the results! 
 #global_results contains the error values for ~30 other algorithms, as well as various diagnostics. 

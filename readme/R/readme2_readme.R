@@ -106,9 +106,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = .5, 
-                   batchSizePerCat = 20, 
-                   batchSizePerCat_match = 20, 
+                   batchSizePerCat = 5, 
                    kMatch         = 3, 
+                   batchSizePerCat_match = 10, 
+                   minMatch       = 5,
                    nboot_match    = 100,
                    winsorize      = T, 
                    justTransform  = F,
@@ -255,9 +256,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf, 2)  ) + 
-                             0.25 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
+  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1)  ) + 
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
+                             0.10 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -365,7 +366,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
                 MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index) , T) 
-                minMatch <- 10 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
                 t_              = t_[t_<minMatch]

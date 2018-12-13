@@ -86,8 +86,12 @@ set.seed(1)
 my_wordVecs <- matrix(rnorm(11*25), ncol = 25)
 row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be")
 
-#Generate 100 ``documents'' of between 5-10 words each. 
-my_documentText <- replicate(100, paste(sample(row.names(my_wordVecs), sample(5:10, 1), replace = T), collapse = " ") ) 
+#Generate 100 ``documents'' of 5-10 words each. 
+my_documentText <- replicate(100, 
+                             paste(sample(row.names(my_wordVecs), 
+                                          sample(5:10, 1), 
+                                          replace = T), 
+                                   collapse = " ") ) 
 
 #Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled. 
 my_labeledIndicator <- rep(1, times = 100)
@@ -105,7 +109,7 @@ my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
 readme_results <- readme(dfm = my_dfm,  
                          labeledIndicator = my_labeledIndicator, 
                          categoryVec = my_categoryVec, 
-                         nboot = 2)
+                         nboot = 2, sgd_iters = 500)
 print(readme_results$point_readme)
 
 }
