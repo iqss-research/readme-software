@@ -256,8 +256,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
+  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
                              0.10 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,1) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -365,7 +365,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index) , T) 
+                MatchIndices_i  = c(FNN::get.knnx(data  = X_, query = Y_, k     = kMatch)$nn.index)
+                MatchIndices_i = unique(MatchIndices_i)
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
                 t_              = t_[t_<minMatch]
