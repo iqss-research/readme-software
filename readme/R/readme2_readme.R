@@ -152,7 +152,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
+  #nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
+  nonLinearity_fxn      = function(x){tf$nn$relu(x)}
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -320,10 +321,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      #inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
-      #clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
-      inverse_learning_rate = median( init_L2_squared_vec ) / 5
-      clip_value = median( sqrt( init_L2_squared_vec )  ) / 5 #Gradient clip at 1/2 an order of magnitude from iter 1 
+      inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
+      clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       print( clip_value ) 
       rm(d_)
       
