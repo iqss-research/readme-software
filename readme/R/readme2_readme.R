@@ -262,7 +262,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                               #tf$log( tf$clip_by_value(Spread_tf,0.25,100) ) ))
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2) - tf$maximum(CatDiscrim_tf,2)  ) + 
                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5) - tf$maximum(FeatDiscrim_tf,1.5)  ) + 
-                            0.10*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.25) -  tf$maximum(Spread_tf,0.25) )) ) 
+                            0.10*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.25)) -  tf$log(tf$maximum(Spread_tf,0.25) )) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
