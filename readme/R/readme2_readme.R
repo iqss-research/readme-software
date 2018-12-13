@@ -355,6 +355,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat, function(x){sample(x, batchSizePerCat_match, replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
+          
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -386,7 +387,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
-            browser() 
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
                   urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = batchSizePerCat_match,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
                   return( list(MM) )  } )) )
@@ -401,6 +401,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
+                
+                ESGivenD_noMatch = t( InnerMultMat %*% X_ ); colnames(ESGivenD_noMatch)   = names( MatchIndices_byCat_ ) 
+                ED_sampled_noMatch                   = try(readme_est_fxn(X         = ESGivenD_noMatch ,
+                                                                          Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
+                ED_sampled = 0.75 * ED_sampled + 0.25*ED_sampled_noMatch
                 return( ED_sampled )  
               } )), T)
               ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
