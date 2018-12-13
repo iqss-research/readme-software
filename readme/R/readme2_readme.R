@@ -267,17 +267,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                     use_nesterov  = T)
 
   ### Calculates the gradients from myOpt_tf
-  myGradients          = myOpt_tf$compute_gradients(myLoss_tf) 
-  L2_squared           = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  myGradients_unclipped          = myOpt_tf$compute_gradients(myLoss_tf) 
   
-  #myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
-  #clip_tf              = tf$placeholder(tf$float32, shape = list()); 
-  #TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients[[%s]][[1]]', 1:length(myGradients)), collapse = ","))))
-  #for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  #L2_squared           = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients)), collapse = "+") ) )
+  myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
+  clip_tf              = tf$placeholder(tf$float32, shape = list()); 
+  TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients_unclipped[[%s]][[1]]', 1:length(myGradients_unclipped)), collapse = ","))))
+  for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+  L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients_unclipped)), collapse = "+") ) )
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients )  
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
   #Updates for the batch normalization moments
   Moments_learn        = mLearn
@@ -312,7 +311,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared), 
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
@@ -322,6 +321,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
+      clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       rm(d_)
       
       ## Initialize vector to store learning rates
@@ -331,9 +331,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       my_v = c()
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply_clipped),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
+                                                                  clip_tf = 1000., 
                                                                   IL_mu_last        = update_ls[[1]], 
                                                                   IL_sigma_last     = update_ls[[2]]))
         ### Update the learning rate
