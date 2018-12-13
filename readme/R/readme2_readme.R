@@ -258,7 +258,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
-                             tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,0.5) ) ))
+                             0.10 * tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,0.5) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -329,7 +329,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGD
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared, myOpt_tf_apply,Spread_tf),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   IL_mu_last        = update_ls[[1]], 
@@ -338,7 +338,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
       }
       browser() 
-      Spread_tf
+      plot(  c(update_ls[[5]] )  )
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = update_ls[[1]], 
