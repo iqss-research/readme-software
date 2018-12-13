@@ -106,7 +106,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = .5, 
-                   batchSizePerCat = 10, 
+                   batchSizePerCat = 5, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -358,7 +358,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_      = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2     = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
+            MM2     =  apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
             X_      = FastScale(X_, MM1, MM2);
             Y_      = FastScale(Y_, MM1, MM2)
               
