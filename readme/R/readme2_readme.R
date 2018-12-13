@@ -268,6 +268,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Calculates the gradients from myOpt_tf
   myGradients_unclipped          = myOpt_tf$compute_gradients(myLoss_tf) 
+  browser() 
   
   myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
   clip_tf              = tf$placeholder(tf$float32, shape = list()); 
