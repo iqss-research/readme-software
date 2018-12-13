@@ -247,7 +247,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2)
+  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -257,8 +257,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
-                              tf$reduce_mean(tf$log( tf$clip_by_value(Spread_tf,0.01,0.25) ) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  ) + 
+                              tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.25) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
