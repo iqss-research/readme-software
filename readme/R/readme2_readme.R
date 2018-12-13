@@ -257,9 +257,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  ) + 
-                              0.10*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.33) )  - 
-                                      0.50 * ( tf$clip_by_value(Spread_tf,0.33,100) ) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
+                              0.10*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.50) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -267,7 +266,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                     use_nesterov  = T)
 
   ### Calculates the gradients from myOpt_tf
-  myGradients_unclipped          = myOpt_tf$compute_gradients(myLoss_tf) 
+  myGradients_unclipped = myOpt_tf$compute_gradients(myLoss_tf) 
 
   myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
   clip_tf              = tf$placeholder(tf$float32, shape = list()); 
@@ -322,7 +321,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
-      clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      #clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      clip_value = median( sqrt( init_L2_squared_vec )  ) / 5 
+      print( clip_value ) 
       rm(d_)
       
       ## Initialize vector to store learning rates
