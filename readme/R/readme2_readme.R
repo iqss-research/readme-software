@@ -152,8 +152,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   #nonlinearity fxn for projection 
-  #nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
-  nonLinearity_fxn      = function(x){tf$nn$relu(x)}
+  nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -387,6 +386,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch), categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
+            browser() 
             InnerMultMat             = t(do.call(rbind,sapply(1:nCat,function(x_){
                   urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = batchSizePerCat_match,ncol = nCat); MM[,x_] = 1-(nCat-1)*uncertainty_amt
                   return( list(MM) )  } )) )
