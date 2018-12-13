@@ -107,7 +107,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
                    batchSizePerCat = 10, 
-                   kMatch         = 3, 
+                   kMatch         = 1, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
                    nboot_match    = 100,
@@ -322,7 +322,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       init_L2_squared_vec   = unlist( d_[3,] ) 
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       #clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
-      clip_value = median( sqrt( init_L2_squared_vec )  ) / 5 
+      clip_value = median( sqrt( init_L2_squared_vec )  ) / 5 #Gradient clip at 1/2 an order of magnitude from iter 1 
       print( clip_value ) 
       rm(d_)
       
