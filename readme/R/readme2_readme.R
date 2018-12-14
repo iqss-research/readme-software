@@ -281,8 +281,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
   #Updates for the batch normalization moments
-  OneMinus_mLearn = tf$constant(1-mLearn, dtype = tf$float16)
-  mLearn = tf$constant(mLearn, dtype = tf$float16)
+  OneMinus_mLearn      = tf$constant(1-mLearn, dtype = tf$float16)
+  mLearn               = tf$constant(mLearn, dtype = tf$float16)
   IL_mu_               = mLearn  * IL_mu_b   + OneMinus_mLearn * IL_mu_last; 
   IL_sigma_            = mLearn * IL_sigma_b + OneMinus_mLearn * IL_sigma_last
   
@@ -331,7 +331,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
-        print( awer )
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
         update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply),
                                                  feed_dict = dict(
