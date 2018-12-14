@@ -369,8 +369,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                browser() 
-                MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index)
+                MatchIndices_i  = FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index
+                DistMat_i = sapply(1:nrow(MatchIndices_i), function(asdr){ 
+                  EUCLID_ =  ( t(X_[MatchIndices_i[asdr,],]) - Y_[asdr,] )^2 
+                  apply(EUCLID_, 2, function(er){ sqrt(sum(er)) }) })
+                MatchIndices_i = c(MatchIndices_i[DistMat_i<sqrt(nProj)])
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
                 t_              = t_[t_<minMatch]
@@ -406,7 +409,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 ESGivenD_noMatch = t( InnerMultMat %*% X_ ); colnames(ESGivenD_noMatch)   = names( MatchIndices_byCat_ ) 
                 ED_sampled_noMatch                   = try(readme_est_fxn(X         = ESGivenD_noMatch ,
                                                                           Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
-                ED_sampled = 0.75 * ED_sampled + 0.25*ED_sampled_noMatch
+                ED_sampled = 1 * ED_sampled + 0*ED_sampled_noMatch
                 return( ED_sampled )  
               } )), T)
               ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
