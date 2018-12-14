@@ -135,6 +135,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     stop("Error: 'mLearn' must be greater than 0 and less than 1")
   }
   
+  browser() 
   if (verbose == T){
     if (kMatch == 0){
       cat("Note: 'kmatch' set to 0, skipping matching procedure for the labeled set")
