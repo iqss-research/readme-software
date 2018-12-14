@@ -224,7 +224,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   # In this case, a line with only 3 positions
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
-  Indices_full        = tf$Variable(t(replicate(sgd_iters, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
+  Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
   iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
   iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
   Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
@@ -308,7 +308,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
-      if(iter_i > 1){ sess$run(list(Indices_full$assign(t(replicate(sgd_iters, sgd_grabSamp()-1))), 
+      if(iter_i > 1){ sess$run(list(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1))), 
                                     iterator_tf$assign(as.integer(0)))) } 
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
@@ -336,9 +336,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
-        try__ = try(sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply)), T)  
-        sess$run( iterator_tf_add )
-        if(class(try__) == "try-error"){browser()}
+        try__ = try(sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply)), T)  
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
