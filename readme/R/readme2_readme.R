@@ -285,7 +285,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   # Initialize global variables in TensorFlow Graph
   browser()
+  q = tf.FIFOQueue(capacity=3, dtypes=tf.float32)
+  tf$FIFOQueue(capacity = 3, dtypes = tf$float32)
   init                 = tf$global_variables_initializer()
+  
+  f = tf$FIFOQueue(10, list(tf$int32), shapes = list(4))
+  en = f$enqueue(list(list(1,2,3,4)))
+  de = f.dequeue()
+  with tf.Session() as sess:
+    en.run()
+  x = sess.run(de)
+  print(x)
  
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol=nCat, dimnames = list(NULL, names(labeled_pd)))
