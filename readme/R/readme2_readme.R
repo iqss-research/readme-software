@@ -206,8 +206,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   axis_FeatDiscrim    = as.integer(nCat!=2)
     
   #Placeholder settings - to be filled when executing TF operations
-  sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
-  clip_tf             = tf$placeholder(tf$float16, shape = list()); 
+  #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
+  #clip_tf             = tf$placeholder(tf$float16, shape = list());
+  clip_tf             = tf$Variable(10000., dtype = tf$float16, trainable = F); 
+  sdg_learning_rate   = tf$Variable(10000., dtype = tf$float16, trainable = F)
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -324,13 +326,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      browser() 
-      sess$run( CatIndices_1_shuf ) 
+      if(T == F){
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
                                                                IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
+      } 
+      browser() 
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped))
+      
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
       
