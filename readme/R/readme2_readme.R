@@ -206,15 +206,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   axis_FeatDiscrim    = as.integer(nCat!=2)
     
   #Placeholder settings - to be filled when executing TF operations
-  sdg_learning_rate   = tf$placeholder(tf$float32, shape = c())
-  clip_tf             = tf$placeholder(tf$float32, shape = list()); 
+  sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
+  clip_tf             = tf$placeholder(tf$float16, shape = list()); 
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
                           urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
-  MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
+  MultMat_tf          = tf$constant(MultMat, dtype = tf$float16)
 
   ## Which indices in the labeled set are associated with each category
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
@@ -222,29 +222,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   
   # In this case, a line with only 3 positions
-  q_tf = tf$FIFOQueue(capacity=sgd_iters, dtypes=tf$float32)
-  browser() 
-  #https://blog.metaflow.fr/tensorflow-how-to-optimise-your-input-pipeline-with-queues-and-multi-threading-e7c3874157e0
-  x_input_data = replicate(sgd_iters, dfm_labeled[sgd_grabSamp(),])
-  x_input_data <- aperm(x_input_data, c(3,1,2))
-  x_input_data = tf$constant(x_input_data, dtype = tf$float32)
-  enqueue_op = q_tf$enqueue_many(x_input_data) # <- x1 - x2 -x3 
-  IL_input =q_tf$dequeue() #tf$reshape(q_tf$dequeue() , shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
-  
-  #IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
   IL_sigma_b          = tf$sqrt(IL_sigma2_b)
-  IL_mu_last          = tf$placeholder( tf$float32,shape(dim(IL_mu_b)) )
-  IL_sigma_last       = tf$placeholder( tf$float32,shape(dim(IL_sigma_b)) )
+  IL_mu_last          = tf$placeholder( tf$float16,shape(dim(IL_mu_b)) )
+  IL_sigma_last       = tf$placeholder( tf$float16,shape(dim(IL_sigma_b)) )
   IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
-  OUTPUT_IL           = tf$placeholder(tf$float32, shape = list(NULL, nDim))
+  OUTPUT_IL           = tf$placeholder(tf$float16, shape = list(NULL, nDim))
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float32, trainable = T)
-  BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
+  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj)),dtype = tf$float16, trainable = T)
+  BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float16)
 
   ### Drop-out transformation 
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
@@ -319,10 +310,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      browser() 
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
-                                                               #IL_input      = dfm_labeled[sgd_grabSamp(),],
+                                                               IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
@@ -339,7 +329,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate_vec = rep(NA, times = sgd_iters) 
       
       ### For each iteration of SGDs
-      myV <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         print( awer )
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
