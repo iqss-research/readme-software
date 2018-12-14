@@ -354,7 +354,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_sigma_value = update_ls[[2]]
     
       for(awer in 1:sgd_iters){
-        print(awer)
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
           update_ls                       = sess$run(list(  L2_squared_clipped,
