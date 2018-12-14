@@ -207,9 +207,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #Placeholder settings - to be filled when executing TF operations
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
-  #clip_tf             = tf$placeholder(tf$float16, shape = list());
   clip_tf             = tf$Variable(10000., dtype = tf$float16, trainable = F); 
-  sdg_learning_rate   = tf$Variable(10000., dtype = tf$float16, trainable = F)
+  inverse_learning_rate   = tf$Variable(0, dtype = tf$float16, trainable = F)
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -287,7 +286,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients_unclipped[[%s]][[1]]', 1:length(myGradients_unclipped)), collapse = ","))))
   for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
   L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients_unclipped)), collapse = "+") ) )
-  
+  sdg_learning_rate = 1 /  inverse_learning_rate
+    
+  inverse_learning_rate = inverse_learning_rate + L2_squared_clipped / inverse_learning_rate
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
@@ -338,11 +339,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
-      inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
+      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       sess$run(  clip_tf$assign(clip_value ) ) 
-      sess$run(  sdg_learning_rate$assign( 1/inverse_learning_rate ) )  
-      my_reassign = sdg_learning_rate$assign( 1/inverse_learning_rate )
+      sess$run(  inverse_learning_rate$assign( inverse_learning_rate_starting ) )  
       rm(d_)
       
       ### For each iteration of SGDs
@@ -353,11 +353,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-          update_ls                       = sess$run(list(  L2_squared_clipped,
-                                                            my_reassign, 
+          update_ls                       = sess$run(list(  inverse_learning_rate_update,
                                                             myOpt_tf_apply))
-          inverse_learning_rate <- inverse_learning_rate + update_ls[[1]] / inverse_learning_rate
-          #if(awer %% 1 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
+          #inverse_learning_rate <- inverse_learning_rate + update_ls[[1]] / inverse_learning_rate
         } 
         
         if(T == F){ 
