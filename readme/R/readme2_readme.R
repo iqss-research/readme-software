@@ -352,6 +352,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
       
+      print( "and") 
       for(awer in 1:sgd_iters){
         print( awer )
         if(T == T){ 
