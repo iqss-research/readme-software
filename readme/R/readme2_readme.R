@@ -150,13 +150,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     cat(paste("Count of documents in each category in the labeled set:\n"))
     print(labeledCt)
   }
-  
-  #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
-  
-  ## Generic winsorization function 
-  r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
-  
+
   # Winsorize the columns of the document-feature matrix
   if(winsorize          == T){
   dfm                   = apply(dfm, 2, Winsorize_fxn )
@@ -173,6 +167,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
+  
+  #nonlinearity fxn for projection 
+  nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
+  
+  ## Generic winsorization function 
+  r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
+  
+  ### Function to generate bootstrap sample
+  sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } ))}
   
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
@@ -305,9 +308,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
-      ### Function to generate bootstrap sample
-      sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } ))}
-
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
