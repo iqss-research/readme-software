@@ -278,8 +278,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Calculates the gradients from myOpt_tf
   myGradients_unclipped = myOpt_tf$compute_gradients(myLoss_tf) 
-
-  myGradients_clipped  = myOpt_tf$compute_gradients(myLoss_tf) 
+  myGradients_clipped  = myGradients_unclipped
   TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients_unclipped[[%s]][[1]]', 1:length(myGradients_unclipped)), collapse = ","))))
   for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
   L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients_unclipped)), collapse = "+") ) )
@@ -331,6 +330,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
+        browser() 
         try__ = try(sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply)), T)  
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
