@@ -344,10 +344,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       init_L2_squared_vec   = unlist( d_[3,] ) 
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
-      clip_tf$assign(clip_value )
-      sdg_learning_rate$assign( inverse_learning_rate )
-      sess$run( sdg_learning_rate )  
-      browser()
+      sess$run(  clip_tf$assign(clip_value ) ) 
+      sess$run(  sdg_learning_rate$assign( inverse_learning_rate ) )  
       rm(d_)
       
       ### For each iteration of SGDs
@@ -362,7 +360,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           IL_mu_value    = mLearn * update_ls[[1]] + (1 - mLearn) * IL_mu_value
           IL_sigma_value = mLearn * update_ls[[2]] + (1 - mLearn) * IL_sigma_value
           inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
-          if(awer %% 1 == 0){ sdg_learning_rate = sdg_learning_rate$assign( inverse_learning_rate )}
+          if(awer %% 1 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
         } 
         
         if(T == F){ 
