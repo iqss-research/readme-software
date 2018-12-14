@@ -210,6 +210,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
                           urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          #certainty_amt = 0.99; uncertainty_amt = (1 - certainty_amt) / (nCat - 1);MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = certainty_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -403,11 +404,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
-                
-                ESGivenD_noMatch = t( InnerMultMat %*% X_ ); colnames(ESGivenD_noMatch)   = names( MatchIndices_byCat_ ) 
-                ED_sampled_noMatch                   = try(readme_est_fxn(X         = ESGivenD_noMatch ,
-                                                                          Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
-                ED_sampled = 1 * ED_sampled + 0*ED_sampled_noMatch
                 return( ED_sampled )  
               } )), T)
               ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
