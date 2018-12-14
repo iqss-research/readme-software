@@ -362,6 +362,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
+      print("e")
       ### Here ends the SGD for generating optimal document-feature matrix.
       
       ### If we're also going to do estimation
