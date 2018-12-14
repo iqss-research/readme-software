@@ -207,8 +207,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #Placeholder settings - to be filled when executing TF operations
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
-  clip_tf             = tf$Variable(10000., dtype = tf$float16, trainable = F); 
-  inverse_learning_rate   = tf$Variable(0, dtype = tf$float16, trainable = F)
+  clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F); 
+  inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
+  sdg_learning_rate     = 1 /  inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -286,7 +287,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients_unclipped[[%s]][[1]]', 1:length(myGradients_unclipped)), collapse = ","))))
   for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
   L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients_unclipped)), collapse = "+") ) )
-  sdg_learning_rate = 1 /  inverse_learning_rate
   
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
