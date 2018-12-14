@@ -224,9 +224,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   # In this case, a line with only 3 positions
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
-  Indices_full        = tf$constant(t(replicate(sgd_iters, sgd_grabSamp())), dtype = tf$int32)
-  browser() 
-  #Sample_indices_tf   = tf$gather(Indices_full, t, axis = 0L)
+  Indices_full        = tf$constant(t(replicate(sgd_iters, sgd_grabSamp()-1)), dtype = tf$int32)
+  Sample_indices_tf   = tf$gather(Indices_full, 
+                                  tf$random_uniform(list(), as.integer(0), as.integer(sgd_iters - 1), dtype = tf$int32),
+                                  axis = 0L)
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
