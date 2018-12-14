@@ -209,7 +209,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
   clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
-  sdg_learning_rate     = tf$constant(1, dtype = tf$float16) /  inverse_learning_rate
+  sdg_learning_rate     = tf$constant(1., dtype = tf$float16) /  inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -223,8 +223,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   # In this case, a line with only 3 positions
-  if(T == T){
-  IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
+  #IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
+  IL_input_full            = tf$Variable(dfm_labeled, dtype = tf$float16, trainable = F)
   for(req in 1:nCat){ 
     eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int32)", req)))
     eval(parse(text = sprintf("batch_indices_%s = tf$gather(tf$random_shuffle(CatIndices_%s), indices = as.integer(0:(NObsPerCat-1)), axis = 0L)", req, req ) ) )
@@ -232,7 +232,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   eval(parse(text = sprintf("Sample_indices_tf   = tf$concat(list(%s), axis = 0L)", 
              paste(paste("batch_indices_", 1:nCat, sep = ""), collapse = ","))))
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
-  } 
+  
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
@@ -351,22 +351,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       for(awer in 1:sgd_iters){
         print( awer )
-        ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
-        
-        if(T == F){ 
-        ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply),
-                                                 feed_dict = dict(
-                                                                  IL_input          = dfm_labeled[sgd_grabSamp(),],
-                                                                  sdg_learning_rate = 1/inverse_learning_rate,
-                                                                  IL_mu_last        = IL_mu_value, 
-                                                                  IL_sigma_last     = IL_sigma_value))
-          inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
-        } 
-        ### Update the learning rate
+        sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
       }
-      browser() 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
