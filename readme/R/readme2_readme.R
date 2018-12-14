@@ -222,7 +222,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  browser() 
   # In this case, a line with only 3 positions
   if(T == T){
   IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
@@ -350,6 +349,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
     
+      browser() 
       for(awer in 1:sgd_iters){
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
