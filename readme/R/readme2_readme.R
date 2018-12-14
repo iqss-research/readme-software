@@ -336,8 +336,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
-        sess$run( iterator_tf_add )
         try__ = try(sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply)), T)  
+        sess$run( iterator_tf_add )
         if(class(try__) == "try-error"){browser()}
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
