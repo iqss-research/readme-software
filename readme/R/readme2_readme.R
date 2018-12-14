@@ -329,7 +329,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
       if(T == F){
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
+      d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
                                                                IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
@@ -351,15 +351,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
-      
-      print( "and") 
+    
       for(awer in 1:sgd_iters){
-        print( awer )
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-          update_ls                       = sess$run(list( IL_mu_b,IL_sigma_b, L2_squared_clipped, myOpt_tf_apply))
-          IL_mu_value    = mLearn * update_ls[[1]] + (1 - mLearn) * IL_mu_value
-          IL_sigma_value = mLearn * update_ls[[2]] + (1 - mLearn) * IL_sigma_value
+          update_ls                       = sess$run(list(  L2_squared_clipped, myOpt_tf_apply))
           inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
           if(awer %% 10 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
         } 
@@ -375,15 +371,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
         } 
         ### Update the learning rate
-      } 
+      }
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
-                                                                      IL_mu_last    = update_ls[[1]], 
-                                                                      IL_sigma_last = update_ls[[2]])), T)
+                                                                      IL_mu_last    = IL_mu_value, 
+                                                                      IL_sigma_last = IL_mu_value)), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
-      print("e")
       ### Here ends the SGD for generating optimal document-feature matrix.
       
       ### If we're also going to do estimation
