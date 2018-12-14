@@ -345,7 +345,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       sess$run(  clip_tf$assign(clip_value ) ) 
-      sess$run(  sdg_learning_rate$assign( inverse_learning_rate ) )  
+      sess$run(  sdg_learning_rate$assign( 1/inverse_learning_rate ) )  
       rm(d_)
       
       ### For each iteration of SGDs
@@ -353,11 +353,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_sigma_value = update_ls[[2]]
     
       for(awer in 1:sgd_iters){
+        print(awer)
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-          update_ls                       = sess$run(list(  L2_squared_clipped, myOpt_tf_apply))
+          update_ls                       = sess$run(list(  L2_squared_clipped,
+                                                            sdg_learning_rate$assign( 1/inverse_learning_rate ), 
+                                                            myOpt_tf_apply))
           inverse_learning_rate <- inverse_learning_rate + update_ls[[1]] / inverse_learning_rate
-          if(awer %% 1 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
+          #if(awer %% 1 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
         } 
         
         if(T == F){ 
