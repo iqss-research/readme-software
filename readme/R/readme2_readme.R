@@ -106,7 +106,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
-                   batchSizePerCat = 10, 
+                   batchSizePerCat = 5, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -308,7 +308,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
-      if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters, sgd_grabSamp()-1)))) } 
+      if(iter_i > 1){ sess$run(list(Indices_full$assign(t(replicate(sgd_iters, sgd_grabSamp()-1))), iterator_tf$assign(as.integer(0)))) } 
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
@@ -324,15 +324,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       init_L2_squared_vec   = unlist( d_[3,] ) 
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
-      sess$run(  clip_tf$assign(clip_value ) ) 
-      sess$run(  inverse_learning_rate$assign( inverse_learning_rate_starting ) )  
+      sess$run(  list(clip_tf$assign(clip_value ), 
+                      inverse_learning_rate$assign( inverse_learning_rate_starting ), 
+                      iterator_tf$assign(as.integer(0))) )  
       rm(d_)
       
       ### For each iteration of SGDs
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
     
-      sess$run(iterator_tf$assign(as.integer(0)))
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
         sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply))
