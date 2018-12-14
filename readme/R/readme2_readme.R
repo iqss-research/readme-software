@@ -224,9 +224,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # In this case, a line with only 3 positions
   q_tf = tf$FIFOQueue(capacity=sgd_iters, dtypes=tf$float32)
   browser() 
-  x_input_data = tf$array(replicate(sgd_iters, dfm_labeled[sgd_grabSamp(),]))
+  #https://blog.metaflow.fr/tensorflow-how-to-optimise-your-input-pipeline-with-queues-and-multi-threading-e7c3874157e0
+  x_input_data = replicate(sgd_iters, dfm_labeled[sgd_grabSamp(),])
+  x_input_data <- aperm(x_input_data, c(3,1,2))
+  x_input_data = tf$constant(x_input_data, dtype = tf$float32)
   enqueue_op = q_tf$enqueue_many(x_input_data) # <- x1 - x2 -x3 
-  IL_input = tf$reshape(q_tf$dequeue() , shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  IL_input =q_tf$dequeue() #tf$reshape(q_tf$dequeue() , shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   
   #IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
