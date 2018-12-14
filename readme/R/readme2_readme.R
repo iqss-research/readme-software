@@ -308,7 +308,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped,Spread_tf), 
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
                                                                IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
