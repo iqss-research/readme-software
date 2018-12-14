@@ -296,10 +296,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
   #Updates for the batch normalization moments
+  if(T == F){ 
   OneMinus_mLearn      = tf$constant(1-mLearn, dtype = tf$float16)
   mLearn               = tf$constant(mLearn, dtype = tf$float16)
   IL_mu_               = mLearn  * IL_mu_b   + OneMinus_mLearn * IL_mu_last; 
   IL_sigma_            = mLearn * IL_sigma_b + OneMinus_mLearn * IL_sigma_last
+  } 
+  IL_mu_               = tf$Variable(rep(0, times = nDim), dtype = tf$float16, trainable = F)
+  IL_sigma_            = tf$Variable(rep(1, times = nDim), dtype = tf$float16, trainable = F)
   
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
@@ -334,7 +338,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       } 
       browser() 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped))
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped)))
       
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
@@ -343,6 +347,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       init_L2_squared_vec   = unlist( d_[3,] ) 
       inverse_learning_rate = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      clip_tf$assign(clip_value )
       print( clip_value ) 
       rm(d_)
       
@@ -356,7 +361,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                  feed_dict = dict(
                                                                   IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
-                                                                  clip_tf           = clip_value, 
                                                                   IL_mu_last        = update_ls[[1]], 
                                                                   IL_sigma_last     = update_ls[[2]]))
         ### Update the learning rate
