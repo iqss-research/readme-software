@@ -224,7 +224,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  # In this case, a line with only 3 positions
+  browser() 
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
   iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
