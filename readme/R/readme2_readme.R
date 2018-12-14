@@ -175,7 +175,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
   
   ### Function to generate bootstrap sample
-  sgd_grabSamp   = function(){ unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } ))}
+  sgd_grabSamp   = function(){ c(unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } )))}
   
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
@@ -224,13 +224,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   # In this case, a line with only 3 positions
   IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
-  browser() 
-  for(req in 1:nCat){ 
-    eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int32)", req)))
-    eval(parse(text = sprintf("batch_indices_%s = tf$gather(tf$random_shuffle(CatIndices_%s), indices = as.integer(0:(NObsPerCat-1)), axis = 0L)", req, req ) ) )
-  } 
-  eval(parse(text = sprintf("Sample_indices_tf   = tf$concat(list(%s), axis = 0L)", 
-             paste(paste("batch_indices_", 1:nCat, sep = ""), collapse = ","))))
+  Indices_full             = tf$constant(t(replicate(sgd_iters, sgd_grabSamp())), dtype = tf$int32)
+  #for(req in 1:nCat){ 
+    #eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int8)", req)))
+    #eval(parse(text = sprintf("batch_indices_%s = tf$gather(tf$random_shuffle(CatIndices_%s), indices = as.integer(0:(NObsPerCat-1)), axis = 0L)", req, req ) ) )
+  #} 
+  #eval(parse(text = sprintf("Sample_indices_tf   = tf$concat(list(%s), axis = 0L)", 
+             #paste(paste("batch_indices_", 1:nCat, sep = ""), collapse = ","))))
+  Sample_indices_tf   = tf$gather(Indices_full, 0L, axis = 0L)
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
