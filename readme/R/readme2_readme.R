@@ -338,6 +338,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         if(awer %%100 == 0){print( awer )}
         sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply))
       }
+      browser() 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
