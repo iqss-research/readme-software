@@ -315,26 +315,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      browser() 
       update_ls      = list() 
-      d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma2_b)))
-      
-      update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
-      update_ls[[2]] =  rowMeans( sqrt(do.call(cbind, d_[2,]) )  )
+      moments_list             = replicate(200, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
+      IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
+      rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec   = unlist(replicate(20, sess$run(L2_squared_clipped, iterator_tf_add)))
+      init_L2_squared_vec   = unlist(replicate(20, sess$run(list(L2_squared_clipped, iterator_tf_add))[[1]]))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       sess$run(  list(clip_tf$assign(clip_value ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ), 
-                      iterator_tf$assign(as.integer(0))) )  
-      rm(d_)
+                      iterator_tf$assign(as.integer(0))) )
       
       ### For each iteration of SGDs
-      IL_mu_value = update_ls[[1]]
-      IL_sigma_value = update_ls[[2]]
-    
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
         try__ = try(sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply)), T)  
