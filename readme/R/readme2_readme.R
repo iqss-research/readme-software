@@ -333,6 +333,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
     
+      browser() 
       sess$run(iterator_tf$assign(as.integer(0)))
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
