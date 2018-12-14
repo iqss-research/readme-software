@@ -418,6 +418,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     ## if it's the first iteration
     if(iter_i == 1){ 
       ### Calculate the transformed DFM
+      browser() 
       transformed_dfm <- dfm[,1:(ncol(tf_est_results$transformed_unlabeled_dfm))]; transformed_dfm[] <- NA
       transformed_dfm[which(labeledIndicator==1),] <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
