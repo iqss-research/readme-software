@@ -220,7 +220,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  
+  # In this case, a line with only 3 positions
+  q_tf = tf$FIFOQueue(capacity=sgd_iters, dtypes=tf$float32)
+  x_input_data = replicate(sgd_iters, dfm_labeled[sgd_grabSamp(),])
+  enqueue_op = q_tf$enqueue_many(x_input_data) # <- x1 - x2 -x3 
+  IL_input = tf$reshape(q_tf$dequeue() , shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  
+  #IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -289,7 +296,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # Initialize global variables in TensorFlow Graph
   init                 = tf$global_variables_initializer()
   
- 
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol=nCat, dimnames = list(NULL, names(labeled_pd)))
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
@@ -312,7 +318,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       browser() 
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
-                                                               IL_input      = dfm_labeled[sgd_grabSamp(),],
+                                                               #IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
