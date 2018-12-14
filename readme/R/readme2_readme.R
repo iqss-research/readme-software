@@ -234,13 +234,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  browser()
   WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf$float16),dtype = tf$float16, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float16)
 
   ### Drop-out transformation 
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-  MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1))), 1 / (ulim1/(ulim1+0.5)))
+  MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float16))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
@@ -263,7 +262,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              0.10*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
+                              tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -282,9 +281,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
   #Updates for the batch normalization moments
-  Moments_learn        = mLearn
-  IL_mu_               = Moments_learn  * IL_mu_b +  (1-Moments_learn) * IL_mu_last; 
-  IL_sigma_            = Moments_learn * IL_sigma_b + (1-Moments_learn) * IL_sigma_last
+  OneMinus_mLearn = tf$constant(1-mLearn, dtype = tf$float16)
+  mLearn = tf$constant(mLearn, dtype = tf$float16)
+  IL_mu_               = mLearn  * IL_mu_b   + OneMinus_mLearn * IL_mu_last; 
+  IL_sigma_            = mLearn * IL_sigma_b + OneMinus_mLearn * IL_sigma_last
   
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
