@@ -104,7 +104,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_iters      = 2000,
                    sgd_momentum   = .9,
                    numProjections = 20,
-                   mLearn         = 0.001, 
+                   mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
@@ -209,7 +209,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
   MultMat_tf          = tf$constant(MultMat, dtype = tf$float32)
@@ -369,8 +369,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                #MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index) 
-                Sigma_ = cov( X_ ); MatchIndices_i = c(sapply(1:nrow(Y_), function(zerta){  order( mahalanobis(x = X_, center = Y_[zerta,], cov = Sigma_))[1:kMatch] } ))
+                MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index) 
+                #Sigma_ = cov( X_ ); MatchIndices_i = c(sapply(1:nrow(Y_), function(zerta){  order( mahalanobis(x = X_, center = Y_[zerta,], cov = Sigma_))[1:kMatch] } ))
                 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
@@ -398,8 +398,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
-                #ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
+                ESGivenD_sampled            = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+                #ESGivenD_sampled             = t( InnerMultMat %*% X__ ) 
                 colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
