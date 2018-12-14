@@ -356,7 +356,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
           update_ls                       = sess$run(list(  L2_squared_clipped, myOpt_tf_apply))
-          inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
+          inverse_learning_rate <- inverse_learning_rate + update_ls[[1]] / inverse_learning_rate
           if(awer %% 10 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
         } 
         
