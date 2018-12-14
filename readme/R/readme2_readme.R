@@ -360,7 +360,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           IL_mu_value    = mLearn * update_ls[[1]] + (1 - mLearn) * IL_mu_value
           IL_sigma_value = mLearn * update_ls[[2]] + (1 - mLearn) * IL_sigma_value
           inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
-          if(awer %% 1 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
+          if(awer %% 10 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
         } 
         
         if(T == F){ 
