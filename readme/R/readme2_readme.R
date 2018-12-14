@@ -340,7 +340,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                   IL_sigma_last     = update_ls[[2]]))
         ### Update the learning rate
         inverse_learning_rate_vec[awer] = inverse_learning_rate <- inverse_learning_rate + update_ls[[3]] / inverse_learning_rate
-        myV[awer]  = update_ls[[5]]
+        myV[awer]  = update_ls[[5]][[1]]
       }
       browser() 
       ### Given the learned parameters, output the feature transformations for the entire matrix
