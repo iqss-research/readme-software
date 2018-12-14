@@ -357,7 +357,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
           update_ls                       = sess$run(list(  L2_squared_clipped, myOpt_tf_apply))
           inverse_learning_rate <- inverse_learning_rate + update_ls[[1]] / inverse_learning_rate
-          if(awer %% 10 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
+          if(awer %% 1 == 0){ sess$run( sdg_learning_rate$assign( 1/inverse_learning_rate )) }
         } 
         
         if(T == F){ 
@@ -372,13 +372,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         } 
         ### Update the learning rate
       }
-      browser()
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
-                                                                      IL_sigma_last = IL_mu_value)), T)
+                                                                      IL_sigma_last = IL_sigma_value)), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
+      plot( out_dfm_labeled )
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       
