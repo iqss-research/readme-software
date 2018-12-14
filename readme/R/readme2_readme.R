@@ -369,9 +369,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                #MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index)
-                browser() 
-                Sigma_ = cov( X_ )
+                #MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index) 
+                Sigma_ = cov( X_ ); MatchIndices_i = c(sapply(1:nrow(Y_), function(zerta){  order( mahalanobis(x = X_, center = Y_[zerta,], cov = Sigma_))[1:kMatch] } ))
                 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
