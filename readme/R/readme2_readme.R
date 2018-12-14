@@ -372,6 +372,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         } 
         ### Update the learning rate
       }
+      browser()
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
