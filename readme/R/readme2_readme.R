@@ -167,7 +167,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
-  rm( dfm )
+  rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
@@ -205,6 +205,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   redund_indices1     = as.integer(redund_mat[1,])
   redund_indices2     = as.integer(redund_mat[2,])
   axis_FeatDiscrim    = as.integer(nCat!=2)
+  rm(redund_mat)
     
   #Placeholder settings - to be filled when executing TF operations
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
@@ -308,22 +309,24 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
-      if(iter_i > 1){ sess$run(list(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1))), 
-                                    iterator_tf$assign(as.integer(0)))) } 
+      if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   = replicate(200, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      iterator_tf$assign(as.integer(sgd_iters - 200))
+      moments_list   =  replicate(200, sess$run(list(IL_mu_b, IL_sigma2_b, iterator_tf_add)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
+      iterator_tf$assign(as.integer(0))
       init_L2_squared_vec   = unlist(replicate(20, sess$run(list(L2_squared_clipped, iterator_tf_add))[[1]]))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
+
       sess$run(  list(clip_tf$assign(clip_value ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ), 
                       iterator_tf$assign(as.integer(0))) )
@@ -331,9 +334,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
-        browser() 
         #sort( sapply(ls(),function(x){object.size(get(x))})) 
-        try__ = try(sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply)), T)  
+        sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply))
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
