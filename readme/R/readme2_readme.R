@@ -207,8 +207,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #Placeholder settings - to be filled when executing TF operations
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
-  browser( )
-  clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F); 
+  clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
   sdg_learning_rate     = tf$constant(1, dtype = tf$float16) /  inverse_learning_rate
   
@@ -344,14 +343,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       sess$run(  clip_tf$assign(clip_value ) ) 
-      #sess$run(  inverse_learning_rate$assign( inverse_learning_rate_starting ) )  
+      sess$run(  inverse_learning_rate$assign( inverse_learning_rate_starting ) )  
       rm(d_)
       
       ### For each iteration of SGDs
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
     
-      browser() 
       for(awer in 1:sgd_iters){
         if(T == T){ 
           ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
