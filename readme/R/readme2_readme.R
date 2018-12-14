@@ -227,9 +227,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   Indices_full        = tf$Variable(t(replicate(sgd_iters, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
   iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
   iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
-  Sample_indices_tf   = tf$gather(Indices_full, 
-                                  iterator_tf,
-                                  axis = 0L)
+  Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
