@@ -175,7 +175,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
   
   ### Function to generate bootstrap sample
-  sgd_grabSamp   = function(){ c(unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } )))}
+  sgd_grabSamp          = function(){ c(unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } )))}
   
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
@@ -316,13 +316,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(50, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped,iterator_tf_add)))
+      browser() 
+      d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma2_b)))
       
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( sqrt(do.call(cbind, d_[2,]) )  )
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec   = unlist( d_[3,] ) 
+      init_L2_squared_vec   = unlist(replicate(20, sess$run(L2_squared_clipped, iterator_tf_add)))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       sess$run(  list(clip_tf$assign(clip_value ), 
