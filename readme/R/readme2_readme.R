@@ -221,7 +221,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   #IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
-  browser() 
   IL_input            = tf$Variable(dfm_labeled[sgd_grabSamp(),], validate_shape = T, dtype = tf$float32)
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
