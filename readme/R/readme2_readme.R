@@ -237,10 +237,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
-  IL_sigma_b          = tf$sqrt(IL_sigma2_b)
-  IL_mu_last          = tf$placeholder( tf$float16,shape(dim(IL_mu_b)) )
-  IL_sigma_last       = tf$placeholder( tf$float16,shape(dim(IL_sigma_b)) )
-  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_mu_b, variance = IL_sigma2_b, offset = 0, scale = 1, variance_epsilon = 0.001)
+  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   OUTPUT_IL           = tf$placeholder(tf$float16, shape = list(NULL, nDim))
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last,variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
@@ -327,16 +324,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
       if(T == F){
-      d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
+      d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
                                                                IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       } 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped)))
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped)))
       
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
-      update_ls[[2]] =  rowMeans( do.call(cbind, d_[2,]) )  
+      update_ls[[2]] =  rowMeans( sqrt(do.call(cbind, d_[2,]) )  )
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec   = unlist( d_[3,] ) 
@@ -351,12 +348,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_sigma_value = update_ls[[2]]
     
       for(awer in 1:sgd_iters){
-        if(T == T){ 
-          ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-          update_ls                       = sess$run(list(  inverse_learning_rate_update,
-                                                            myOpt_tf_apply))
-          #inverse_learning_rate <- inverse_learning_rate + update_ls[[1]] / inverse_learning_rate
-        } 
+        print( awer )
+        ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
+        update_ls                       = sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
         
         if(T == F){ 
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
@@ -370,6 +364,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         } 
         ### Update the learning rate
       }
+      browser() 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
