@@ -209,7 +209,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
   clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F); 
   inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
-  sdg_learning_rate     = 1 /  inverse_learning_rate
+  sdg_learning_rate     = tf$constant(1, dtype = tf$float16) /  inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
