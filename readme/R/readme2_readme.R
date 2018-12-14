@@ -332,7 +332,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       myV <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
-        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply,Spread_tf),
+        update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply),
                                                  feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf = clip_value, 
@@ -363,7 +363,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Y_      = out_dfm_unlabeled
             
             ### Normalize X and Y
-            MM2     =  apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
+            MM2     = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
             X_      = FastScale(X_, MM1, MM2);
             Y_      = FastScale(Y_, MM1, MM2)
               
