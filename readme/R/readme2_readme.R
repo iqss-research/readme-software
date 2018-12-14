@@ -194,6 +194,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   
+  browser() 
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
