@@ -287,8 +287,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
   L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients_unclipped)), collapse = "+") ) )
   sdg_learning_rate = 1 /  inverse_learning_rate
-    
-  inverse_learning_rate = inverse_learning_rate + L2_squared_clipped / inverse_learning_rate
+  
+  inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
+  
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
@@ -342,7 +343,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
       sess$run(  clip_tf$assign(clip_value ) ) 
-      sess$run(  inverse_learning_rate$assign( inverse_learning_rate_starting ) )  
+      #sess$run(  inverse_learning_rate$assign( inverse_learning_rate_starting ) )  
       rm(d_)
       
       ### For each iteration of SGDs
