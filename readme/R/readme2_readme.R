@@ -369,11 +369,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index
-                DistMat_i = sapply(1:nrow(MatchIndices_i), function(asdr){ 
-                  EUCLID_ =  ( t(X_[MatchIndices_i[asdr,],]) - Y_[asdr,] )^2 
-                  apply(EUCLID_, 2, function(er){ sqrt(sum(er)) }) })
-                MatchIndices_i = c(MatchIndices_i[DistMat_i<sqrt(nProj)])
+                #MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index)
+                browser() 
+                Sigma_ = cov( X_ )
+                
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
                 t_              = t_[t_<minMatch]
