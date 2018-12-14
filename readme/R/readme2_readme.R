@@ -222,7 +222,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   
   # In this case, a line with only 3 positions
-  if(T == F){
+  if(T == T){
   IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
   for(req in 1:nCat){ 
     eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int32)", req)))
@@ -235,7 +235,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
              paste(paste("batch_indices_", 1:nCat, sep = ""), collapse = ","))))
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   } 
-  IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -325,6 +325,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
       browser() 
+      sess$run( CatIndices_1_shuf ) 
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
                                                                IL_input      = dfm_labeled[sgd_grabSamp(),],
