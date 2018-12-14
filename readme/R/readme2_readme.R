@@ -135,7 +135,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     stop("Error: 'mLearn' must be greater than 0 and less than 1")
   }
   
-  browser() 
   if (verbose == T){
     if (kMatch == 0){
       cat("Note: 'kmatch' set to 0, skipping matching procedure for the labeled set")
@@ -195,7 +194,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   
-  browser() 
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -232,7 +230,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   Sample_indices_tf   = tf$gather(Indices_full, 
                                   iterator_tf,
                                   axis = 0L)
-  IL_input            = tf$gather(IL_input_full, indices = iterator_tf, axis = 0L)
+  IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
@@ -318,7 +316,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped,iterator_tf_add)))
+      d_             = replicate(50, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped,iterator_tf_add)))
       
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( sqrt(do.call(cbind, d_[2,]) )  )
@@ -335,13 +333,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
     
-      browser() 
       sess$run(iterator_tf$assign(as.integer(0)))
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
         sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply))
       }
-      browser() 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
