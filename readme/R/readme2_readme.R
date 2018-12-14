@@ -212,11 +212,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   sdg_learning_rate     = tf$constant(1., dtype = tf$float16) /  inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
-  MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
+  MultMat_tf             = t(do.call(rbind,sapply(1:nCat,function(x){
                           urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
-  MultMat             = MultMat  / rowSums( MultMat )
-  MultMat_tf          = tf$constant(MultMat, dtype = tf$float16)
+  MultMat_tf             = MultMat_tf  / rowSums( MultMat_tf )
+  MultMat_tf          = tf$constant(MultMat_tf, dtype = tf$float16)
 
   ## Which indices in the labeled set are associated with each category
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
@@ -225,8 +225,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # In this case, a line with only 3 positions
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   Indices_full        = tf$constant(t(replicate(sgd_iters, sgd_grabSamp()-1)), dtype = tf$int32)
+  browser() 
+  iterator_tf = tf$Variable(0, trainable = F, dtype = tf$int32)
   Sample_indices_tf   = tf$gather(Indices_full, 
-                                  tf$random_uniform(list(), as.integer(0), as.integer(sgd_iters - 1), dtype = tf$int32),
+                                  iterator_tf,
                                   axis = 0L)
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
