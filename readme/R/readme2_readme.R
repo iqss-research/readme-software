@@ -222,6 +222,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   
   # In this case, a line with only 3 positions
+  if(T == F){
   IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
   for(req in 1:nCat){ 
     eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int32)", req)))
@@ -233,7 +234,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   eval(parse(text = sprintf("Sample_indices_tf   = tf$concat(list(%s), axis = 0L)", 
              paste(paste("batch_indices_", 1:nCat, sep = ""), collapse = ","))))
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
-  #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  } 
+  IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -324,7 +326,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       update_ls      = list() 
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
-                                                               #IL_input      = dfm_labeled[sgd_grabSamp(),],
+                                                               IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
@@ -345,7 +347,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
         update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply),
                                                  feed_dict = dict(
-                                                                  #IL_input          = dfm_labeled[sgd_grabSamp(),],
+                                                                  IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf           = clip_value, 
                                                                   IL_mu_last        = update_ls[[1]], 
