@@ -101,7 +101,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
-                   sgd_iters      = 1000,
+                   sgd_iters      = 100,
                    sgd_momentum   = .9,
                    numProjections = 20,
                    mLearn         = 0.01, 
@@ -223,8 +223,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   # In this case, a line with only 3 positions
-  #IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
-  IL_input_full            = tf$Variable(dfm_labeled, dtype = tf$float16, trainable = F)
+  IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
+  browser() 
   for(req in 1:nCat){ 
     eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int32)", req)))
     eval(parse(text = sprintf("batch_indices_%s = tf$gather(tf$random_shuffle(CatIndices_%s), indices = as.integer(0:(NObsPerCat-1)), axis = 0L)", req, req ) ) )
