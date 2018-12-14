@@ -217,7 +217,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  #IL_input            = tf$placeholder(tf$float32, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
+  IL_input            = tf$Variable(dfm_labeled[sgd_grabSamp(),], validate_shape = T)
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -284,18 +285,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
-  browser()
-  q = tf.FIFOQueue(capacity=3, dtypes=tf.float32)
-  tf$FIFOQueue(capacity = 3, dtypes = tf$float32)
   init                 = tf$global_variables_initializer()
   
-  f = tf$FIFOQueue(10, list(tf$int32), shapes = list(4))
-  en = f$enqueue(list(list(1,2,3,4)))
-  de = f.dequeue()
-  with tf.Session() as sess:
-    en.run()
-  x = sess.run(de)
-  print(x)
  
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol=nCat, dimnames = list(NULL, names(labeled_pd)))
@@ -321,7 +312,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       update_ls      = list() 
       d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma_b, L2_squared_clipped), 
                                               feed_dict = dict(clip_tf = 10000.,
-                                                               IL_input      = dfm_labeled[sgd_grabSamp(),],
+                                                               #IL_input      = dfm_labeled[sgd_grabSamp(),],
                                                                IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
                                                                IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
@@ -341,8 +332,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       myV <- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         ## Update the moving averages for batch normalization of the inputs + train parameters (apply the gradients via myOpt_tf_apply)
+        IL_input$assign( dfm_labeled[sgd_grabSamp(),] )
         update_ls                       = sess$run(list( IL_mu_,IL_sigma_, L2_squared_clipped, myOpt_tf_apply),
-                                                 feed_dict = dict(IL_input          = dfm_labeled[sgd_grabSamp(),],
+                                                 feed_dict = dict(
+                                                                  #IL_input          = dfm_labeled[sgd_grabSamp(),],
                                                                   sdg_learning_rate = 1/inverse_learning_rate,
                                                                   clip_tf           = clip_value, 
                                                                   IL_mu_last        = update_ls[[1]], 
