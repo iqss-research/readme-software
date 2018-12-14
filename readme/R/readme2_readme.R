@@ -207,6 +207,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #Placeholder settings - to be filled when executing TF operations
   #sdg_learning_rate   = tf$placeholder(tf$float16, shape = c())
+  browser( )
   clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F); 
   inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
   sdg_learning_rate     = tf$constant(1, dtype = tf$float16) /  inverse_learning_rate
