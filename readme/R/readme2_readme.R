@@ -225,12 +225,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # In this case, a line with only 3 positions
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   Indices_full        = tf$constant(t(replicate(sgd_iters, sgd_grabSamp()-1)), dtype = tf$int32)
-  browser() 
-  iterator_tf = tf$Variable(0, trainable = F, dtype = tf$int32)
+  iterator_tf = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
+  iterator_tf_add = tf$assign_add(iterator_tf, as.integer(1))
   Sample_indices_tf   = tf$gather(Indices_full, 
                                   iterator_tf,
                                   axis = 0L)
-  IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
+  IL_input            = tf$gather(IL_input_full, indices = iterator_tf, axis = 0L)
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
@@ -291,14 +291,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
 
-  #Updates for the batch normalization moments
-  if(T == F){ 
-  OneMinus_mLearn      = tf$constant(1-mLearn, dtype = tf$float16)
-  mLearn               = tf$constant(mLearn, dtype = tf$float16)
-  IL_mu_               = mLearn  * IL_mu_b   + OneMinus_mLearn * IL_mu_last; 
-  IL_sigma_            = mLearn * IL_sigma_b + OneMinus_mLearn * IL_sigma_last
-  } 
-  
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
@@ -324,14 +316,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       update_ls      = list() 
-      if(T == F){
-      d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped), 
-                                              feed_dict = dict(clip_tf = 10000.,
-                                                               IL_input      = dfm_labeled[sgd_grabSamp(),],
-                                                               IL_mu_last    =  rep(0, times = ncol(dfm_labeled)),
-                                                               IL_sigma_last = rep(1, times = ncol(dfm_labeled)))))
-      } 
-      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped)))
+      d_             = replicate(30, sess$run(list(IL_mu_b, IL_sigma2_b, L2_squared_clipped,iterator_tf_add)))
       
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
       update_ls[[2]] =  rowMeans( sqrt(do.call(cbind, d_[2,]) )  )
@@ -348,10 +333,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value = update_ls[[1]]
       IL_sigma_value = update_ls[[2]]
     
+      sess$run(iterator_tf$assign(as.integer(0)))
       for(awer in 1:sgd_iters){
-        print( awer )
-        sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
+        if(awer %%100 == 0){print( awer )}
+        sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply))
       }
+      browser() 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
