@@ -167,6 +167,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
+  rm( dfm )
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
@@ -331,6 +332,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         if(awer %%100 == 0){print( awer )}
         browser() 
+        #sort( sapply(ls(),function(x){object.size(get(x))})) 
         try__ = try(sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply)), T)  
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
