@@ -209,7 +209,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat             = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.00001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           #certainty_amt = 0.99; uncertainty_amt = (1 - certainty_amt) / (nCat - 1);MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = certainty_amt
                           return( list(MM) )  } )) )
   MultMat             = MultMat  / rowSums( MultMat )
