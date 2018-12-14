@@ -223,7 +223,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   # In this case, a line with only 3 positions
   q_tf = tf$FIFOQueue(capacity=sgd_iters, dtypes=tf$float32)
-  x_input_data = replicate(sgd_iters, dfm_labeled[sgd_grabSamp(),])
+  browser() 
+  x_input_data = tf$array(replicate(sgd_iters, dfm_labeled[sgd_grabSamp(),]))
   enqueue_op = q_tf$enqueue_many(x_input_data) # <- x1 - x2 -x3 
   IL_input = tf$reshape(q_tf$dequeue() , shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   
