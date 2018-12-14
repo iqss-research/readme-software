@@ -315,8 +315,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      update_ls      = list() 
       browser() 
+      update_ls      = list() 
       d_             = replicate(100, sess$run(list(IL_mu_b, IL_sigma2_b)))
       
       update_ls[[1]] =  rowMeans( do.call(cbind, d_[1,]) )  
