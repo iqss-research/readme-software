@@ -106,7 +106,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
-                   batchSizePerCat = 5, 
+                   batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -284,6 +284,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
+  browser()
   init                 = tf$global_variables_initializer()
  
   # Holding containers for results
