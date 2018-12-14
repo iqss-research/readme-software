@@ -222,16 +222,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  
+  browser() 
   # In this case, a line with only 3 positions
   if(T == T){
   IL_input_full            = tf$constant(dfm_labeled, dtype = tf$float16)
   for(req in 1:nCat){ 
     eval(parse(text = sprintf("CatIndices_%s = tf$constant( as.integer(l_indices_by_cat[[req]]-1) , dtype = tf$int32)", req)))
-    eval(parse(text = sprintf("CatIndices_%s_shuf = tf$random_shuffle(CatIndices_%s)", req,req)))
-    eval(parse(text = sprintf("CatIndices_%s_shuf = tf$random_shuffle(CatIndices_%s)", req,req)))
-    eval(parse(text = sprintf("CatIndices_%s_shuf = tf$random_shuffle(CatIndices_%s)", req,req)))
-    eval(parse(text = sprintf("batch_indices_%s = tf$gather(CatIndices_%s_shuf, indices = as.integer(0:(NObsPerCat-1)), axis = 0L)", req, req ) ) )
+    eval(parse(text = sprintf("batch_indices_%s = tf$gather(tf$random_shuffle(CatIndices_%s), indices = as.integer(0:(NObsPerCat-1)), axis = 0L)", req, req ) ) )
   } 
   eval(parse(text = sprintf("Sample_indices_tf   = tf$concat(list(%s), axis = 0L)", 
              paste(paste("batch_indices_", 1:nCat, sep = ""), collapse = ","))))
@@ -381,7 +378,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                       IL_sigma_last = IL_sigma_value)), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
-      plot( out_dfm_labeled )
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       
