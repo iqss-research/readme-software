@@ -212,6 +212,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
   sdg_learning_rate     = tf$constant(1., dtype = tf$float16) /  inverse_learning_rate
+  iterator_tf           = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
+  iterator_tf_add       = tf$assign_add(iterator_tf, as.integer(1))
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf             = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -224,7 +226,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  if(T == F){ 
+  if(T == T){ 
     for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(500L)$batch(NObsPerCat)", 
                  ape)) )
@@ -238,12 +240,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                      paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   }
   
+  if(T == F){ 
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
-  iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
-  iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
   Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
   IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
+  }
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
