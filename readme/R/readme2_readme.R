@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .9,
-                   numProjections = 10,
+                   numProjections = 30,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
                    batchSizePerCat = 10, 
@@ -223,25 +223,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  if(T == T){ 
-    for(ape in 1:nCat){ 
+  for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", ape,ape)) )
       eval(parse(text = sprintf("b_%s = iter_%s$get_next()", ape,ape)) )
-    } 
-    IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf$float16)", 
+  } 
+  IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf$float16)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
-  }
-  
-  if(T == F){ 
-  iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
-  iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
-  IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
-  Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
-  Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
-  IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
-  #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
-  }
+
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
