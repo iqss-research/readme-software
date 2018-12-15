@@ -238,8 +238,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                         paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   #IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   #Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
-  #iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
-  #iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
+  iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
+  iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
   #Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
   #IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
