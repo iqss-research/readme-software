@@ -324,7 +324,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
-      if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
+      #if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
