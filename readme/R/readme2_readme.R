@@ -335,8 +335,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(clip_value ), 
-                      inverse_learning_rate$assign( inverse_learning_rate_starting ), 
-                      d_1 ))
+                      inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
       
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
