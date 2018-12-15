@@ -55,7 +55,7 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
   if(compareQuantifiers == T){
     source("./support/readme2_va2_replication.R")
     source("./support/readme2_quantification_algos.R")
-    termMatrix_use <- cbind(1:length(categoryVec), categoryVec, labeledIndicator, dtm)
+    termMatrix_use <- cbind(1:length(categoryVec), categoryVec, labeledIndicator, as.data.frame(  dtm) )  
     colnames(termMatrix_use)[1:3] <- c("FILENAME",  "categoryLabels", "TRAININGSET")
     va2_results <- try(va2(termMatrix=termMatrix_use,seed=ceiling(runif(1,1,1000)), nsymps=2), T)  
     set.seed(Sys.time())
@@ -63,8 +63,8 @@ readme2_testing <- function(dtm, dfm, labeledIndicator, categoryVec, nboot = 10,
     
     categoryVec_labeled_factor <- as.factor(categoryVec)[labeledIndicator==1]
     categoryVec_unlabeled_factor <- as.factor(categoryVec)[labeledIndicator==0]
-    QUANTIFY_ALL_RESULTS <- try(quantifyAll_QUANT(trainMatrix = as.data.frame(cbind(categoryVec_labeled_factor, dtm[labeledIndicator==1,])),
-                                                  testMatrix = as.data.frame(cbind(categoryVec_unlabeled_factor, dtm[labeledIndicator==0,])),
+    QUANTIFY_ALL_RESULTS <- try(quantifyAll_QUANT(trainMatrix = as.data.frame(cbind(categoryVec_labeled_factor, as.data.frame( dtm[labeledIndicator==1,]))),
+                                                  testMatrix = as.data.frame(cbind(categoryVec_unlabeled_factor, as.data.frame( dtm[labeledIndicator==0,]))),
                                                   baseClassifierModelFunction=liblinearModelFunction,
                                                   baseClassifierPredFunction=liblinearPredFunction,
                                                   trials=10), T)  
