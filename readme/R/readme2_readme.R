@@ -225,7 +225,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
     for(ape in 1:nCat){ 
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])))$batch(NObsPerCat)", ape)) )
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", ape,ape)) )
       eval(parse(text = sprintf("b_%s = iter_%s$get_next()", ape,ape)) )
     } 
@@ -330,7 +330,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
-      browser() 
       init_L2_squared_vec   = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
