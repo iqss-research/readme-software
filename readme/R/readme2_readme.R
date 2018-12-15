@@ -224,6 +224,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
+    browser() 
     for(ape in 1:nCat){ 
       #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", ape,ape)) )
