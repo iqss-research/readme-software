@@ -224,13 +224,24 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  browser() 
-  IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
-  Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
-  iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
-  iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
-  Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
-  IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
+  # make a dataset from a numpy array
+  for(ape in 1:nCat){ 
+    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$shuffle(500L)$batch(NObsPerCat)", 
+               ape)) )
+    eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", 
+                              ape,ape)) )
+    eval(parse(text = sprintf("b_%s = iter_%s$get_next()", 
+                              ape,ape)) )
+  } 
+  
+  IL_input             = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), list(NObsPerCat*nCat, nDim)), dtype = tf$float16)", 
+                        paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+  #IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
+  #Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
+  #iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
+  #iterator_tf_add     = tf$assign_add(iterator_tf, as.integer(1))
+  #Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
+  #IL_input            = tf$gather(IL_input_full, indices = Sample_indices_tf, axis = 0L)
   
   #IL_input            = tf$placeholder(tf$float16, shape = list(as.integer(NObsPerCat * nCat), as.integer(nDim)))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
@@ -308,6 +319,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   for(iter_i in 1:nboot){ 
+      browser() 
       sess$run(init) # Initialize TensorFlow graph
       if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
       ## Print iteration count
