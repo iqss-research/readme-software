@@ -230,14 +230,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(500L)$batch(NObsPerCat)", 
                  ape)) )
-      ae = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", 
                                 ape,ape)) )
       eval(parse(text = sprintf("b_%s = iter_%s$get_next()", 
                                 ape,ape)) )
     } 
-    IL_input             = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), list(NObsPerCat*nCat, nDim)), dtype = tf$float16)", 
-                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+    #IL_input             = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), list(NObsPerCat*nCat, nDim)), dtype = tf$float16)", 
+                                                     #paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+    IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf$float16)", 
+                              paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   }
   
   if(T == F){ 
