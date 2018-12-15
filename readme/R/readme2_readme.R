@@ -102,7 +102,7 @@
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
-                   sgd_momentum   = .1,
+                   sgd_momentum   = .99,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
@@ -214,7 +214,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.005; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf$float16)
@@ -280,8 +280,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.25) ) ))
-                              #tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
+                              tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -333,7 +332,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      clip_value                     = 1#0.50 * median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(clip_value ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
