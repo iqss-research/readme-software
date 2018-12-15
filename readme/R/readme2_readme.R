@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .9,
-                   numProjections = 50,
+                   numProjections = 25,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
                    batchSizePerCat = 10, 
@@ -225,7 +225,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
     for(ape in 1:nCat){ 
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
+      #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", ape,ape)) )
       eval(parse(text = sprintf("b_%s = iter_%s$get_next()", ape,ape)) )
     } 
@@ -279,7 +279,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  ) + 
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
                               tf$constant(0.30, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -337,6 +337,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       sess$run(  list(clip_tf$assign(clip_value ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
       
+      browser() 
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
         sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
