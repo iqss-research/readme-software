@@ -330,6 +330,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
+      browser() 
       init_L2_squared_vec   = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
