@@ -234,10 +234,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("b_%s = iter_%s$get_next()", 
                                 ape,ape)) )
     } 
-  } 
+    IL_input             = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), list(NObsPerCat*nCat, nDim)), dtype = tf$float16)", 
+                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+  }
   
-  IL_input             = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), list(NObsPerCat*nCat, nDim)), dtype = tf$float16)", 
-                        paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
   iterator_tf         = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
