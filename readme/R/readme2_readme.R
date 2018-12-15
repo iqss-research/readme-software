@@ -102,8 +102,8 @@
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
-                   sgd_momentum   = .9,
-                   numProjections = 25,
+                   sgd_momentum   = .1,
+                   numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
                    batchSizePerCat = 10, 
@@ -280,7 +280,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.01, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
+                              tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.25) ) ))
+                              #tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
