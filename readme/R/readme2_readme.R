@@ -106,7 +106,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
-                   batchSizePerCat = 10, 
+                   batchSizePerCat = 8, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -212,8 +212,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
   sdg_learning_rate     = tf$constant(1., dtype = tf$float16) /  inverse_learning_rate
-  iterator_tf           = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
-  iterator_tf_add       = tf$assign_add(iterator_tf, as.integer(1))
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf             = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -228,20 +226,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
     for(ape in 1:nCat){ 
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(500L)$batch(NObsPerCat)", 
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])))$batch(NObsPerCat)", 
                  ape)) )
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", 
                                 ape,ape)) )
       eval(parse(text = sprintf("b_%s = iter_%s$get_next()", 
                                 ape,ape)) )
     } 
-    #IL_input             = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), list(NObsPerCat*nCat, nDim)), dtype = tf$float16)", 
-                                                     #paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
     IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf$float16)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   }
   
   if(T == F){ 
+  iterator_tf           = tf$Variable(as.integer(0), trainable = F, dtype = tf$int32)
+  iterator_tf_add       = tf$assign_add(iterator_tf, as.integer(1))
   IL_input_full       = tf$constant(dfm_labeled, dtype = tf$float16)
   Indices_full        = tf$Variable(t(replicate(sgd_iters+2, sgd_grabSamp()-1)), dtype = tf$int32, trainable = F)
   Sample_indices_tf   = tf$gather(Indices_full, iterator_tf,axis = 0L)
@@ -286,8 +284,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.50) ) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  ) + 
+                              tf$constant(0.30, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -331,27 +329,22 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      iterator_tf$assign(as.integer(sgd_iters - 200))
-      moments_list   =  replicate(200, sess$run(list(IL_mu_b, IL_sigma2_b, iterator_tf_add)))
+      moments_list   =  replicate(200, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
-      iterator_tf$assign(as.integer(0))
-      init_L2_squared_vec   = unlist(replicate(20, sess$run(list(L2_squared_clipped, iterator_tf_add))[[1]]))
+      init_L2_squared_vec   = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(clip_value ), 
-                      inverse_learning_rate$assign( inverse_learning_rate_starting ), 
-                      iterator_tf$assign(as.integer(0))) )
+                      inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
       
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
-        if(awer %%100 == 0){print( awer )}
-        #sort( sapply(ls(),function(x){object.size(get(x))})) 
-        sess$run(list(  inverse_learning_rate_update,iterator_tf_add,myOpt_tf_apply))
+        sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
