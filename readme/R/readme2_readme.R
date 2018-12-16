@@ -208,10 +208,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm(redund_mat)
     
   #Placeholder settings - to be filled when executing TF operations
+  tf_float_precision    = tf$float16
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   sdg_learning_rate     = tf$constant(1., dtype = tf_float_precision) /  inverse_learning_rate
-  tf_float_precision    = tf$float16
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
