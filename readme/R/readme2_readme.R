@@ -170,7 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){ x* tf$nn$sigmoid(x)}
+  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -223,6 +223,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
+  browser()
   for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", ape,ape)) )
