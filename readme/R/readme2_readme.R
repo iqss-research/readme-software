@@ -208,16 +208,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm(redund_mat)
     
   #Placeholder settings - to be filled when executing TF operations
-  clip_tf               = tf$Variable(10000., dtype = tf$float16, trainable = F)
-  inverse_learning_rate = tf$Variable(1, dtype = tf$float16, trainable = F)
-  sdg_learning_rate     = tf$constant(1., dtype = tf$float16) /  inverse_learning_rate
+  clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
+  inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  sdg_learning_rate     = tf$constant(1., dtype = tf_float_precision) /  inverse_learning_rate
+  tf_float_precision    = tf$float16
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
                           urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  );MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
-  MultMat_tf          = tf$constant(MultMat_tf, dtype = tf$float16)
+  MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
 
   ## Which indices in the labeled set are associated with each category
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
@@ -229,25 +230,25 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
-  IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf$float16)", 
+  IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
 
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
-  IL_mu_last          = tf$placeholder( tf$float16,shape(dim(IL_mu_b)) )
-  IL_sigma_last       = tf$placeholder( tf$float16,shape(dim(IL_mu_b)) ) 
+  IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
+  IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
   IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
-  OUTPUT_IL           = tf$placeholder(tf$float16, shape = list(NULL, nDim))
+  OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf$float16),dtype = tf$float16, trainable = T)
-  BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float16)
+  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation 
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-  MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float16))), 1 / (ulim1/(ulim1+0.5)))
+  MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
@@ -270,7 +271,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
+                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
