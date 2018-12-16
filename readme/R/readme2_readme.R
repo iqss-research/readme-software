@@ -223,11 +223,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  browser()
+  batch_reshape <- function(e){ tf$reshape(e, shape = list(NObsPerCat,nDim)) }
   for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
-      eval(parse(text = sprintf("iter_%s = d_%s$make_one_shot_iterator()", ape,ape)) )
-      eval(parse(text = sprintf("b_%s = iter_%s$get_next()", ape,ape)) )
+      eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
+      eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
   IL_input             = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf$float16)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
@@ -329,6 +329,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
+        print(awer)
         sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
