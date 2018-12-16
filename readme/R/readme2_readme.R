@@ -170,7 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){tf$nn$tanh(x)}
+  nonLinearity_fxn      = function(x){ x* tf$nn$sigmoid(x)}
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -267,7 +267,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  browser() 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
                               tf$constant(0.10, dtype = tf$float16)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
