@@ -101,9 +101,9 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
-                   sgd_iters      = 1000,
+                   sgd_iters      = 500,
                    sgd_momentum   = .9,
-                   numProjections = 30,
+                   numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.5, 
                    batchSizePerCat = 10, 
