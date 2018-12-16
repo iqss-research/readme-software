@@ -329,7 +329,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
-        print(awer)
         sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
