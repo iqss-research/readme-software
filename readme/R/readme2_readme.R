@@ -101,7 +101,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
-                   sgd_iters      = 500,
+                   sgd_iters      = 1000,
                    sgd_momentum   = .9,
                    numProjections = 20,
                    mLearn         = 0.01, 
@@ -170,7 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){tf$nn$softsign(x)}
+  nonLinearity_fxn      = function(x){tf$nn$tanh(x)}
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
