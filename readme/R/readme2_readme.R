@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .9,
-                   numProjections = 30,
+                   numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
@@ -249,6 +249,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Drop-out transformation 
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
   MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
+  browser()
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
@@ -271,7 +272,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.25) ) ))
+                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
