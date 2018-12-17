@@ -247,10 +247,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation 
+  dropout_rate2 = 0.10 
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
+  ulim2                = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1)
   MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
-  browser()
-  WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
+  MASK_VEC2            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2,dtype = tf_float_precision))), 1 / (ulim2/(ulim2+0.5)))
+  WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1*MASK_VEC2)
 
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
