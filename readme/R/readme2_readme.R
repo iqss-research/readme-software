@@ -170,7 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
+  nonLinearity_fxn      = function(x){ tf$nn$leaky_relu(x) }
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -259,8 +259,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
-  LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  #LFinal_for_m         = nonLinearity_fxn( tf$matmul(IL_n, WtsMat) + BiasVec)
+  #LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+  LFinal_for_m         = nonLinearity_fxn( tf$matmul(IL_n, WtsMat) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
