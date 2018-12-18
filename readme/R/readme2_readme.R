@@ -346,7 +346,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         my_v[awer] = max(apply(sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply, WtsMat))[[3]], 2, 
                            function(aesr){sqrt(sum(aesr^2))}))
       }
-      browser( )
+      print(summary(my_v))
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
