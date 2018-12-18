@@ -101,7 +101,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
-                   sgd_iters      = 1200,
+                   sgd_iters      = 2000,
                    sgd_momentum   = .9,
                    numProjections = 20,
                    mLearn         = 0.01, 
@@ -271,7 +271,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.50, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.10) ) ))
+                              tf$constant(0.40, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -279,16 +279,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                     use_nesterov  = T)
 
   ### Calculates the gradients from myOpt_tf
-  myGradients_unclipped = myOpt_tf$compute_gradients(myLoss_tf) 
-  myGradients_clipped  = myGradients_unclipped
-  TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('myGradients_unclipped[[%s]][[1]]', 1:length(myGradients_unclipped)), collapse = ","))))
-  for(jack in 1:length(myGradients_clipped)){ myGradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(myGradients_clipped[[%s]][[1]]))", 1:length(myGradients_unclipped)), collapse = "+") ) )
+  Gradients_unclipped  = myOpt_tf$compute_gradients(myLoss_tf) 
+  Gradients_clipped    = Gradients_unclipped
+  TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
+  for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+  L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
   
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( myGradients_clipped )  
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
 
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
@@ -325,13 +325,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
-      browser()
       sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
     
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
-        sess$run(list(  inverse_learning_rate_update,myOpt_tf_apply))
+        sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
