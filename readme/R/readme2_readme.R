@@ -249,10 +249,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     beta__[dropout__==1] <- 0
     beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
-  print(10/initializer_reweighting)
   #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-  WtsMat               = tf$clip_by_norm(tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T), 
-                                          10/initializer_reweighting, axes = 0L)
+  WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   
