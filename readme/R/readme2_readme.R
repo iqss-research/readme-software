@@ -250,10 +250,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
   #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-  browser() 
-  WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  WtsMat               = tf$clip_by_norm(tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T), 
+                                         2 * sqrt(nDim), axes = 0L)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
+  
   ### Drop-out transformation
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
   MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
@@ -340,9 +341,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       #summary(apply(sess$run(tf$matmul(IL_n, WtsMat)), 2, sd))
       #summary(apply(sess$run(tf$matmul(IL_n, WtsMat_drop)), 2, sd))
       ### For each iteration of SGDs
+      my_v<- rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
-        sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
+        my_v[awer] = max(apply(sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply, WtsMat))[[3]], 2, 
+                           function(aesr){sqrt(sum(aesr^2))}))
       }
+      browser( )
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
