@@ -247,7 +247,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation 
-  dropout_rate2 = 0.10 
+  dropout_rate2        = 0.05
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
   ulim2                = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1)
   MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
@@ -255,7 +255,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1*MASK_VEC2)
 
   ### Apply non-linearity + batch normalization 
-  LFinal               = nonLinearity_fxn(tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+  LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
@@ -272,8 +272,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
+  myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.75)  ) + 
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.75)  ) + 
                               tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -325,10 +325,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = 0.25 * median( init_L2_squared_vec )
+      clip_value                     = 0.25 * median( sqrt( init_L2_squared_vec )  )
 
-      sess$run(  list(clip_tf$assign(clip_value ), 
+      sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
     
       ### For each iteration of SGDs
