@@ -242,8 +242,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
+  var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
+  initializer_reweighting = 1/sd(replicate(2000, {
+    beta__               = rnorm(nDim, mean = 0, sd = 1/sqrt(nDim)  )
+    dropout__            = rbinom(nDim, size = 1, prob = dropout_rate)
+    beta__[dropout__==1] <- 0
+    beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
+    sum(beta__) }))
   #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-  WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation
@@ -330,8 +337,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
     
       browser()
-      #plot(apply(sess$run(tf$matmul(IL_n, WtsMat)), 2, sd))
-      #apply(sess$run( WtsMat_drop), 2, sd)
+      #plot(apply(sess$run(tf$matmul(IL_n, WtsMat_drop)), 2, sd))
+      #points(apply(sess$run(tf$matmul(IL_n, WtsMat)), 2, sd),pch =2)
+      summary(apply(sess$run(tf$matmul(IL_n, WtsMat)), 2, sd))
+      summary(apply(sess$run(tf$matmul(IL_n, WtsMat_drop)), 2, sd))
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
         sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
