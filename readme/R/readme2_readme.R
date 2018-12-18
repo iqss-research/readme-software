@@ -170,8 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  browser() 
-  nonLinearity_fxn      = function(x){ tf$nn$relu(x) }
+  nonLinearity_fxn      = function(x){ tf$nn$leaky_relu(x) }
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -243,7 +242,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
-  WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation
@@ -314,6 +314,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
+      browser() 
+      tf$matmul(IL_n, WtsMat_drop)
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
