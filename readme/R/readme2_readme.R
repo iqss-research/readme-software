@@ -101,7 +101,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
-                   sgd_iters      = 1000,
+                   sgd_iters      = 1200,
                    sgd_momentum   = .9,
                    numProjections = 20,
                    mLearn         = 0.01, 
@@ -272,8 +272,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
                               tf$constant(0.50, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.10) ) ))
-  
-  browser()
+
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                                     momentum      = sgd_momentum, 
