@@ -329,6 +329,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
     
+      browser()
       #plot(apply(sess$run(tf$matmul(IL_n, WtsMat)), 2, sd))
       #apply(sess$run( WtsMat_drop), 2, sd)
       ### For each iteration of SGDs
