@@ -105,7 +105,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_momentum   = .9,
                    numProjections = 20,
                    mLearn         = 0.01, 
-                   dropout_rate   = 0.50, 
+                   dropout_rate   = 0.80, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
@@ -261,7 +261,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  #LFinal_for_m        = nonLinearity_fxn( tf$matmul(IL_n, WtsMat) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
