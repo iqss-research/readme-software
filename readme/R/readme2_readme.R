@@ -247,12 +247,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation 
-  dropout_rate2        = 0.05
   ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-  ulim2                = -0.5 * (1-dropout_rate2) / ( (1-dropout_rate2)-1)
   MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
-  MASK_VEC2            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,nProj),-0.5,ulim2,dtype = tf_float_precision))), 1 / (ulim2/(ulim2+0.5)))
-  WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1*MASK_VEC2)
+  WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
@@ -273,9 +270,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.75)  ) + 
-                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
+                              tf$constant(0.50, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.10) ) ))
   
+  browser()
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                                     momentum      = sgd_momentum, 
@@ -318,14 +316,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   =  replicate(200, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 1 * median( init_L2_squared_vec )
+      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(  clip_value  ), 
