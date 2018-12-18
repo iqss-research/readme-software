@@ -170,7 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){ tf$nn$leaky_relu(x) }
+  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -250,6 +250,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
   #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  browser() 
   WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
@@ -260,8 +261,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_for_m         = nonLinearity_fxn( tf$matmul(IL_n, WtsMat) + BiasVec)
-  LFinal_m             = tf$nn$moments(LFinal_for_m, axes = 0L);
+  #LFinal_for_m        = nonLinearity_fxn( tf$matmul(IL_n, WtsMat) + BiasVec)
+  LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
    
   #Find E[S|D] and calculate objective function  
@@ -305,7 +306,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   init                 = tf$global_variables_initializer()
   
   # Holding containers for results
-  boot_readme          = matrix(nrow=nboot, ncol=nCat, dimnames = list(NULL, names(labeled_pd)))
+  boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
   hold_coef[]          = 0
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
