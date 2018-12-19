@@ -322,9 +322,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
-    browser()
-    
-    LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
