@@ -243,16 +243,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  a_ = rnorm(100, mean = 0, sd = 0.10); plot( a_, a_ / (1 + abs(a_))) 
-  browser( )
-  initializer_reweighting = 0.10* 1/sd(replicate(2000, {
-    beta__               = rnorm(nDim, mean = 0, sd = 1/sqrt(nDim)  )
+  initializer_reweighting =  1/sd(replicate(2000, {
+    #beta__               = rnorm(nDim, mean = 0, sd = 1/sqrt(nDim)  )
+    beta__               =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__            = rbinom(nDim, size = 1, prob = dropout_rate)
     beta__[dropout__==1] <- 0
     beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
-  #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-  WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+  #WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   
