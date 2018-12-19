@@ -105,7 +105,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_momentum   = .9,
                    numProjections = 20,
                    mLearn         = 0.01, 
-                   dropout_rate   = 0.80, 
+                   dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
@@ -249,6 +249,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     beta__[dropout__==1] <- 0
     beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
+  browser()
   #WtsMat               = tf$Variable(tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim+nProj), 1/sqrt(nDim+nProj), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
