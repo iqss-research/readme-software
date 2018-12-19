@@ -244,14 +244,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
   initializer_reweighting =  1/sd(replicate(2000, {
-    #beta__               = rnorm(nDim, mean = 0, sd = 1/sqrt(nDim)  )
     beta__               =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
-    dropout__            = rbinom(nDim, size = 1, prob = dropout_rate)
+    dropout__            =   rbinom(nDim, size = 1, prob = dropout_rate)
     beta__[dropout__==1] <- 0
     beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
   WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-  #WtsMat               = tf$Variable(tf$random_normal(list(nDim,nProj),mean = 0, stddev = 1/sqrt(nDim) * initializer_reweighting, dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
 
   ### Drop-out transformation
@@ -287,7 +285,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                     use_nesterov  = T)
 
   ### Calculates the gradients from myOpt_tf
-  Gradients_unclipped  = myOpt_tf$compute_gradients(myLoss_tf) 
+  Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
   Gradients_clipped    = Gradients_unclipped
   TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
   for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
@@ -323,6 +321,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
 
+    browser() 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
