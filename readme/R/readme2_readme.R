@@ -170,7 +170,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm( dfm ); rm(categoryVec)
   
   #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){ tf$nn$tanh(x) }
+  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
   
   ## Generic winsorization function 
   r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
@@ -277,7 +277,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/nCat) ) ))
+                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/sqrt(nCat) ) )))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
