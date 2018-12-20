@@ -260,7 +260,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
-  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (1.0*nCat) * LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (1.*nCat) * LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
@@ -277,8 +277,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/sqrt(nCat) ) )))
                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40 ) )))
+                             #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/sqrt(nCat) ) )))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
