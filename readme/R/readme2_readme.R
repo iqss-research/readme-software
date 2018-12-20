@@ -278,7 +278,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
                               #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/sqrt(nCat) ) )))
-                             tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.50 ) )))
+                             tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40 ) )))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
