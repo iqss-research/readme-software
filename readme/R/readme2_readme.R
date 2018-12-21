@@ -102,14 +102,14 @@
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
-                   sgd_momentum   = .9,
+                   sgd_momentum   = .1,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
-                   batchSizePerCat_match = 10, 
-                   minMatch       = 2,
+                   batchSizePerCat_match = 20, 
+                   minMatch       = 5,
                    nboot_match    = 40,
                    winsorize      = T, 
                    justTransform  = F,
@@ -230,7 +230,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
-  browser() 
   IL_input            = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
@@ -267,7 +266,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   ## Spread component of objective function
-  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
+  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.02^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
