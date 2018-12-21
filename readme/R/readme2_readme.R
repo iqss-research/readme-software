@@ -102,7 +102,7 @@
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
-                   sgd_momentum   = .1,
+                   sgd_momentum   = .8,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.50, 
