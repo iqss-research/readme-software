@@ -102,7 +102,7 @@
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
-                   sgd_momentum   = .99,
+                   sgd_momentum   = .90,
                    numProjections = 20,
                    mLearn         = 0.01, 
                    dropout_rate   = 0.50, 
@@ -171,9 +171,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
-  
-  ## Generic winsorization function 
-  r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
+
+  #r_clip_by_value       = function(x, a, b){x[x<=a] <- a;x[x>=b] <- b;return(x)}
   
   ### Function to generate bootstrap sample
   sgd_grabSamp          = function(){ c(unlist(sapply(1:nCat, function(ze){  sample(l_indices_by_cat[[ze]], NObsPerCat, replace = length(l_indices_by_cat[[ze]]) *0.75 < NObsPerCat )  } )))}
@@ -277,8 +276,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                              tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                             tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40 ) )))
-                             #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/sqrt(nCat) ) )))
+                             tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,1/sqrt(nCat) ) )))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -330,8 +328,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      #inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
+      #clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = median( init_L2_squared_vec )
+      clip_value                     = median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
