@@ -240,7 +240,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  initializer_reweighting =  1/sd(replicate(2000, {
+  initializer_reweighting =  0.10/sd(replicate(2000, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
     beta__[dropout__==1]  <- 0
