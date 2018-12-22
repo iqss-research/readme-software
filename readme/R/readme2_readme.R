@@ -262,6 +262,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
+  browser() 
   ## Spread component of objective function
   Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.02^2)
 
