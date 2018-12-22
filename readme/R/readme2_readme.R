@@ -240,7 +240,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  initializer_reweighting =  0.10/sd(replicate(2000, {
+  initializer_reweighting =  1/sd(replicate(2000, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
     beta__[dropout__==1]  <- 0
@@ -274,7 +274,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) )))
+                              tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) )) - 
+                              tf$constant(0.10, dtype = tf_float_precision) * tf$reduce_mean(tf$abs(ESGivenD_tf)))
 
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -284,7 +285,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
   Gradients_clipped    = Gradients_unclipped
-  TEMP__               = eval(parse(text=sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
+  TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
   for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
   L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
   
