@@ -241,10 +241,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
   initializer_reweighting =  1/sd(replicate(2000, {
-    beta__               =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
-    dropout__            =   rbinom(nDim, size = 1, prob = dropout_rate)
-    beta__[dropout__==1] <- 0
-    beta__[dropout__==0] <- beta__[dropout__==0] / (1 - dropout_rate)
+    beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
+    dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
+    beta__[dropout__==1]  <- 0
+    beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
     sum(beta__) }))
   WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
   BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
@@ -262,9 +262,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
-  browser() 
   ## Spread component of objective function
-  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.02^2)
+  Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
