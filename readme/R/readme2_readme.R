@@ -320,9 +320,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
       browser()
-      wt1 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-      wt2 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-      wt3 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+      wt1_ = median(replicate(100,mean(sess$run(CatDiscrim_tf))))
+      wt2_ = median(replicate(100,mean(sess$run(FeatDiscrim_tf))))
+      wt3_ = median(replicate(100,mean(sess$run(Spread_tf))))
+      sess$run(wt1$assign(1/wt1_))
+      sess$run(wt2$assign(1/wt2_))
+      sess$run(wt3$assign(1/wt3_))
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
