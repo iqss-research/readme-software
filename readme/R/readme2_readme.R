@@ -319,7 +319,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
-      browser()
       wt1_ = median(replicate(100,mean(sess$run(CatDiscrim_tf))))
       wt2_ = median(replicate(100,mean(sess$run(FeatDiscrim_tf))))
       wt3_ = median(replicate(100,mean(sess$run(Spread_tf))))
