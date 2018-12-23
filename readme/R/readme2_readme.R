@@ -266,8 +266,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                            tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) ))
+                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  ) + 
+                             tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) ))
                               #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) )) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -326,12 +326,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
     
       ### For each iteration of SGDs
-      browser() 
-      myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
-                                 tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                                 tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) ))
-      #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) )) )
-      
       for(awer in 1:sgd_iters){
         sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
       }
