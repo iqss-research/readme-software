@@ -322,9 +322,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       wt1_ = median(replicate(100,mean(sess$run(CatDiscrim_tf))))
       wt2_ = median(replicate(100,mean(sess$run(FeatDiscrim_tf))))
       wt3_ = median(replicate(100,mean(sess$run(Spread_tf))))
-      sess$run(wt1$assign(1/wt1_))
-      sess$run(wt2$assign(1/wt2_))
-      sess$run(wt3$assign(1/wt3_))
+      sess$run(wt1$assign(1/(0.01+wt1_)))
+      sess$run(wt2$assign(1/(0.01+wt2_)))
+      sess$run(wt3$assign(1/(0.01+wt3_)))
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
