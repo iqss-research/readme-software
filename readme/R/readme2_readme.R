@@ -31,8 +31,6 @@
 #' 
 #' @param numProjections How many projections should be calculated? Input should be a positive number. Minimum number of projections = number of categories + 2. 
 #' 
-#' @param mLearn Learning parameter for moments in batch normalization (numeric value from 0-1). Default to 0.01 
-#' 
 #' @param batchSizePerCat What should the batch size per category be in the sgd optimization and knn matching? 
 #' 
 #' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
@@ -103,10 +101,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .90,
-                   numProjections = 20,
-                   mLearn         = 0.01, 
+                   numProjections = 30,
                    dropout_rate   = 0.50, 
-                   batchSizePerCat = 10, 
+                   batchSizePerCat = 20, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -129,10 +126,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   if (nDocuments != length(categoryVec)){
     stop("Error: 'dfm' must have the same number of rows as the length of 'categoryVec'")
-  }
-  
-  if (mLearn <= 0 | mLearn > 1){
-    stop("Error: 'mLearn' must be greater than 0 and less than 1")
   }
   
   if (verbose == T){
@@ -274,14 +267,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -(tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  ) + 
                             tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  ) + 
-                              tf$constant(2, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) ))
+                              tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) ))
                               #tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) )) )
-
+  
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
                                                     momentum      = sgd_momentum, 
                                                     use_nesterov  = T)
-
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
   Gradients_clipped    = Gradients_unclipped
