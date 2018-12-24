@@ -265,6 +265,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
+  browser() 
   wt1 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   wt2 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   wt3 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
