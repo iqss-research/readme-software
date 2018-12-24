@@ -334,6 +334,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       term2_sd = sd(abs(unlist(terma_[2,] )))
       term3_m = mean(abs(unlist(terma_[3,] )))
       term3_sd = sd(abs(unlist(terma_[3,] )))
+      browser() 
       sess$run(term1_M$assign(term1_m))
       sess$run(term2_M$assign(term2_m))
       sess$run(term3_M$assign(term3_m))
