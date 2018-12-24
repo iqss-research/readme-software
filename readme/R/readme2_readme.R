@@ -274,7 +274,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   term3_SD = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   CatDiscrim_contrib = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
-  Spread_contrib = tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ))
+  #Spread_contrib = tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ))
+  Spread_contrib = tf$reduce_mean(tf$minimum(Spread_tf, 0.35))
   myLoss_tf            = -(tf$multiply(1/term1_SD,CatDiscrim_contrib-term1_M) + 
                              tf$multiply(1/term2_SD,FeatDiscrim_contrib-term2_M)
                            tf$multiply(1/term3_SD,Spread_contrib-term3_M)
