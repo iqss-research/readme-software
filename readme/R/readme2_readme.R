@@ -323,11 +323,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
-      browser()
       terma_ = replicate(100,sess$run(list(CatDiscrim_contrib,FeatDiscrim_contrib,Spread_contrib)))
-      wt1_ = terma_[1,] 
-      wt2_ = terma_[1,] 
-      wt3_ = terma_[1,] 
+      wt1_ = median(abs(unlist(terma_[1,] )))
+      wt2_ = median(abs(unlist(terma_[2,] )))
+      wt3_ = median(abs(unlist(terma_[3,] )))
       sess$run(wt1$assign(1/(0.01+wt1_)))
       sess$run(wt2$assign(1/(0.01+wt2_)))
       sess$run(wt3$assign(1/(0.01+wt3_)))
