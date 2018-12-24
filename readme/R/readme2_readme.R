@@ -265,16 +265,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  wt1 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  wt2 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  wt3 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  term1_M = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  term2_M = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  term3_M = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  
+  term1_SD = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  term2_SD = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  term3_SD = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   CatDiscrim_contrib = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
   Spread_contrib = tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ))
-  myLoss_tf            = -(tf$multiply(wt1,CatDiscrim_contrib) + 
-                             tf$multiply(wt2,FeatDiscrim_contrib) + 
+  myLoss_tf            = -(tf$multiply(1/term1_SD,CatDiscrim_contrib-term1_M) + 
+                             tf$multiply(1/term2_SD,FeatDiscrim_contrib-term2_M)
+                           tf$multiply(1/term3_SD,Spread_contrib-term3_M)
                               #tf$multiply(wt3,tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) )))
-                           tf$multiply(wt3,tf$constant(0.10, dtype = tf_float_precision)*Spread_contrib))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -323,12 +327,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
       terma_ = replicate(100,sess$run(list(CatDiscrim_contrib,FeatDiscrim_contrib,Spread_contrib)))
-      wt1_ = sd(abs(unlist(terma_[1,] )))
-      wt2_ = sd(abs(unlist(terma_[2,] )))
-      wt3_ = sd(abs(unlist(terma_[3,] )))
-      sess$run(wt1$assign(1/(0.01+wt1_)))
-      sess$run(wt2$assign(1/(0.01+wt2_)))
-      sess$run(wt3$assign(1/(0.01+wt3_)))
+      term1_m = mean(abs(unlist(terma_[1,] )))
+      term1_sd = sd(abs(unlist(terma_[1,] )))
+      term2_m = mean(abs(unlist(terma_[2,] )))
+      term2_sd = sd(abs(unlist(terma_[2,] )))
+      term3_m = mean(abs(unlist(terma_[3,] )))
+      term3_sd = sd(abs(unlist(terma_[3,] )))
+      sess$run(term1_M$assign(term1_m))
+      sess$run(term2_M$assign(term2_m))
+      sess$run(term3_M$assign(term3_m))
+      sess$run(term1_SD$assign(term1_sd))
+      sess$run(term2_SD$assign(term2_sd))
+      sess$run(term3_SD$assign(term3_sd))
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
