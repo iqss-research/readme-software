@@ -265,15 +265,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  browser() 
   wt1 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   wt2 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   wt3 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  myLoss_tf            = -(tf$multiply(wt1,tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )) + 
-                             tf$multiply(wt2,tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )) + 
+  CatDiscrim_contrib = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
+  FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
+  Spread_contrib = tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ))
+  myLoss_tf            = -(tf$multiply(wt1,CatDiscrim_contrib) + 
+                             tf$multiply(wt2,FeatDiscrim_contrib) + 
                               #tf$multiply(wt3,tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) )))
                              #tf$multiply(wt3,tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) )))
-                           tf$multiply(wt3,tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) )) ))
+                           tf$multiply(wt3,tf$constant(0.10, dtype = tf_float_precision)*Spread_contrib)
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -321,9 +323,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
-      wt1_ = median(replicate(100,mean(sess$run(CatDiscrim_tf))))
-      wt2_ = median(replicate(100,mean(sess$run(FeatDiscrim_tf))))
-      wt3_ = median(replicate(100,mean(sess$run(Spread_tf))))
+      browser()
+      terma_ = replicate(100,sess$run(list(CatDiscrim_contrib,FeatDiscrim_contrib,Spread_contrib)))
+      wt1_ = terma_[1,] 
+      wt2_ = terma_[1,] 
+      wt3_ = terma_[1,] 
       sess$run(wt1$assign(1/(0.01+wt1_)))
       sess$run(wt2$assign(1/(0.01+wt2_)))
       sess$run(wt3$assign(1/(0.01+wt3_)))
