@@ -269,13 +269,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   wt2 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   wt3 = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   CatDiscrim_contrib = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
-  FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
+  FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )
   Spread_contrib = tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ))
   myLoss_tf            = -(tf$multiply(wt1,CatDiscrim_contrib) + 
                              tf$multiply(wt2,FeatDiscrim_contrib) + 
                               #tf$multiply(wt3,tf$constant(1, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) )))
-                             #tf$multiply(wt3,tf$constant(0.10, dtype = tf_float_precision)*tf$reduce_mean( tf$minimum(Spread_tf,0.20) )))
-                           tf$multiply(wt3,tf$constant(0.10, dtype = tf_float_precision)*Spread_contrib))
+                           tf$multiply(wt3,tf$constant(0.50, dtype = tf_float_precision)*Spread_contrib))
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
