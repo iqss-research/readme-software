@@ -197,6 +197,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   axis_FeatDiscrim    = as.integer(nCat!=2)
   rm(redund_mat)
     
+  browser() 
   #Placeholder settings - to be filled when executing TF operations
   tf_float_precision    = tf$float32
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
