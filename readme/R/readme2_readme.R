@@ -326,6 +326,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
+      browser()
+      c(CatDiscrim_tf,FeatDiscrim_tf,Spread_tf)
       terma_ = replicate(100,sess$run(list(CatDiscrim_contrib,FeatDiscrim_contrib,Spread_contrib)))
       term1_m = mean(abs(unlist(terma_[1,] )))
       term1_sd = 0.10+sd(abs(unlist(terma_[1,] )))
