@@ -255,9 +255,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
-  browser()
+  gathering_mat = sapply(1:nCat, function(er){ 
+    if(er == 1){indices_ =  1:NObsPerCat-1 }
+    if(er > 1){indices_ =  (er*NObsPerCat):((er+1)*NObsPerCat-1) }
+    return(as.integer(indices_))
+    })
   ## Spread component of objective function
-  Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
+  Spread_tf =         tf$reduce_mean(tf$abs(tf$gather(LFinal_n, t(gathering_mat), axis = 0L) -
+                                              tf$gather(ESGivenD_tf, 1L,axis = 0L)), 
+                                     1L)
+  #Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
