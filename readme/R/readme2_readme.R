@@ -255,7 +255,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
-  gathering_mat = tf$constant(t(sapply(1:nCat, function(er){ 
+  gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
     return(as.integer(indices_))
@@ -263,13 +263,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  browser()
   Spread_tf =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) -
-                                              tf$gather(ESGivenD_tf, 1L,axis = 0L)), 
-                                     1L)
+                                              ESGivenD_tf), 
+                                     0L)
   #Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
-
-  sess$run(tf$gather(LFinal_n, gathering_mat, axis = 0L))
+  
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                      tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -318,7 +316,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   for(iter_i in 1:nboot){ 
-      browser() 
       sess$run(init) # Initialize TensorFlow graph
       Spread_tf
       #if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
