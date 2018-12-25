@@ -255,19 +255,22 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
+  browser()
   ## Spread component of objective function
   Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
-  CatDiscrim_tf        = tf$square(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
+  CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
+                                     tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
   
   ## Feature discrimination (row-differences)
-  FeatDiscrim_tf       = tf$sqrt(0.01+tf$square(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))))
+  FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
+                                  tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(tf$sqrt(CatDiscrim_tf+0.01),2)  )
+  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
-  Spread_contrib       = tf$reduce_mean(tf$log(tf$minimum(Spread_tf+0.01, 1)))
+  Spread_contrib       = tf$reduce_mean(tf$log(tf$minimum(Spread_tf, 1)))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
