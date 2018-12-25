@@ -271,11 +271,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   CatDiscrim_contrib = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
-  #Spread_contrib = tf$reduce_mean(tf$log( tf$minimum(Spread_tf,0.40) ))
   Spread_contrib = tf$reduce_mean(tf$minimum(Spread_tf, 0.25))
-  myLoss_tf            = -(tf$multiply(1/term1_M,CatDiscrim_contrib) + 
-                             tf$multiply(1/term2_M,FeatDiscrim_contrib) + 
-                           tf$multiply(1/term3_M,Spread_contrib))
+  myLoss_tf            = -(tf$multiply(1/term1_M,   CatDiscrim_contrib) + 
+                           tf$multiply(1/term2_M, FeatDiscrim_contrib) + 
+                           tf$multiply(0.10/term3_M,   Spread_contrib))
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -327,7 +326,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       term1_m = 0.01+mean(abs(unlist(terma_[1,])))
       term2_m = 0.01+mean(abs(unlist(terma_[2,])))
       term3_m = 0.01+mean(abs(unlist(terma_[3,])))
-      print(term1_m); print(term2_m); print(term3_m)
       sess$run(term1_M$assign(term1_m))
       sess$run(term2_M$assign(term2_m))
       sess$run(term3_M$assign(term3_m))
