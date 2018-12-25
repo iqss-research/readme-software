@@ -265,16 +265,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  term1_M = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  term2_M = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  term3_M = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-
   CatDiscrim_contrib = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
   Spread_contrib = tf$reduce_mean(tf$minimum(Spread_tf, 0.25))
-  myLoss_tf            = -(tf$multiply(1/term1_M,   CatDiscrim_contrib) + 
-                           tf$multiply(1/term2_M, FeatDiscrim_contrib) + 
-                           tf$multiply(0.10/term3_M,   Spread_contrib))
+  myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -322,13 +316,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
       rm(moments_list)
-      terma_ = replicate(100,sess$run(list(CatDiscrim_contrib,FeatDiscrim_contrib,Spread_contrib)))
-      term1_m = 0.01+mean(abs(unlist(terma_[1,])))
-      term2_m = 0.01+mean(abs(unlist(terma_[2,])))
-      term3_m = 0.01+mean(abs(unlist(terma_[3,])))
-      sess$run(term1_M$assign(term1_m))
-      sess$run(term2_M$assign(term2_m))
-      sess$run(term3_M$assign(term3_m))
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
