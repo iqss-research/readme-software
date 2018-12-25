@@ -317,7 +317,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   for(iter_i in 1:nboot){ 
+      browser() 
       sess$run(init) # Initialize TensorFlow graph
+      Spread_tf
       #if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
