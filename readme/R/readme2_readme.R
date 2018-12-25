@@ -268,6 +268,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
   Spread_contrib       = tf$reduce_mean(tf$minimum(Spread_tf, 0.25))
+  browser()
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
