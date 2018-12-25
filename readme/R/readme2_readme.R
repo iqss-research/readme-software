@@ -105,7 +105,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
-                   batchSizePerCat_match = 20, 
+                   batchSizePerCat_match = 30, 
                    minMatch       = 10,
                    nboot_match    = 40,
                    winsorize      = T, 
@@ -205,7 +205,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
@@ -259,18 +259,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   Spread_tf            = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
-  CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
+  CatDiscrim_tf        = tf$sqrt(tf$square(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) - tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)))
   
   ## Feature discrimination (row-differences)
-  FeatDiscrim_tf       = tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
+  FeatDiscrim_tf       = tf$sqrt(tf$square(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) - tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
-  Spread_contrib       = tf$reduce_mean(tf$minimum(Spread_tf, 0.25))
-  Lasso_contrib        = 0.01*tf$reduce_mean(tf$abs(tf$trainable_variables()[[1]]))
-  myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + 
-                             Spread_contrib + Lasso_contrib)
+  Spread_contrib       = tf$reduce_mean(tf$log(tf$minimum(Spread_tf, 0.40)))
+  myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -321,8 +319,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 0.50 * min( init_L2_squared_vec )
-      clip_value                     = 0.50 * min( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = 0.50 * max( init_L2_squared_vec )
+      clip_value                     = 0.50 * max( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
