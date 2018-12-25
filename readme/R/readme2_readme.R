@@ -263,6 +263,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
+  browser()
   Spread_tf =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) -
                                               tf$gather(ESGivenD_tf, 1L,axis = 0L)), 
                                      1L)
