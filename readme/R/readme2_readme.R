@@ -260,6 +260,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     if(er > 1){indices_ =  (er*NObsPerCat):((er+1)*NObsPerCat-1) }
     return(as.integer(indices_))
     })
+  browser()
   ## Spread component of objective function
   Spread_tf =         tf$reduce_mean(tf$abs(tf$gather(LFinal_n, t(gathering_mat), axis = 0L) -
                                               tf$gather(ESGivenD_tf, 1L,axis = 0L)), 
