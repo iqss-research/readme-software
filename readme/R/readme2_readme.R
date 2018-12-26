@@ -105,7 +105,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
-                   batchSizePerCat_match = 30, 
+                   batchSizePerCat_match = 20, 
                    minMatch       = 10,
                    nboot_match    = 40,
                    winsorize      = T, 
@@ -274,8 +274,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
-  #Spread_contrib       = 0.10*tf$reduce_mean(tf$log(tf$minimum(Spread_tf, 0.40)))
-  Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(tf$reduce_min(Spread_tf, 0L), 0.40) )
+  Spread_contrib       = 0.10*tf$reduce_mean(tf$log(tf$minimum(tf$reduce_min(Spread_tf, 0L), 0.40) ))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -340,8 +339,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       #seems to check out 
       #L0 = sess$run(list(Spread_tf,tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) , 
                     #ESGivenD_tf));target_ = L0[[1]]
-      #candidate_ = Reduce("+", unlist(apply(L0[[2]], c(1), function(x){ 
-        #list(  abs(x - L0[[3]])  )   }), recursive = F) )  / NObsPerCat
+      #candidate_ = Reduce("+", unlist(apply(L0[[2]], c(1), function(x){ list(  abs(x - L0[[3]])  )   }), recursive = F) )  / NObsPerCat
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
