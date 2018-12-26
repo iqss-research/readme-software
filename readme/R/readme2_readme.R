@@ -150,14 +150,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   ## Drop invariant columns
   dfm                   = dfm[,apply(dfm,2,sd)>0]
-  dfm_M = colMeans(dfm[labeledIndicator==1,])
-  dfm_SD = colSds(dfm[labeledIndicator==1,], dfm_M)
-  dfm = FastScale(dfm, cm = dfm_M, csd = dfm_SD); dfm = dfm/(1+abs(dfm))
 
   #Setup information for SGD
-  categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]  
+  categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
-  labeled_pd            = vec2prob( categoryVec_labeled ); 
+  labeled_pd            = vec2prob( categoryVec_labeled )
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   dfm_labeled           = dfm[labeledIndicator==1,]; 
   dfm_unlabeled         = dfm[labeledIndicator==0,]
@@ -277,7 +274,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )
-  Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.40))
+  Spread_contrib       = 0.10*tf$reduce_mean(tf$log(tf$minimum(Spread_tf, 0.40)))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -294,7 +291,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
+  #myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
+  browser()
+  
 
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
