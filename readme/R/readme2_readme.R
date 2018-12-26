@@ -273,7 +273,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
-  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )
+  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
   Spread_contrib       = 0.10*tf$reduce_mean(tf$log(tf$minimum(Spread_tf, 0.40)))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
@@ -337,10 +337,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
       }
-      #seems to check out 
-      #L0 = sess$run(list(Spread_tf,tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) , 
-                    #ESGivenD_tf));target_ = L0[[1]]
-      #candidate_ = Reduce("+", unlist(apply(L0[[2]], c(1), function(x){ list(  abs(x - L0[[3]])  )   }), recursive = F) )  / NObsPerCat
+    
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal,feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                       IL_mu_last    = IL_mu_value, 
