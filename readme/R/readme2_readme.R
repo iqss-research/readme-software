@@ -339,6 +339,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       ### For each iteration of SGDs
       for(awer in 1:sgd_iters){
+        print( sess$run( Spread_tf )) 
         sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
       }
       #seems to check out 
