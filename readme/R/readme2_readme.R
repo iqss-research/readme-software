@@ -100,7 +100,7 @@
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1300,
-                   sgd_momentum   = .90,
+                   sgd_momentum   = .50,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
@@ -291,8 +291,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  #myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
-  myOpt_tf_apply        =  tf$train$AdamOptimizer(learning_rate = 0.0001)$minimize(myLoss_tf)
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
 
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
