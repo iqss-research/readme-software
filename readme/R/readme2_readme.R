@@ -341,7 +341,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
       }
-      #browser()
+      browser()
       
       #Spread_tf =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) -
                                                   #ESGivenD_tf), 0L)
