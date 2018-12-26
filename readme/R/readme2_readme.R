@@ -150,6 +150,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   ## Drop invariant columns
   dfm                   = dfm[,apply(dfm,2,sd)>0]
+  browser() 
   dfm = FastScale(dfm); dfm = dfm/(1+abs(dfm))
 
   #Setup information for SGD
