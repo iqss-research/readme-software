@@ -292,8 +292,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ### applies the gradient updates
   #myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
-  browser()
-  
+  myOpt_tf_apply        =  tf$train$AdamOptimizer(learning_rate = 0.001)$minimize(myLoss_tf)
 
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
