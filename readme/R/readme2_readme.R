@@ -251,6 +251,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (1.*nCat)*LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
   #Find E[S|D] and calculate objective function  
+  browser() 
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
   
   gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
