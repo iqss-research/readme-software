@@ -350,16 +350,26 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
+        
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat, 
                                                                      function(x){sample(x, 
                                                                                         batchSizePerCat_match, 
                                                                                         replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
+          indices_list = lapply(l_indices_by_cat, function(x){
+            x_all <- c(replicate(ceiling( (batchSizePerCat_match*nboot_match)/length(x) ), 
+                                             {
+                                               as.numeric(sample(as.character(x)))
+                                             }) )[1:(batchSizePerCat_match*nboot_match)]
+            x_all_l = split(x_all, ceiling(seq_along(x_all)/batchSizePerCat_match))
+          })
+          indices_list = do.call(rbind,indices_list)
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
-          browser()
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
-            Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
-            X_      = out_dfm_labeled[indices_list[[boot_iter]],];
+            #Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
+            #X_      = out_dfm_labeled[indices_list[[boot_iter]],];
+            Cat_    = categoryVec_labeled[unlist(indices_list[,boot_iter])]; 
+            X_      = out_dfm_labeled[unlist(indices_list[,boot_iter]),];
             Y_      = out_dfm_unlabeled
           
             ### Normalize X and Y
