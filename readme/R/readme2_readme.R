@@ -203,7 +203,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.0001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
@@ -339,9 +339,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
-                                                                      IL_mu_last    = IL_mu_value, 
-                                                                      IL_sigma_last = IL_sigma_value)), T)
-      out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),]; 
+                                                                       IL_mu_last    = IL_mu_value, 
+                                                                       IL_sigma_last = IL_sigma_value)), T)
+      out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),];  
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
       ### Here ends the SGD for generating optimal document-feature matrix.
@@ -354,7 +354,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, 
                                                                                                            batchSizePerCat_match, 
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-          
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -368,9 +367,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = c(FNN::get.knnx(data = X_, 
+                MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
                                                   query = Y_, 
-                                                  k = kMatch)$nn.index) 
+                                                  k     = kMatch)$nn.index) 
 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
