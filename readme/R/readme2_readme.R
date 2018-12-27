@@ -273,7 +273,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
-  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )
+  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
   Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
@@ -351,14 +351,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
-          X_ME      = FastScale(out_dfm_labeled, MM1, MM2_);
-          Y_ME      = FastScale(out_dfm_unlabeled, MM1, MM2_)
-          MatchIndices_ME  = c(FNN::get.knnx(data = X_ME, query = Y_ME, k = kMatch)$nn.index)
-          l_indices_by_cat = tapply(MatchIndices_ME, categoryVec_labeled[MatchIndices_ME], c)
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, 
                                                                                                            batchSizePerCat_match, 
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-          
           
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
@@ -391,7 +386,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             }else{ ## Otherwise use all the indices
                 MatchIndices_i  = 1:nrow(X_)
             }
-            MatchIndices_i  = 1:nrow(X_)
             categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
             MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch),
                                           categoryVec_LabMatch, function(x){c(x) })
