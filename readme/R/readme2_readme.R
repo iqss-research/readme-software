@@ -262,8 +262,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Gather slices from params axis axis according to indices.
   Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
   #Spread_tf            =         tf$contrib$distributions$percentile(tf$abs(tf$gather(params = LFinal_n,indices = gathering_mat, axis = 0L) - ESGivenD_tf), 50.0, 0L)
-  #Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
-  
+
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                      tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L))
@@ -273,7 +272,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                   tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1)  )
+  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )
   Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
