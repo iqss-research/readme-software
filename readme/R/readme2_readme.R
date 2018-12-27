@@ -335,6 +335,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       learning_rate_vec = rep(NA, times = sgd_iters)
       for(awer in 1:sgd_iters){
         learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
+        if(awer %% 100 == 0){ sess$run(inverse_learning_rate$assign( 2*inverse_learning_rate )) }
       }
       browser() 
     
