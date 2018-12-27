@@ -256,13 +256,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     return(as.integer(indices_))
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
-  #ESGivenD_tf          = tf$reduce_mean(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L), 0L)
+  #ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+  ESGivenD_tf          = tf$contrib$distributions$percentile(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L), 50., 0L)
   
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
-  #Spread_tf            =         tf$contrib$distributions$percentile(tf$abs(tf$gather(params = LFinal_n,indices = gathering_mat, axis = 0L) - ESGivenD_tf), 50.0, 0L)
+  #Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+  Spread_tf            =         tf$contrib$distributions$percentile(tf$abs(tf$gather(params = LFinal_n,indices = gathering_mat, axis = 0L) - ESGivenD_tf), 50.0, 0L)
   #Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
