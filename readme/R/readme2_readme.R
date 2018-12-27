@@ -256,8 +256,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     return(as.integer(indices_))
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
-  #ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
-  ESGivenD_tf          = tf$reduce_mean(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L), 0L)
+  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+  #ESGivenD_tf          = tf$reduce_mean(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L), 0L)
   
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
