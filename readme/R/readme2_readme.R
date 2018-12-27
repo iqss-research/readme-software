@@ -351,26 +351,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-        
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat, 
                                                                      function(x){sample(x, 
                                                                                         batchSizePerCat_match, 
-                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here. 
-          indices_list = lapply(l_indices_by_cat, function(x){
-            x_all <- c(replicate(ceiling( (batchSizePerCat_match*nboot_match)/length(x) ), 
-                                             {
-                                               as.numeric(sample(as.character(x)))
-                                             }) )[1:(batchSizePerCat_match*nboot_match)]
-            x_all_l = split(x_all, ceiling(seq_along(x_all)/batchSizePerCat_match))
-          })
-          indices_list = do.call(rbind,indices_list)
+                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+                                                                                        
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
-            #Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
-            #X_      = out_dfm_labeled[indices_list[[boot_iter]],];
-            Cat_    = categoryVec_labeled[unlist(indices_list[,boot_iter])]; 
-            X_      = out_dfm_labeled[unlist(indices_list[,boot_iter]),];
+            Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
+            X_      = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_      = out_dfm_unlabeled
           
             ### Normalize X and Y
@@ -391,7 +381,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                   MatchIndices_i = c(MatchIndices_i,
                                      sample(which(Cat_ == t__ ), 
                                             minMatch, 
-                                            replace = length(which(Cat_ == t__ )) < minMatch))
+                                            #replace = length(which(Cat_ == t__ )) < minMatch))
+                                            replace = T))
                     }
                   }
             }else{ ## Otherwise use all the indices
@@ -402,14 +393,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                           categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
-            browser() 
-            est_readme2_ = try((  replicate(100, { 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = length(sae) * 0.75 < batchSizePerCat_match ) })
+            est_readme2_ = try((  sapply(1:nboot_match, function(eare){ 
+                #MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = length(sae) * 0.75 < batchSizePerCat_match ) })
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = T ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
                 ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                colnames(ESGivenD_sampled)   = names( MatchIndices_byCat_ ) 
+                colnames(ESGivenD_sampled)   = names(labeled_pd)
                 ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                                   Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
                 return( ED_sampled )  
