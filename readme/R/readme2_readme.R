@@ -402,6 +402,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                           categoryVec_LabMatch, function(x){c(x) })
           
             ### Carry out estimation on the matched samples
+            browser() 
             est_readme2_ = try((  replicate(100, { 
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = length(sae) * 0.75 < batchSizePerCat_match ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
