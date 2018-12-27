@@ -358,11 +358,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                                         
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
-          browser() 
-          
-          X_ME      = FastScale(out_dfm_unlabeled, MM1, MM2_);
-          Y_ME      = FastScale(out_dfm_unlabeled, MM1, MM2_)
-          
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -376,7 +371,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = c(FNN::get.knnx(data = X_, query = Y_, k = kMatch)$nn.index) 
+                MatchIndices_i  = c(FNN::get.knnx(data = X_, 
+                                                  query = Y_, 
+                                                  k = kMatch)$nn.index) 
 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
