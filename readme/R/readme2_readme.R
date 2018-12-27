@@ -250,15 +250,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (1.*nCat)*LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
-  #Find E[S|D] and calculate objective function  
-  browser() 
-  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
-  
   gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
     return(as.integer(indices_))
     })), dtype = tf$int32)
+  #Find E[S|D] and calculate objective function  
+  #ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+  ESGivenD_tf          = tf$reduce_mean(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L), 0L)
+  
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
   Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
