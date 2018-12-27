@@ -260,8 +260,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     })), dtype = tf$int32)
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  #Spread_tf           =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
-  Spread_tf            =         tf$contrib$distributions$percentile(tf$abs(tf$gather(params = LFinal_n,indices = gathering_mat, axis = 0L) - ESGivenD_tf), 50.0, 0L)
+  Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+  #Spread_tf            =         tf$contrib$distributions$percentile(tf$abs(tf$gather(params = LFinal_n,indices = gathering_mat, axis = 0L) - ESGivenD_tf), 50.0, 0L)
   #Spread_tf            = (tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
   
   ## Category discrimination (absolute difference in all E[S|D] columns)
@@ -276,7 +276,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$log(tf$minimum(Spread_tf, 0.40)))
-  Spread_contrib       = 0.25*tf$reduce_mean(tf$minimum(Spread_tf, 0.50))
+  Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.20))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
