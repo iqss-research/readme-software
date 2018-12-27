@@ -257,8 +257,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
-  #ESGivenD_tf          = tf$reduce_mean(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L), 0L)
-  
+
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
   Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
@@ -274,8 +273,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                   tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
-  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
+  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1)  )
+  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1)  )
   Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
@@ -351,8 +350,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
-          indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat, 
-                                                                     function(x){sample(x, 
+          indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, 
                                                                                         batchSizePerCat_match, 
                                                                                         replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
                                                                                         
