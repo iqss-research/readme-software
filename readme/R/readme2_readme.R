@@ -203,7 +203,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.002; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
@@ -260,7 +260,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  Spread_tf            =         tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+  Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -332,6 +332,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
       
       ### For each iteration of SGDs
+      browser() 
       for(awer in 1:sgd_iters){
         sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply))
       }
