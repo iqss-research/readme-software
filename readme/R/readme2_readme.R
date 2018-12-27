@@ -358,6 +358,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                                         
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
+          browser() 
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -381,7 +382,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                   MatchIndices_i = c(MatchIndices_i,
                                      sample(which(Cat_ == t__ ), 
                                             minMatch, 
-                                            #replace = length(which(Cat_ == t__ )) < minMatch))
                                             replace = T))
                     }
                   }
@@ -394,7 +394,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             est_readme2_ = try((  sapply(1:nboot_match, function(eare){ 
-                #MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = length(sae) * 0.75 < batchSizePerCat_match ) })
                 MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = T ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
