@@ -273,7 +273,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
-  Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
+  Spread_contrib       = 0.50*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -348,7 +348,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       
       ### Here ends the SGD for generating optimal document-feature matrix.
-      
       ### If we're also going to do estimation
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
@@ -393,7 +392,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           
             ### Carry out estimation on the matched samples
             est_readme2_ = try((  sapply(1:nboot_match, function(eare){ 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, batchSizePerCat_match, replace = T ) })
+                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
+                                                                                                batchSizePerCat_match, 
+                                                                                                replace = length(sae) * 0.75 < batchSizePerCat_match ) })
                 X__                          = X_m[unlist(MatchIndices_byCat_),]; 
                 categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
 
