@@ -336,9 +336,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       nrestart = 0
       for(awer in 1:sgd_iters){
+        if(rbinom(1, size = 1, prob = 1/awer))==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
         #if(awer %% 5 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate-(1/(1+nrestart ))*inverse_learning_rate )) }
-        if(rbinom(1, size = 1, prob = 1/awer))==1){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
       }
       plot(1/inverse_learning_rate_vec)
       ### Given the learned parameters, output the feature transformations for the entire matrix
