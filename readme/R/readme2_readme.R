@@ -335,7 +335,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       nrestart = 0
-      seq__ = seq(1, 0.01, length.out = sgd_iters)
+      seq__ = seq(1, 0.01, length.out = sgd_iters)^10
+      seq__ = seq__ / sum(seq__) * 100
       for(awer in 1:sgd_iters){
         #if(rbinom(1, size = 1, prob = 1/sqrt(awer))==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
