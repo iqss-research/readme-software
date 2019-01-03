@@ -231,6 +231,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
+  browser() 
   initializer_reweighting =  1/sd(replicate(2000, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
@@ -326,10 +327,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
-      #inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-      #clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
-      inverse_learning_rate_starting = median( init_L2_squared_vec )
-      clip_value                     = median( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
+      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
