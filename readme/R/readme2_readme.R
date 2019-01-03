@@ -320,14 +320,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       moments_list   =  replicate(500, sess$run(list(IL_mu_b, IL_sigma2_b)))
-      IL_mu_value    =  apply( do.call(cbind, moments_list[1,]), 1, median )  
-      IL_sigma_value =  apply( sqrt(do.call(cbind, moments_list[2,]) ), 1, median  )
+      IL_mu_value    =  apply( do.call(cbind, moments_list[1,]), 1, mean )  
+      IL_sigma_value =  apply( sqrt(do.call(cbind, moments_list[2,]) ), 1, mean  )
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      #inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
+      #clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = median( init_L2_squared_vec )
+      clip_value                     = median( sqrt( init_L2_squared_vec )  )
 
       sess$run(  list(clip_tf$assign(  clip_value  ), 
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
@@ -335,7 +337,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       nrestart = 0
-      seq__ = seq(1, 0.01, length.out = sgd_iters)^3
+      seq__ = seq(1, 0.01, length.out = sgd_iters)^10
       seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
       for(awer in 1:sgd_iters){
         #if(rbinom(1, size = 1, prob = 1/sqrt(awer))==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
