@@ -108,7 +108,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    batchSizePerCat_match = 20, 
                    minMatch       = 5,
                    nboot_match    = 50,
-                   winsorize      = T, 
+                   winsorize      = F, 
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F){ 
