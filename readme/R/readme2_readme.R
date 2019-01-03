@@ -274,7 +274,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
-  Spread_contrib       = 0.01*tf$reduce_mean(tf$minimum(Spread_tf, 0.50))
+  Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.25))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -337,9 +337,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       nrestart = 0
       for(awer in 1:sgd_iters){
         learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
-        if(awer %% 20 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate-(1/(1+nrestart ))*inverse_learning_rate )) }
+        #if(awer %% 5 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate-(1/(1+nrestart ))*inverse_learning_rate )) }
+        if(awer %% 3 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate+abs(rnorm(1,mean=0, sd = abs(inverse_learning_rate)) ))) }
       }
+      plot( learning_rate_vec )
     
+      inverse_learning_rate_starting / 100 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                        IL_mu_last    = IL_mu_value, 
