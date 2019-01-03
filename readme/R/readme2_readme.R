@@ -225,13 +225,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_sigma2_b         = IL_m[[2]];
   IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
   IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
-  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  #IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.1)
   OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  browser() 
   initializer_reweighting =  1/sd(replicate(2000, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
@@ -275,7 +275,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
-  Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.25))
+  Spread_contrib       = 0.01*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -321,8 +321,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
       moments_list   =  replicate(500, sess$run(list(IL_mu_b, IL_sigma2_b)))
-      IL_mu_value    =  apply( do.call(cbind, moments_list[1,]), 1, mean )  
-      IL_sigma_value =  apply( sqrt(do.call(cbind, moments_list[2,]) ), 1, mean  )
+      IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
+      IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
@@ -335,14 +335,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
-      nrestart = 0
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
       seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
       for(awer in 1:sgd_iters){
         #if(rbinom(1, size = 1, prob = 1/sqrt(awer))==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
-        #if(awer %% 5 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate-(1/(1+nrestart ))*inverse_learning_rate )) }
       }
       plot(1/inverse_learning_rate_vec, main = 'This')
       ### Given the learned parameters, output the feature transformations for the entire matrix
