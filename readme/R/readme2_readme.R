@@ -319,9 +319,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
-      IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]) )  
-      IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) )  )
+      moments_list   =  replicate(500, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      IL_mu_value    =  apply( do.call(cbind, moments_list[1,]), 1, median )  
+      IL_sigma_value =  apply( sqrt(do.call(cbind, moments_list[2,]) ), 1, median  )
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
