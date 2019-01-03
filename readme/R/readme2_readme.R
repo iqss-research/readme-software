@@ -338,7 +338,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
       seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
       for(awer in 1:sgd_iters){
-        #if(rbinom(1, size = 1, prob = 1/sqrt(awer))==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
       }
