@@ -333,7 +333,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                       inverse_learning_rate$assign( inverse_learning_rate_starting ) ))
       
       ### For each iteration of SGDs
-      learning_rate_vec = rep(NA, times = sgd_iters)
+      inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       nrestart = 0
       for(awer in 1:sgd_iters){
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
