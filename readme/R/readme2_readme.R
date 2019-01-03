@@ -338,8 +338,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       for(awer in 1:sgd_iters){
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
         #if(awer %% 5 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( inverse_learning_rate-(1/(1+nrestart ))*inverse_learning_rate )) }
-        if(awer %% 3 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( abs(inverse_learning_rate-abs(rnorm(1,mean=0, sd = 1/abs(inverse_learning_rate_vec[awer-1])) ) ))) }
-        print(inverse_learning_rate_vec[awer])
+        if(awer %% 10 == 0){ nrestart=nrestart+1;sess$run(inverse_learning_rate$assign( abs(inverse_learning_rate-abs(rnorm(1,mean=0, sd = 0.25/abs(inverse_learning_rate_vec[awer-1])) ) ))) }
       }
       plot( 1/inverse_learning_rate_vec )
     
