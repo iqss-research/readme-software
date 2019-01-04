@@ -319,13 +319,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   =  replicate(500, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
+      init_L2_squared_vec            = c(unlist(replicate(25, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
@@ -340,7 +340,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(inverse_learning_rate$assign( inverse_learning_rate_starting )) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
       }
-      plot(1/inverse_learning_rate_vec, main = 'That and this')
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                        IL_mu_last    = IL_mu_value, 
