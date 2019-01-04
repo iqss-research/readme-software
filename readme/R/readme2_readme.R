@@ -335,12 +335,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       warm_restart_action = inverse_learning_rate$assign( tf$constant(inverse_learning_rate_starting,dtype=tf$float32) )
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
-      seq__ = seq(1, 0.01, length.out = sgd_iters)^20
+      seq__ = seq(1, 0.01, length.out = sgd_iters)^10
       #seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
-      seq__ = seq__ / sum(seq__) * (100)
-      browser()
+      seq__ = seq__ / sum(seq__) * (100);seq__[seq__>0.50] <- 0.50
       for(awer in 1:sgd_iters){
-        if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
+        if(rbinom(1, size = 1, 
+                  prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
       }
       ### Given the learned parameters, output the feature transformations for the entire matrix
