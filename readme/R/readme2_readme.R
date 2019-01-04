@@ -106,9 +106,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
-                   minMatch       = 5,
+                   minMatch       = 10,
                    nboot_match    = 50,
-                   winsorize      = F, 
+                   winsorize      = T, 
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F){ 
@@ -325,7 +325,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec            = c(unlist(replicate(20, sess$run(L2_squared_clipped))))
+      init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
