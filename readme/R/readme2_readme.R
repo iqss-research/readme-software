@@ -274,7 +274,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.50)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.25)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
-  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
+  Spread_contrib       = tf$reduce_mean(tf$minimum(Spread_tf, 0.10))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -337,8 +337,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-      #seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
-      seq__ = seq__ / sum(seq__) * (100);seq__[seq__>0.50] <- 0.50
+      seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
+      seq__[seq__>0.50] <- 0.50
       for(awer in 1:sgd_iters){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
