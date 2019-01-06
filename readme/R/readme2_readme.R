@@ -248,8 +248,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
-  scale_factor         = ( 1/abs(diff(FastScale(as.matrix(seq(1,-1,length.out = nCat)))[c(1,2),])) )^2
-  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (scale_factor)*LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  scale_factor         = 1/abs(diff(FastScale(as.matrix(seq(1,-1,length.out = nCat)))[c(1,2),])) 
+  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = scale_factor, variance_epsilon = 0.001)
   
   gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
