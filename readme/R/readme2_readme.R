@@ -274,7 +274,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.50)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.25)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
-  Spread_contrib       = 0.10 * tf$reduce_mean(tf$minimum(Spread_tf, 0.10))
+  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf, 0.01))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -319,7 +319,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      moments_list   =  replicate(400, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
       rm(moments_list)
