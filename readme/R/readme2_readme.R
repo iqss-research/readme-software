@@ -248,7 +248,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
-  scale_factor = abs(diff(FastScale(as.matrix(seq(1,-1,length.out = nCat)))[c(1,2),]))
+  scale_factor         = 1/abs(diff(FastScale(as.matrix(seq(1,-1,length.out = nCat)))[c(1,2),]))
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (scale_factor)*LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
   gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
@@ -338,7 +338,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-      seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
+      seq__ = seq__ / sum(seq__) * (sgd_iters*0.02)
       seq__[seq__>0.50] <- 0.50
       print("Training...")
       for(awer in 1:sgd_iters){
