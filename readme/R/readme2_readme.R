@@ -248,7 +248,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
-  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (1.*nCat)*LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  scale_factor = abs(diff(FastScale(as.matrix(seq(1,-1,length.out = nCat)))[c(1,2),]))
+  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = (scale_factor)*LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
   gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
@@ -274,7 +275,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
-  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf, 1))
+  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
