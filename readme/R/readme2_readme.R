@@ -107,7 +107,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
-                   nboot_match    = 50,
+                   nboot_match    = 100,
                    winsorize      = T, 
                    justTransform  = F,
                    verbose        = F,  
@@ -119,7 +119,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
-  
+
   ### Sanity checks
   if (nDocuments != nLabeled + nUnlabeled){
     stop("Error: 'dfm' must have the same number of rows as the length of 'labeledIndicator'")
@@ -248,7 +248,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
-  #scale_factor         = 1/abs(diff(FastScale(as.matrix(seq(1,-1,length.out = nCat)))[c(1,2),])) 
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
   gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
@@ -275,7 +274,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
   #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
-  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
+  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf, 0.50))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
@@ -327,8 +326,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(25, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = 0.50 * mean( init_L2_squared_vec )
+      clip_value                     = 0.50 * mean( sqrt( init_L2_squared_vec )  )
 
       setclip_action      = clip_tf$assign(  clip_value  )
       warm_restart_action = inverse_learning_rate$assign( tf$constant(inverse_learning_rate_starting,dtype=tf$float32) )
@@ -338,14 +337,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-      seq__ = seq__ / sum(seq__) * (sgd_iters*0.02)
+      seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
       seq__[seq__>0.50] <- 0.50
       print("Training...")
       for(awer in 1:sgd_iters){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
       }
-      print(c(nCat,mean(sess$run(CatDiscrim_contrib))))
       print("Done training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
