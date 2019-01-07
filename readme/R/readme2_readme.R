@@ -337,14 +337,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-      seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
+      seq__ = seq__ / sum(seq__) * 10#(sgd_iters*0.005)
       seq__[seq__>0.50] <- 0.50
       print("Training...")
       for(awer in 1:sgd_iters){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         inverse_learning_rate_vec[awer] = sess$run(list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate))[[3]]
       }
-      print(mean(sess$run(Spread_tf)))
+      plot(inverse_learning_rate_vec)
+      print( Spread_tf )
       print("Done training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
