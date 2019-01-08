@@ -203,7 +203,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.0001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
@@ -256,7 +256,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     return(as.integer(indices_))
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -2., 2.)
+  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -1.75, 1.75)
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
@@ -271,8 +271,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                   tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,100.)  )
-  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,100.)  )
+  #CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,100.)  )
+  #FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,100.)  )
+  CatDiscrim_contrib   = tf$reduce_mean(CatDiscrim_tf  )
+  FeatDiscrim_contrib  = tf$reduce_mean(FeatDiscrim_tf  )
   Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
@@ -318,13 +320,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
 
       ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   =  replicate(400, sess$run(list(IL_mu_b, IL_sigma2_b)))
+      moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
       IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
       IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
       rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec            = c(unlist(replicate(25, sess$run(L2_squared_clipped))))
+      init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
       inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
       clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
