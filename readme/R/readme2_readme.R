@@ -203,7 +203,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.01; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+                          urat = 0.0001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
                           return( list(MM) )  } )) )
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
@@ -256,7 +256,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     return(as.integer(indices_))
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -2., 2.)
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
@@ -273,7 +273,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,1.5)  )
   FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,1.5)  )
-  #Spread_contrib       = 0.10*tf$reduce_mean(tf$minimum(Spread_tf, 0.30))
   Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
@@ -326,8 +325,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(25, sess$run(L2_squared_clipped))))
-      inverse_learning_rate_starting = 0.50 * mean( init_L2_squared_vec )
-      clip_value                     = 0.50 * mean( sqrt( init_L2_squared_vec )  )
+      inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
+      clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
 
       setclip_action      = clip_tf$assign(  clip_value  )
       warm_restart_action = inverse_learning_rate$assign( tf$constant(inverse_learning_rate_starting,dtype=tf$float32) )
