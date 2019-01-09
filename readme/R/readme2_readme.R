@@ -343,11 +343,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       seq__[seq__>0.50] <- 0.50
       print("Training...")
       my_list =list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate)
-      for(awer in 1:sgd_iters){
+      #for(awer in 1:sgd_iters){
+        #if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
+        #inverse_learning_rate_vec[awer] = sess$run(my_list)[[3]]} 
+      sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
-        inverse_learning_rate_vec[awer] = sess$run(my_list)[[3]]
-      }
-      browser()
+        sess$run(my_list)
+      })
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
