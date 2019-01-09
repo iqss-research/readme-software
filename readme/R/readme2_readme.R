@@ -342,7 +342,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
       seq__[seq__>0.50] <- 0.50
       print("Training...")
-      system.time(sess$run(my_lirt))
       my_list =list(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate)
       for(awer in 1:sgd_iters){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
