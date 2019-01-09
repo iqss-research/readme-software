@@ -256,7 +256,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     return(as.integer(indices_))
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -1, 1)
+  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -2, 2)
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
@@ -271,10 +271,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                   tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim))
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  #CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,100.)  )
-  #FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,100.)  )
-  CatDiscrim_contrib   = tf$reduce_mean(CatDiscrim_tf  )
-  FeatDiscrim_contrib  = tf$reduce_mean(FeatDiscrim_tf  )
+  CatDiscrim_contrib   = tf$reduce_mean(tf$minimum(CatDiscrim_tf,2.)  )
+  FeatDiscrim_contrib  = tf$reduce_mean(tf$minimum(FeatDiscrim_tf,2.)  )
   Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.30))
   myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
                               
