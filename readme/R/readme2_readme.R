@@ -99,7 +99,7 @@
 #' @import tensorflow
 readme <- function(dfm, labeledIndicator, categoryVec, 
                    nboot          = 4,  
-                   sgd_iters      = 1500,
+                   sgd_iters      = 1000,
                    sgd_momentum   = .90,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
@@ -107,7 +107,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
-                   nboot_match    = 100,
+                   nboot_match    = 50,
                    winsorize      = T, 
                    justTransform  = F,
                    verbose        = F,  
@@ -339,7 +339,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       inverse_learning_rate_vec = rep(NA, times = sgd_iters)
       seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-      seq__ = seq__ / sum(seq__) * 10#(sgd_iters*0.005)
+      seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
       seq__[seq__>0.50] <- 0.50
       print("Training...")
       for(awer in 1:sgd_iters){
