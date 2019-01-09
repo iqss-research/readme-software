@@ -346,6 +346,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       #for(awer in 1:sgd_iters){
         #if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         #inverse_learning_rate_vec[awer] = sess$run(my_list)[[3]]} 
+      browser()
       sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         sess$run(my_list)
