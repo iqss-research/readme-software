@@ -112,7 +112,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F){ 
-  
+   
+  ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nDocuments  = nrow(dfm)
   nFeat       = ncol(dfm)
