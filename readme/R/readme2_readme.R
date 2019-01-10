@@ -329,7 +329,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   seq__[seq__>0.50] <- 0.50
   
   for(iter_i in 1:nboot){ 
-      print(length( tf$all_variables() ))  
+      print(length( tf$global_variables() ))  
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
