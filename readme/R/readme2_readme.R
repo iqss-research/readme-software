@@ -339,7 +339,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-      } 
+      }
       
       sess$run(  list(setclip_action, 
                       warm_restart_action ))
@@ -350,6 +350,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         sess$run(learning_group)
       })
+      
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
@@ -357,6 +358,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                        IL_sigma_last = IL_sigma_value)), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),];  
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
+      rm(out_dfm) 
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
