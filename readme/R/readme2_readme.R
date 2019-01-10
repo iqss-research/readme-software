@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_momentum   = .90,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
-                   batchSizePerCat = 10, 
+                   batchSizePerCat = 5, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -120,7 +120,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
-  batchSizePerCat = ceiling(34/length(labeledCt))#batch size is 100 
+  #batchSizePerCat = ceiling(34/length(labeledCt))#batch size is 100 
 
   ### Sanity checks
   if (nDocuments != nLabeled + nUnlabeled){
@@ -385,7 +385,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                 MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                   query = Y_, 
                                                   k     = kMatch)$nn.index) , T) 
-                if(class(MatchIndices_i) == 'try-error'){browser()}
 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
@@ -484,7 +483,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   ### Close the TensorFlow session
-  sess$close();tf$reset_default_graph()
+  sess$close();
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
