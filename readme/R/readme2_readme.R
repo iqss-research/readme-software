@@ -312,6 +312,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     cat("Estimating...\n")
   }
   
+  ### Means and variances for batch normalization of the input layer - initialize starting parameters
+  moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
+  IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
+  IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
+  rm(moments_list)
+  
+  #generate learning rate 
+  inverse_learning_rate_vec = rep(NA, times = sgd_iters)
+  seq__ = seq(1, 0.01, length.out = sgd_iters)^10
+  seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
+  seq__[seq__>0.50] <- 0.50
+  
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       #if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
@@ -319,12 +331,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
-
-      ### Means and variances for batch normalization of the input layer - initialize starting parameters
-      moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
-      IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
-      IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
-      rm(moments_list)
       
       ### Calculate a clip value for the gradients to avoid overflow
       init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
@@ -337,10 +343,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                       warm_restart_action ))
       
       ### For each iteration of SGDs
-      inverse_learning_rate_vec = rep(NA, times = sgd_iters)
-      seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-      seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
-      seq__[seq__>0.50] <- 0.50
       print("Training...")
       my_group = tf$group(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate)
       sapply(1:sgd_iters, function(awer){
