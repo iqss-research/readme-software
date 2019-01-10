@@ -333,10 +333,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
-      ### Calculate a clip value for the gradients to avoid overflow
-      init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
-      setclip_action                 = clip_tf$assign(  0.50 * median( sqrt( init_L2_squared_vec )  )  )
-      warm_restart_action            = inverse_learning_rate$assign( 0.50 * median( init_L2_squared_vec ) )
+     
+      if(iter_i == 1){ 
+        ### Calculate a clip value for the gradients to avoid overflow
+        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
+        setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
+        warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+      } 
       
       sess$run(  list(setclip_action, 
                       warm_restart_action ))
