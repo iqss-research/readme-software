@@ -348,7 +348,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       print("Training...")
       sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
-        sess$run(my_group)
+        sess$run(learning_group)
       })
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
