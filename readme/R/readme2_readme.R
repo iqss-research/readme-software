@@ -345,6 +345,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       print("Training...")
       my_group = tf$group(  inverse_learning_rate_update, myOpt_tf_apply,inverse_learning_rate)
+      browser()
       sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         sess$run(my_group)
