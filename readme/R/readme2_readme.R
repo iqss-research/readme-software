@@ -329,7 +329,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   seq__[seq__>0.50] <- 0.50
   
   for(iter_i in 1:nboot){ 
-      print(length( tf$global_variables() ))  
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
@@ -383,9 +382,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             ## If we're using matching
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = c(FNN::get.knnx(data  = X_, 
+                MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                   query = Y_, 
-                                                  k     = kMatch)$nn.index) 
+                                                  k     = kMatch)$nn.index) , T) 
+                if(class(MatchIndices_i) == 'try-error'){browser()}
 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
