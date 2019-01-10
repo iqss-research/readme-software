@@ -292,11 +292,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
-  #learning consists of gradient updates plus learning rate updates. 
-  learning_group = tf$group(  inverse_learning_rate_update, myOpt_tf_apply)
-  
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
+  
+  #learning consists of gradient updates plus learning rate updates. 
+  learning_group = tf$group(  inverse_learning_rate_update, myOpt_tf_apply)
 
   #Setup the outputs 
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
