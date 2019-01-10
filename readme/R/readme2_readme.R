@@ -478,6 +478,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ### Close the TensorFlow session
   sess$close()
+  browser()
+  #sort( sapply(ls(),function(x){object.size(get(x))}))
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
