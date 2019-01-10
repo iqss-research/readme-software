@@ -328,6 +328,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   seq__[seq__>0.50] <- 0.50
   
   for(iter_i in 1:nboot){ 
+      print(length( tf$all_variables() ))  
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
@@ -346,7 +347,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      browser()
       sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         sess$run(learning_group)
@@ -423,6 +423,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ED_sampled_averaged) )
           })
           
+          
+          
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
@@ -481,7 +483,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   
   ### Close the TensorFlow session
-  sess$close()
+  sess$close();tf$reset_default_graph()
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
