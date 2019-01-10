@@ -292,6 +292,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
+  #learning consists of gradient updates plus learning rate updates. 
+  learning_group = tf$group(  inverse_learning_rate_update, myOpt_tf_apply)
+  
   ### applies the gradient updates
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )  
 
@@ -324,27 +327,22 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
   seq__[seq__>0.50] <- 0.50
   
-  ### Calculate a clip value for the gradients to avoid overflow
-  init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
-  inverse_learning_rate_starting = 0.50 * median( init_L2_squared_vec )
-  clip_value                     = 0.50 * median( sqrt( init_L2_squared_vec )  )
-  
-  setclip_action      = clip_tf$assign(  clip_value  )
-  warm_restart_action = inverse_learning_rate$assign( tf$constant(inverse_learning_rate_starting,dtype=tf$float32) )
-  
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
-      #if(iter_i > 1){ sess$run(Indices_full$assign(t(replicate(sgd_iters+2, sgd_grabSamp()-1)))) } 
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
+      ### Calculate a clip value for the gradients to avoid overflow
+      init_L2_squared_vec            = c(unlist(replicate(50, sess$run(L2_squared_clipped))))
+      setclip_action                 = clip_tf$assign(  0.50 * median( sqrt( init_L2_squared_vec )  )  )
+      warm_restart_action            = inverse_learning_rate$assign( 0.50 * median( init_L2_squared_vec ) )
+      
       sess$run(  list(setclip_action, 
                       warm_restart_action ))
       
       ### For each iteration of SGDs
       print("Training...")
-      my_group = tf$group(  inverse_learning_rate_update, myOpt_tf_apply)
       sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         sess$run(my_group)
