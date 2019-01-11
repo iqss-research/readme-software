@@ -330,6 +330,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
      
+    browser()
       if(iter_i == 1){ 
         ### Calculate a clip value for the gradients to avoid overflow
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
