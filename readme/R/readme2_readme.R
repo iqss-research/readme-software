@@ -343,6 +343,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
+      browser()
       system.time( sapply(1:sgd_iters, function(awer){
         sess$run(learning_group)
       }))
