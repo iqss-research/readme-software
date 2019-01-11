@@ -218,7 +218,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   for(ape in 1:nCat){ 
       #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
       #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 2L)", ape)) )
-    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(100))$batch(NObsPerCat)", ape)) )
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(100))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
@@ -306,6 +306,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   # Initialize global variables in TensorFlow Graph
   init                 = tf$global_variables_initializer()
+  browser()
   
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
