@@ -326,6 +326,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm(moments_list)
   
   for(iter_i in 1:nboot){ 
+      browser()
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
