@@ -488,6 +488,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
+  browser() 
+  #sort( sapply(ls(),function(x){object.size(get(x))})) 
   if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     transformed_dfm = transformed_dfm) )  }
   ## If diagnostics wanted
