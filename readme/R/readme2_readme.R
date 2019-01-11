@@ -342,7 +342,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      browser()
       print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
       
       print("Done with training...!")
