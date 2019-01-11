@@ -424,8 +424,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
               return( list(ED_sampled_averaged) )
           })
           
-          
-          
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
@@ -438,10 +436,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       } 
 
     ## if it's the first iteration
-    if(iter_i == 1 & diagnostics == T){ 
+    if(diagnostics == T){ 
       ### Save them as tf_est_results
-      tf_est_results <- list(est_readme2               = est_readme2,
-                             transformed_unlabeled_dfm = out_dfm_unlabeled,
+      tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
                              transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
                                                               matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
       
@@ -449,28 +446,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
-      ### Only run one iteration if we're just transforming the data
-    }
-    ## Save results 
-    est_readme                                 = est_readme
-    temp_est_readme                            = hold_coef 
-    temp_est_readme[names(est_readme)]         = est_readme
-    boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
-    ## If we're saving diagnostics, do some processing
-    if(diagnostics == T){
+      
       ESGivenD_div               = try({ 
         OldMat                   = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
         PreESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
-                                            tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
-                                            colMeans(OldMat[za,]) }))
-                                          
+                                                        tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
+                                                          colMeans(OldMat[za,]) }))
+        
         NewMat                    = apply(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,-1], 2, f2n)
         PostESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1]),
-                                    tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1], function(za){colMeans(NewMat[za,])}))
+                                                         tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1], function(za){colMeans(NewMat[za,])}))
         
         unlabeled_transformed_dfm = apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
         TrueESGivenD              = do.call(cbind,tapply(1:nrow(unlabeled_transformed_dfm), categoryVec_unlabeled, function(za){
-                                            colMeans(unlabeled_transformed_dfm[za,]) }))
+          colMeans(unlabeled_transformed_dfm[za,]) }))
         sharedCols                = intersect(colnames(TrueESGivenD),  colnames(PostESGivenD))
         
         OrigESGivenD_div_         = mean(abs(c(PreESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
@@ -482,7 +471,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       MatchedPrD_div[iter_i]      = sum(abs(vec2prob(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1])[names(unlabeled_pd)] - unlabeled_pd))
       OrigESGivenD_div[iter_i]    = try(ESGivenD_div["OrigESGivenD_div_",1], T) 
       MatchedESGivenD_div[iter_i] = try(ESGivenD_div["MatchedESGivenD_div_",1], T)  
-    } 
+    }
+      
+    ## Save results 
+    temp_est_readme                            = hold_coef 
+    temp_est_readme[names(est_readme)]         = est_readme2
+    boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
   }
   
   ### Close the TensorFlow session
