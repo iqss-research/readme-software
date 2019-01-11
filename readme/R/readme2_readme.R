@@ -259,11 +259,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     return(as.integer(indices_))
     })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$clip_by_value(tf$matmul(MultMat_tf,LFinal_n), -2,2)
+  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+  #Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+  Spread_tf             = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -323,12 +324,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_sigma_value =  rowMeans( sqrt(do.call(cbind, moments_list[2,]) ))
   rm(moments_list)
   
-  #generate learning rate 
-  inverse_learning_rate_vec = rep(NA, times = sgd_iters)
-  seq__ = seq(1, 0.01, length.out = sgd_iters)^10
-  seq__ = seq__ / sum(seq__) * (sgd_iters*0.01)
-  seq__[seq__>0.50] <- 0.50
-  
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
@@ -348,11 +343,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      browser()
-      sapply(1:sgd_iters, function(awer){
-        if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
+      system.time( sapply(1:sgd_iters, function(awer){
         sess$run(learning_group)
-      })
+      }))
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
