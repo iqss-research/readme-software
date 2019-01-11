@@ -306,7 +306,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   # Initialize global variables in TensorFlow Graph
   init                 = tf$global_variables_initializer()
-  sess$graph$finalize()
   
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
@@ -326,7 +325,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm(moments_list)
   
   for(iter_i in 1:nboot){ 
-      browser()
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
@@ -338,6 +336,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+        sess$graph$finalize()
       }
       
       sess$run(  list(setclip_action, 
