@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_momentum   = .90,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
-                   batchSizePerCat = 5, 
+                   batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -217,7 +217,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   batch_reshape <- function(e){ tf$reshape(e, shape = list(NObsPerCat,nDim)) }
   for(ape in 1:nCat){ 
       #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 10L)", ape)) )
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
@@ -276,10 +276,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                   1.75)
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  CatDiscrim_contrib   = tf$reduce_mean(CatDiscrim_tf)
-  FeatDiscrim_contrib  = tf$reduce_mean(FeatDiscrim_tf)
-  Spread_contrib       = 0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.30))
-  myLoss_tf            = -(CatDiscrim_contrib + FeatDiscrim_contrib + Spread_contrib)
+  myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
+                            tf$reduce_mean(FeatDiscrim_tf) + 
+                            0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.30)))
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -330,7 +329,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
       }
      
-    browser()
       if(iter_i == 1){ 
         ### Calculate a clip value for the gradients to avoid overflow
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
@@ -344,9 +342,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      print( system.time( sapply(1:sgd_iters, function(awer){
-        sess$run(learning_group)
-      })) ) 
+      print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
