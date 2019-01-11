@@ -475,7 +475,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
     ## Save results 
     temp_est_readme                            = hold_coef 
-    temp_est_readme[names(est_readme)]         = est_readme2
+    temp_est_readme[names(est_readme2)]         = est_readme2
     boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
   }
   
