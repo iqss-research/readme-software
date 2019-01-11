@@ -348,6 +348,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
+      browser()
       sapply(1:sgd_iters, function(awer){
         if(rbinom(1, size = 1, prob = seq__[awer])==1){ sess$run(warm_restart_action) }
         sess$run(learning_group)
