@@ -217,7 +217,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   batch_reshape <- function(e){ tf$reshape(e, shape = list(NObsPerCat,nDim)) }
   for(ape in 1:nCat){ 
       #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 2L)", ape)) )
+      #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 2L)", ape)) )
+    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(100))$batch(NObsPerCat)", ape)) )
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
