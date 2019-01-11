@@ -306,7 +306,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   # Initialize global variables in TensorFlow Graph
   init                 = tf$global_variables_initializer()
-  browser()
+  sess$graph$finalize()
   
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
