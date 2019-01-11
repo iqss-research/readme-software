@@ -253,16 +253,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
-  gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
-    if(er == 1){indices_ =  1:NObsPerCat-1 }
-    if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    return(as.integer(indices_))
-    })), dtype = tf$int32)
   #Find E[S|D] and calculate objective function  
   ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
+  #gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
+    #if(er == 1){indices_ =  1:NObsPerCat-1 }
+    #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
+    #return(as.integer(indices_))})), dtype = tf$int32)
   #Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
   Spread_tf             = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
@@ -343,10 +342,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      browser()
-      system.time( sapply(1:sgd_iters, function(awer){
+      print( system.time( sapply(1:sgd_iters, function(awer){
         sess$run(learning_group)
-      }))
+      })) ) 
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
