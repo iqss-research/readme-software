@@ -429,28 +429,30 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
-          ### Save them as tf_est_results
-          tf_est_results <- list(est_readme2               = est_readme2,
-                                 transformed_unlabeled_dfm = out_dfm_unlabeled,
-                                 transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
-                                                                matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
       }
       ## If we're just doing the transformation
       else if(justTransform == T){ 
         tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
-                               transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) ) }    
+                               transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) )
+        sess$close(); return(list(transformed_dfm=transformed_dfm))
+      } 
 
     ## if it's the first iteration
-    if(iter_i == 1){ 
+    if(iter_i == 1 & diagnostics == T){ 
+      ### Save them as tf_est_results
+      tf_est_results <- list(est_readme2               = est_readme2,
+                             transformed_unlabeled_dfm = out_dfm_unlabeled,
+                             transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
+                                                              matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
+      
       ### Calculate the transformed DFM
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
       ### Only run one iteration if we're just transforming the data
-      if(justTransform == T){sess$close(); return(list(transformed_dfm=transformed_dfm))} 
     }
     ## Save results 
-    est_readme                                 = tf_est_results$est_readme
+    est_readme                                 = est_readme
     temp_est_readme                            = hold_coef 
     temp_est_readme[names(est_readme)]         = est_readme
     boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
@@ -488,13 +490,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
-  browser() 
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
-  if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
-                                    transformed_dfm = transformed_dfm) )  }
+  if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ) )  }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
-                                    transformed_dfm = transformed_dfm, 
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
