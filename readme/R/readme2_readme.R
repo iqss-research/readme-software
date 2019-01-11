@@ -430,6 +430,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       }
       ## If we're just doing the transformation
       else if(justTransform == T){ 
+        transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
+        transformed_dfm[which(labeledIndicator==1),] <- out_dfm_labeled
+        transformed_dfm[which(labeledIndicator==0),] <- out_dfm_unlabeled
+
         tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
                                transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) )
         sess$close(); return(list(transformed_dfm=transformed_dfm))
