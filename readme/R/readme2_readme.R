@@ -120,7 +120,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
-  #batchSizePerCat = ceiling(34/length(labeledCt))#batch size is 100 
 
   ### Sanity checks
   if (nDocuments != nLabeled + nUnlabeled){
