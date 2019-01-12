@@ -197,7 +197,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm(redund_mat)
     
   #Placeholder settings - to be filled when executing TF operations
-  tf_float_precision    = tf$float32
+  tf_float_precision    = tf$float16
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   sdg_learning_rate     = tf$constant(1., dtype = tf_float_precision) /  inverse_learning_rate
