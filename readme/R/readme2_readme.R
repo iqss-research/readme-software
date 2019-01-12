@@ -197,7 +197,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   rm(redund_mat)
     
   #Placeholder settings - to be filled when executing TF operations
-  tf_float_precision    = tf$float16
+  tf_float_precision    = tf$float32
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   sdg_learning_rate     = tf$constant(1., dtype = tf_float_precision) /  inverse_learning_rate
@@ -220,7 +220,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
-  browser()
   IL_input            = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
@@ -234,7 +233,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  initializer_reweighting =  1/sd(replicate(2000, {
+  initializer_reweighting =  1/sd(replicate(1000, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
     beta__[dropout__==1]  <- 0
