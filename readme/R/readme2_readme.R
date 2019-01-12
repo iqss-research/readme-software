@@ -220,6 +220,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
+  browser()
   IL_input            = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
@@ -247,7 +248,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
-  browser()
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
