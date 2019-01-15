@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_momentum   = .90,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
-                   batchSizePerCat = 5, 
+                   batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -267,17 +267,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                      tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 
-                                    2)
+                                    1.50)
   
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
                                   tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 
-                                  2)
+                                  1.50)
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                             tf$reduce_mean(FeatDiscrim_tf) + 
-                            0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.40)))
+                            0.10 * tf$reduce_mean(tf$minimum(Spread_tf,0.50)))
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -330,7 +330,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
      
       if(iter_i == 1){ 
         ### Calculate a clip value for the gradients to avoid overflow
-        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
+        L2_squared_initial      = summary(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))[2]
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
         sess$graph$finalize()
