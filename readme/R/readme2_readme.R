@@ -103,7 +103,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    sgd_momentum   = .90,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
-                   batchSizePerCat = 10, 
+                   batchSizePerCat = 5, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 10,
@@ -215,8 +215,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   batch_reshape <- function(e){ tf$reshape(e, shape = list(NObsPerCat,nDim)) }
   for(ape in 1:nCat){ 
-      #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)", ape)) )
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(length(l_indices_by_cat[[ape]])+1))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+      #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
@@ -257,27 +257,27 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  #gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
-    #if(er == 1){indices_ =  1:NObsPerCat-1 }
-    #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    #return(as.integer(indices_))})), dtype = tf$int32)
-  #Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
-  Spread_tf             = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
+  gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
+    if(er == 1){indices_ =  1:NObsPerCat-1 }
+    if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
+    return(as.integer(indices_))})), dtype = tf$int32)
+  Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+  #Spread_tf             = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                      tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 
-                                    1.75)
+                                    2)
   
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
                                   tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 
-                                  1.75)
+                                  2)
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                             tf$reduce_mean(FeatDiscrim_tf) + 
-                            0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.20)))
+                            0.01 * tf$reduce_mean(tf$minimum(Spread_tf,0.40)))
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
