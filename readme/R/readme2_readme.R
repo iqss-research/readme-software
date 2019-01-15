@@ -105,7 +105,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
-                   batchSizePerCat_match = 25, 
+                   batchSizePerCat_match = 20, 
                    minMatch       = 5,
                    nboot_match    = 50,
                    winsorize      = T, 
@@ -330,7 +330,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
      
       if(iter_i == 1){ 
         ### Calculate a clip value for the gradients to avoid overflow
-        L2_squared_initial      = summary(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))[2]
+        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))[2]
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
         sess$graph$finalize()
