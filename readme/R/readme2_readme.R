@@ -416,6 +416,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
+          rm(BOOTSTRAP_EST); rm(indices_list) 
       }
       ## If we're just doing the transformation
       else if(justTransform == T){ 
@@ -477,6 +478,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
+  browser() 
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
   if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ) )  }
   ## If diagnostics wanted
