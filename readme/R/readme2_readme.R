@@ -214,6 +214,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
+    browser()
     batch_reshape <- function(e_){ tf$reshape(e_, shape = list(NObsPerCat,nDim)) }
     for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(tf$convert_to_tensor(dfm_labeled[l_indices_by_cat[[ape]],], dtype = tf$float32))$`repeat`()$shuffle(as.integer(min(1000,
@@ -221,6 +222,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
     } 
+    output_types;
+    output_shapes
+    
+    
     IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   } 
