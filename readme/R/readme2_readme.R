@@ -284,17 +284,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                     use_nesterov  = T)
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
-  #Gradients_clipped    = Gradients_unclipped
-  #TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
-  #for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  #L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
-  L2_squared_unclipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_unclipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
-  #inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
-  inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_unclipped / inverse_learning_rate)
+  Gradients_clipped    = Gradients_unclipped
+  TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
+  for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+  L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
+  inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  #myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_unclipped )
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
