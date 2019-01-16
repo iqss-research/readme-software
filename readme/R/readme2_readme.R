@@ -101,7 +101,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .90,
-                   numProjections = 20,
+                   numProjections = 10,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
@@ -257,11 +257,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  gathering_mat = tf$constant((sapply(1:nCat, function(er){ 
+  gathering_mat = tf$constant(  (sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    return(as.integer(indices_))})), dtype = tf$int32)
-  Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
+    return(as.integer(indices_))})) , dtype = tf$int32)
+  Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),
+                                    0.30)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -276,7 +277,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                             tf$reduce_mean(FeatDiscrim_tf) + 
-                            0.10 * tf$reduce_mean(tf$minimum(Spread_tf,0.30)))
+                            0.10 * tf$reduce_mean(Spread_tf)
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
