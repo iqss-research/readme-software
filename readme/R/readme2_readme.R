@@ -213,6 +213,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
+  browser() 
+  
+  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
+  eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled)$`repeat`()$shuffle(as.integer(min(1000,
+                                            length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+  
+  
   for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
