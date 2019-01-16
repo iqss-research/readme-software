@@ -222,7 +222,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     IL_input            = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   } 
-  browser()
   if(T == F){ 
   batch_reshape <- function(e){ tf$reshape(e, shape = list(NObsPerCat,nDim)) }
   for(ape in 1:nCat){ 
