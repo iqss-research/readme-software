@@ -328,7 +328,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
      
       if(iter_i == 1){ 
         ### Calculate a clip value for the gradients to avoid overflow
-        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_unclipped)))))
+        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
         sess$graph$finalize()
