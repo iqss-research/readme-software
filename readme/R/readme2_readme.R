@@ -213,13 +213,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  browser() 
-  
+  if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
-  eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled)$`repeat`()$shuffle(as.integer(min(1000,
+  dfm_unlabeled_tf = tf$convert_to_tensor(dfm_unlabeled, dtype = tf$float32)
+  rm(dfm_labeled_tf);rm(dfm_unlabeled_tf)
+  for(ape in 1:nCat){ 
+    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
+                        tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
-  
-  
+    eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
+  }
+  IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
+                                                    list(as.integer(nCat*NObsPerCat),nDim)), tf$float32)", 
+                                                paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+}
+  if(T == F){ 
   for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
@@ -228,15 +236,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
                                                     list(as.integer(nCat*NObsPerCat),nDim)), tf$float32)", 
                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+  } 
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
   IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
-  
-  IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
-  IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
-  OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
-  OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
@@ -305,7 +309,20 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
   #Setup the outputs 
+  IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
+  IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
+  if(T == F){ 
+  OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
+  OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
+  } 
+  if(T == T){ 
+    browser()
+    OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
+    OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
+    OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
+  } 
+  
   
   # Initialize global variables in TensorFlow Graph
   init                 = tf$global_variables_initializer()
