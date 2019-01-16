@@ -213,11 +213,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  browser() 
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
   dfm_unlabeled_tf = tf$convert_to_tensor(dfm_unlabeled, dtype = tf$float32)
-  rm(dfm_labeled_tf);rm(dfm_unlabeled_tf)
+  #rm(dfm_labeled);rm(dfm_unlabeled)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
@@ -317,12 +316,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   } 
-  browser()
   if(T == T){ 
-    browser()
-    OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
-    OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
-    OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
+    OUTPUT_LFinal_labeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+                                                               WtsMat) + BiasVec)
+    OUTPUT_LFinal_unlabeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_unlabeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+                                                               WtsMat) + BiasVec)
   } 
   
   
@@ -370,12 +368,17 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
+      out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled)
+      out_dfm_unlabeled = sess$run(OUTPUT_LFinal_unlabeled)
+      if(T == F){ 
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                        IL_mu_last    = IL_mu_value, 
                                                                        IL_sigma_last = IL_sigma_value)), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),];  
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       rm(out_dfm) 
+      } 
+      
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
@@ -443,7 +446,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
           rm(BOOTSTRAP_EST); rm(indices_list) 
-          browser()
       }
       ## If we're just doing the transformation
       else if(justTransform == T){ 
