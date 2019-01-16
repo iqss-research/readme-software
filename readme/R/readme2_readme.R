@@ -221,6 +221,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
       eval(parse(text = sprintf("b_shaped_%s = tf$reshape(b_%s, shape = list(NObsPerCat,nDim))", ape,ape)) )
     } 
+    browser()
     IL_input            = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                                                     paste(paste("b_shaped_", 1:nCat, sep = ""), collapse = ","))))
   } 
