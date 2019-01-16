@@ -217,7 +217,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(min(1000,
                                                                                                       length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
-      #eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer( 100 ))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
@@ -263,7 +262,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
     return(as.integer(indices_))})), dtype = tf$int32)
   Spread_tf            = tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L)
-  #Spread_tf             = tf$sqrt(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.01^2)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -333,7 +331,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
      
       if(iter_i == 1){ 
         ### Calculate a clip value for the gradients to avoid overflow
-        L2_squared_initial      = summary(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))[2]
+        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_unclipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
         sess$graph$finalize()
