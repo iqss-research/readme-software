@@ -101,7 +101,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .90,
-                   numProjections = 10,
+                   numProjections = 20,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
@@ -368,6 +368,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
+      browser() 
       out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled)
       out_dfm_unlabeled = sess$run(OUTPUT_LFinal_unlabeled)
       if(T == F){ 
