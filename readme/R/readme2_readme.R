@@ -220,14 +220,16 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_shaped_%s = d_%s$map(batch_reshape)", ape,ape)) )
       eval(parse(text = sprintf("b_%s = d_shaped_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   } 
+  browser() 
   IL_input            = eval(parse(text = sprintf("tf$cast(tf$concat(list(%s), 0L), dtype = tf_float_precision)", 
                               paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
+  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+  
   IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
   IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
-  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
   OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
   
