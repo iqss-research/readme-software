@@ -431,7 +431,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
           rm(BOOTSTRAP_EST); rm(indices_list) ; 
           if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
-          print(log(sum(sort( sapply(ls(),function(x){object.size(get(x))})) )))
     }
     ## If we're just doing the transformation
     if(justTransform == T){ 
