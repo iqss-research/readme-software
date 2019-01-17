@@ -213,18 +213,24 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
+  browser()
   if(T == T){ 
-    browser()
-  dfm_labeled_tf = tf$data$Dataset$from_tensors(dfm_labeled[1:2,],dfm_labeled[3:4,])
-  #rm(dfm_labeled);
-  for(ape in 1:nCat){ 
-    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
-                              tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
-                              length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
-    eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
+    for(ape in 1:nCat){ 
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
+                                dfm_labeled[l_indices_by_cat[[ape]],])$`repeat`()$shuffle(as.integer(min(1000,
+                                length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+      eval(parse(text = sprintf("d_t_%s = d_%s$`repeat`()$shuffle(as.integer(min(1000,
+                                                 length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", 
+                                ape, ape)))
+      eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
+    }
+    IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
+                                                    list(as.integer(nCat*NObsPerCat),nDim))", 
+                                                    paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+    rm(dfm_labeled)
   }
   
-  
+  if(T == F){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
