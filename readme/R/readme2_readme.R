@@ -164,7 +164,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
   rm(categoryVec); rm( dfm )
   
-  browser() 
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
 
