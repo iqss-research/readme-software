@@ -214,6 +214,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
+  browser() 
   if(T == T){ 
     for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])", ape)) )
@@ -508,6 +509,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   browser()
   
+  tf$GPUOptions()
+  tf$contrib$memory_stats$
+  
+    tf$contrib$memory_stats$MaxBytesInUse()
+  
+  from tensorflow.contrib.memory_stats.python.ops.memory_stats_ops import BytesInUse
   ### Close the TensorFlow session
   sess$close();
   if(verbose==T){ cat("Finished!") }
