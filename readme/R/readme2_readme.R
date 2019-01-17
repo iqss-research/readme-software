@@ -220,9 +220,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       eval(parse(text = sprintf("d_t_%s = d_%s$`repeat`()$shuffle(as.integer(min(1000,
                                                  length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", 
                                 ape, ape)))
-      eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
+      eval(parse(text = sprintf("b_%s = d_t_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
     }
-    browser() 
     IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
                                                     list(as.integer(nCat*NObsPerCat),nDim))", 
                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
@@ -323,11 +322,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
   #Setup the outputs 
-  browser() 
   IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
   IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
   if(T == T){ 
-    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+    OUTPUT_LFinal_labeled_batch = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(IL_input, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
     OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
     OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
@@ -379,8 +377,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_value, 
-                                                                         IL_sigma_last = IL_sigma_value))
+      #out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_value, IL_sigma_last = IL_sigma_value))
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_unlabeled), 
                                                                        IL_mu_last    = IL_mu_value, 
                                                                        IL_sigma_last = IL_sigma_value)), T)
@@ -406,7 +403,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             
-            X_      = out_dfm_labeled[indices_list[[boot_iter]],];
+            X_      = sess$run(OUTPUT_LFinal_labeled_batch)
+            #X_      = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_      = out_dfm_unlabeled
           
             ### Normalize X and Y
