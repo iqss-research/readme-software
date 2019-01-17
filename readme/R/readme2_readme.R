@@ -214,7 +214,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-    browser() 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float16)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
@@ -261,7 +260,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   gathering_mat = tf$constant(  (sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    return(as.integer(indices_))})) , dtype = tf$int16)
+    return(as.integer(indices_))})) , dtype = tf$int32)
   Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),
                                     0.30)
 
@@ -299,8 +298,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
   #Setup the outputs 
-  IL_mu_last          = tf$Variable(rep(0, nDim), dtype = tf_float_precision, trainable = F )
-  IL_sigma_last       = tf$Variable(rep(1, nDim), dtype = tf_float_precision, trainable = F )
+  IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
+  IL_sigma_last       = tf$placeholder(tf_float_precision, list(nDim) )
   if(T == T){ 
     OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(tf$cast(dfm_labeled_tf, tf$float32), mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
@@ -326,8 +325,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ### Means and variances for batch normalization of the input layer - initialize starting parameters
   moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
-  sess$run( list(IL_mu_last$assign( rowMeans( do.call(cbind, moments_list[1,]))),
-                 IL_sigma_last$assign( sqrt(rowMeans( (do.call(cbind, moments_list[2,]) ))))) ) 
+  IL_mu_last_v =  rowMeans( do.call(cbind, moments_list[1,]))
+  IL_sigma_last_v =   sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
   rm(moments_list)
 
   for(iter_i in 1:nboot){ 
@@ -354,8 +353,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal_labeled), T)  
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled)), T)
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_last_v, 
+                                                                                         IL_sigma_last = IL_sigma_last_v))), T)  
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled,
+                                                                                 IL_mu_last = IL_mu_last_v, 
+                                                                                 IL_sigma_last = IL_sigma_last_v)), T)
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
