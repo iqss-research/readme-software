@@ -214,32 +214,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  browser()
   if(T == T){ 
-    for(ape in 1:nCat){ 
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(dfm_labeled[l_indices_by_cat[[ape]],])", ape)) )
-      eval(parse(text = sprintf("d_t_%s = d_%s$`repeat`()$shuffle(as.integer(min(1000,
-                                                 length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", 
-                                ape, ape)))
-      eval(parse(text = sprintf("b_%s = d_t_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
-    }
-    IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
-                                                    list(as.integer(nCat*NObsPerCat),nDim)), dtype = tf$float32)", 
-                                                    paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
-    rm(dfm_labeled)
-  }
-  
-  if(T == F){ 
-  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
+  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float16)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
-                                                    list(as.integer(nCat*NObsPerCat),nDim))", 
+  IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
+                                                    list(as.integer(nCat*NObsPerCat),nDim)), dtype = tf$float32)", 
                                                 paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+  rm(dfm_labeled) 
   }
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
@@ -387,6 +373,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           batchSizePerCat_match = batchSizePerCat
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+          browser() 
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             
