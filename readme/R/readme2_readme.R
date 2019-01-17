@@ -214,6 +214,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
+    browser()
+  tf$data$Dataset$from_tensor_slices(dfm_labeled)
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
   rm(dfm_labeled);
   for(ape in 1:nCat){ 
@@ -222,9 +224,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  browser()
-  IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
-                                                    list(as.integer(nCat*NObsPerCat),nDim)), tf$float32)", 
+  IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
+                                                    list(as.integer(nCat*NObsPerCat),nDim))", 
                                                 paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   }
   if(T == F){ 
@@ -288,7 +289,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                             tf$reduce_mean(FeatDiscrim_tf) + 
-                            0.10 * tf$reduce_mean(Spread_tf) ) 
+                            0.10 * tf$reduce_mean(Spread_tf) )
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -311,17 +312,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Setup the outputs 
   IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
   IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
-  if(T == F){ 
-  OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
-  OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
-  OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
-  } 
   if(T == T){ 
-    OUTPUT_LFinal_labeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
-    OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
-    OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
-    OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
+    OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
+    OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
+    OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   } 
   
   
