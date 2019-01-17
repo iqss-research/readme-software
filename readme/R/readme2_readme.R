@@ -214,15 +214,15 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float16)
+  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
-                                                    list(as.integer(nCat*NObsPerCat),nDim)), dtype = tf$float32)", 
+  IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
+                                                    list(as.integer(nCat*NObsPerCat),nDim))", 
                                                 paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   rm(dfm_labeled) 
   }
@@ -301,7 +301,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
   IL_sigma_last       = tf$placeholder(tf_float_precision, list(nDim) )
   if(T == T){ 
-    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(tf$cast(dfm_labeled_tf, tf$float32), mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
     OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
     OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
