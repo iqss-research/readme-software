@@ -352,6 +352,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
   IL_sigma_value =  sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
   rm(moments_list)
+  browser()
   
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
