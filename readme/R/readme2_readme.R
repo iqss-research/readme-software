@@ -297,7 +297,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
-  learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply,max_bites)
+  learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
   #Setup the outputs 
   IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
