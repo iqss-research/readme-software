@@ -301,7 +301,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_mu_last          = tf$Variable(rep(0, nDim), dtype = tf_float_precision, trainable = F )
   IL_sigma_last       = tf$Variable(rep(1, nDim), dtype = tf_float_precision, trainable = F )
   if(T == T){ 
-    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(tf$cast(dfm_labeled_tf, tf$float32), mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
     OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
     OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
