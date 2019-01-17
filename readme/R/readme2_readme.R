@@ -222,6 +222,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                 ape, ape)))
       eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
     }
+    browser() 
     IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
                                                     list(as.integer(nCat*NObsPerCat),nDim))", 
                                                     paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
