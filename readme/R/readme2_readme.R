@@ -162,8 +162,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
   if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
-  rm(categoryVec)
-  if(justTransform == F){ rm( dfm )} 
+  rm(categoryVec); rm( dfm )
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
@@ -302,7 +301,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_mu_last          = tf$Variable(rep(0, nDim), dtype = tf_float_precision, trainable = F )
   IL_sigma_last       = tf$Variable(rep(1, nDim), dtype = tf_float_precision, trainable = F )
   if(T == T){ 
-    OUTPUT_LFinal_labeled_batch = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(IL_input, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
     OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
     OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
@@ -354,15 +353,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      #out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_value, IL_sigma_last = IL_sigma_value))
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal_labeled), T)  
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled)), T)
-      if(T == F){ 
-      out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled))), T)
-      out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),];  
-      out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
-      rm(out_dfm) 
-      } 
-      
       
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
@@ -370,15 +362,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ## Minimum number of observations to use in each category per bootstrap iteration
           MM1           = colMeans(out_dfm_unlabeled); 
           MM2_          = colSds(out_dfm_unlabeled,MM1);
-          batchSizePerCat_match = batchSizePerCat
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-          browser() 
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             
-            X_      = sess$run(OUTPUT_LFinal_labeled_batch)
-            #X_      = out_dfm_labeled[indices_list[[boot_iter]],];
+            X_      = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_      = out_dfm_unlabeled
           
             ### Normalize X and Y
@@ -437,7 +426,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     }
     ## If we're just doing the transformation
     if(justTransform == T){ 
-        transformed_dfm = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm)), T)
+        ### Calculate the transformed DFM
+        transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
+        transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
+        transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
+        
         sess$close(); return(list(transformed_dfm=transformed_dfm))
       } 
 
