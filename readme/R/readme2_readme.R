@@ -322,8 +322,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
   #Setup the outputs 
-  IL_mu_last          = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) )
-  IL_sigma_last       = tf$placeholder( tf_float_precision,shape(dim(IL_mu_b)) ) 
+  IL_mu_last          = tf$Variable(rep(0, nDim), dtype = tf_float_precision, trainable = F )
+  IL_sigma_last       = tf$Variable(rep(1, nDim), dtype = tf_float_precision, trainable = F )
   if(T == T){ 
     OUTPUT_LFinal_labeled_batch = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(IL_input, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
@@ -349,8 +349,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   
   ### Means and variances for batch normalization of the input layer - initialize starting parameters
   moments_list   =  replicate(300, sess$run(list(IL_mu_b, IL_sigma2_b)))
-  IL_mu_value    =  rowMeans( do.call(cbind, moments_list[1,]))
-  IL_sigma_value =  sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
+  sess$run( list(IL_mu_last$assign( rowMeans( do.call(cbind, moments_list[1,]))),
+                 IL_sigma_last$assign( sqrt(rowMeans( (do.call(cbind, moments_list[2,]) ))))) ) 
   rm(moments_list)
   browser()
   
@@ -379,13 +379,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
       #out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_value, IL_sigma_last = IL_sigma_value))
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_unlabeled), 
-                                                                       IL_mu_last    = IL_mu_value, 
-                                                                       IL_sigma_last = IL_sigma_value)), T)
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_unlabeled)), T)
       if(T == F){ 
-      out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
-                                                                       IL_mu_last    = IL_mu_value, 
-                                                                       IL_sigma_last = IL_sigma_value)), T)
+      out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled)), T)
       out_dfm_labeled   = out_dfm[1:nrow(dfm_labeled),];  
       out_dfm_unlabeled = out_dfm[-c(1:nrow(dfm_labeled)),]
       rm(out_dfm) 
@@ -401,6 +397,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           batchSizePerCat_match = batchSizePerCat
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+          browser()
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             
