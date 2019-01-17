@@ -222,6 +222,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
+  browser()
   IL_input            = eval(parse(text = sprintf("tf$cast(tf$reshape(tf$concat(list(%s), 0L), 
                                                     list(as.integer(nCat*NObsPerCat),nDim)), tf$float32)", 
                                                 paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
