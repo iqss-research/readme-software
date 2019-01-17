@@ -354,7 +354,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       print("Done with training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm_labeled             = try(sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_last_v, 
-                                                                                         IL_sigma_last = IL_sigma_last_v))), T)  
+                                                                                         IL_sigma_last = IL_sigma_last_v)), T)  
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled,
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
