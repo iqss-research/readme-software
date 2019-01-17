@@ -351,11 +351,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### For each iteration of SGDs
       print("Training...")
       #print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
-      t1=system.time()
       browser()
+      t1=Sys.time()
       max_memory = replicate(sgd_iters, sess$run(learning_group)[[3]])
-      t2=system.time()
-      print(t2-t1)
+      print(Sys.time()-t1)
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
