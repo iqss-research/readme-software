@@ -456,9 +456,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
           rm(BOOTSTRAP_EST); rm(indices_list) 
-      }
-      ## If we're just doing the transformation
-      else if(justTransform == T){ 
+    }
+    ## If we're just doing the transformation
+    if(justTransform == T){ 
         transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
         transformed_dfm[which(labeledIndicator==1),] <- out_dfm_labeled
         transformed_dfm[which(labeledIndicator==0),] <- out_dfm_unlabeled
