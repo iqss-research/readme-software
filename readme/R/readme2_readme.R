@@ -317,6 +317,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   } 
   if(T == T){ 
+    OUTPUT_LFinal_labeled_batch         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(IL_input, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
+                                                               WtsMat) + BiasVec)
     OUTPUT_LFinal_labeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
     OUTPUT_LFinal_unlabeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_unlabeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
@@ -394,7 +396,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             browser()
             
+            sess$run()
             #X_      = out_dfm_labeled[indices_list[[boot_iter]],];
+            X_      = sess$run(OUTPUT_LFinal_labeled_batch)
             Y_      = out_dfm_unlabeled
           
             ### Normalize X and Y
