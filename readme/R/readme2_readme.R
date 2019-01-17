@@ -215,8 +215,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
-  dfm_unlabeled_tf = tf$convert_to_tensor(dfm_unlabeled, dtype = tf$float32)
-  rm(dfm_labeled);rm(dfm_unlabeled)
+  rm(dfm_labeled);
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
@@ -288,7 +287,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                             tf$reduce_mean(FeatDiscrim_tf) + 
-                            0.10 * tf$reduce_mean(Spread_tf)) 
+                            0.10 * tf$reduce_mean(Spread_tf) ) 
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
@@ -317,12 +316,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   } 
   if(T == T){ 
-    OUTPUT_LFinal_labeled_batch         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(IL_input, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
-                                                               WtsMat) + BiasVec)
     OUTPUT_LFinal_labeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
                                                                WtsMat) + BiasVec)
-    OUTPUT_LFinal_unlabeled         = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_unlabeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
-                                                               WtsMat) + BiasVec)
+    OUTPUT_IL           = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
+    OUTPUT_IL_n         = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
+    OUTPUT_LFinal        = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   } 
   
   
@@ -372,8 +370,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm_labeled = sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_value, 
                                                                          IL_sigma_last = IL_sigma_value))
-      out_dfm_unlabeled = sess$run(OUTPUT_LFinal_unlabeled, feed_dict = dict(IL_mu_last = IL_mu_value, 
-                                                                         IL_sigma_last = IL_sigma_value))
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_unlabeled), 
+                                                                       IL_mu_last    = IL_mu_value, 
+                                                                       IL_sigma_last = IL_sigma_value)), T)
       if(T == F){ 
       out_dfm           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL     = rbind(dfm_labeled, dfm_unlabeled), 
                                                                        IL_mu_last    = IL_mu_value, 
@@ -393,12 +392,11 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           batchSizePerCat_match = batchSizePerCat
           indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+          browser()
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
             
-            #X_      = out_dfm_labeled[indices_list[[boot_iter]],];
-            X_      = sess$run(OUTPUT_LFinal_labeled_batch,feed_dict = dict(IL_mu_last = IL_mu_value, 
-                                                                            IL_sigma_last = IL_sigma_value))
+            X_      = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_      = out_dfm_unlabeled
           
             ### Normalize X and Y
