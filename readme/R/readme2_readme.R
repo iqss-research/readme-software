@@ -178,8 +178,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # Initialize tensorflow
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(per_process_gpu_memory_fraction = 0.333)
-  browser()
-  config$gpu_options$allow_growth=True
+  gpu_options = tf$GPUOptions(allow_growth = T)
   sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   
   ## Construct TensorFlow graph
@@ -219,6 +218,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
+  rm(dfm_labeled) 
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
@@ -228,7 +228,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), 
                                                     list(as.integer(nCat*NObsPerCat),nDim))", 
                                                 paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
-  rm(dfm_labeled) 
   }
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
