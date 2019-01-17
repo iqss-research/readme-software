@@ -460,7 +460,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     }
     ## If we're just doing the transformation
     if(justTransform == T){ 
-        browser()
         transformed_dfm = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm)), T)
         tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
                                transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) )
