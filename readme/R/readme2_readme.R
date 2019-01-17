@@ -215,9 +215,21 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
     browser()
-  tf$data$Dataset$from_tensor_slices(dfm_labeled)
-  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
+  dfm_labeled_tf = tf$data$Dataset$from_tensors(dfm_labeled[1:2,],dfm_labeled[3:4,])
   rm(dfm_labeled);
+  tf$gather(dfm_labeled_tf, indices = 1L, axis = 0L)
+  fx_map = 
+  dfm_labeled_tf$map()
+  Dataset$
+  for(ape in 1:nCat){ 
+    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
+                              tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
+                              length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+    eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
+  }
+  
+  
+  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float32)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
