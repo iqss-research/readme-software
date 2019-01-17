@@ -176,7 +176,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
-  tf$reset_default_graph(); sess <- tf$Session()
+  tf$reset_default_graph(); 
+  gpu_options = tf$GPUOptions(per_process_gpu_memory_fraction = 0.333)
+  sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   
   ## Construct TensorFlow graph
   if (verbose == T){
@@ -295,8 +297,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
-  browser()
-  max_bites            = tf$contrib$memory_stats$MaxBytesInUse()
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply,max_bites)
 
   #Setup the outputs 
@@ -351,10 +351,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      #print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
-      browser()
       t1=Sys.time()
-      max_memory = replicate(sgd_iters, sess$run(learning_group)[[3]])
+      replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
