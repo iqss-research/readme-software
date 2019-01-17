@@ -506,6 +506,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     temp_est_readme[names(est_readme2)]         = est_readme2
     boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
   }
+  browser()
   
   ### Close the TensorFlow session
   sess$close();
