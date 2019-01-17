@@ -216,8 +216,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(T == T){ 
     for(ape in 1:nCat){ 
       eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
-                                tf$convert_to_tensor(dfm_labeled[l_indices_by_cat[[ape]],], dtype = tf$float32))$`repeat`()$shuffle(as.integer(min(1000,
-                                length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+                                tf$convert_to_tensor(dfm_labeled[l_indices_by_cat[[ape]],], dtype = tf$float32))", ape)) )
       eval(parse(text = sprintf("d_t_%s = d_%s$`repeat`()$shuffle(as.integer(min(1000,
                                                  length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", 
                                 ape, ape)))
