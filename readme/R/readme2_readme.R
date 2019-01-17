@@ -105,7 +105,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
-                   batchSizePerCat_match = 10, 
+                   batchSizePerCat_match = 15, 
                    minMatch       = 5,
                    nboot_match    = 50,
                    winsorize      = T, 
@@ -214,6 +214,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
+    browser() 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled, dtype = tf$float16)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
@@ -260,7 +261,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   gathering_mat = tf$constant(  (sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    return(as.integer(indices_))})) , dtype = tf$int32)
+    return(as.integer(indices_))})) , dtype = tf$int16)
   Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),
                                     0.30)
 
