@@ -374,7 +374,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                                                                                            replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
           BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
             Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
-            
             X_      = out_dfm_labeled[indices_list[[boot_iter]],];
             Y_      = out_dfm_unlabeled
           
@@ -430,7 +429,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
-          rm(BOOTSTRAP_EST); rm(indices_list) 
+          rm(BOOTSTRAP_EST); rm(indices_list) ; 
+          if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
+          print(log(sum(sort( sapply(ls(),function(x){object.size(get(x))})) )))
     }
     ## If we're just doing the transformation
     if(justTransform == T){ 
