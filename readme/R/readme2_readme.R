@@ -216,11 +216,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(T == T){ 
     browser()
   dfm_labeled_tf = tf$data$Dataset$from_tensors(dfm_labeled[1:2,],dfm_labeled[3:4,])
-  rm(dfm_labeled);
-  tf$gather(dfm_labeled_tf, indices = 1L, axis = 0L)
-  fx_map = 
-  dfm_labeled_tf$map()
-  Dataset$
+  #rm(dfm_labeled);
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                               tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
