@@ -164,6 +164,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
   rm(categoryVec); rm( dfm )
   
+  browser() 
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
 
@@ -295,7 +296,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
-  max_bites = tf$contrib$memory_stats$MaxBytesInUse()
+  browser()
+  max_bites            = tf$contrib$memory_stats$MaxBytesInUse()
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply,max_bites)
 
   #Setup the outputs 
