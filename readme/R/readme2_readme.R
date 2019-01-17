@@ -295,7 +295,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
-  learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
+  max_bites = tf$contrib$memory_stats$MaxBytesInUse()
+  learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply,max_bites)
 
   #Setup the outputs 
   IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
@@ -307,8 +308,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
     OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   } 
-  
-  browser()
   
   # Initialize global variables in TensorFlow Graph
   init                 = tf$global_variables_initializer()
@@ -351,7 +350,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       ### For each iteration of SGDs
       print("Training...")
-      print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
+      #print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
+      t1=system.time()
+      max_memory = replicate(sgd_iters, sess$run(learning_group)[[3]])
+      t2=system.time()
+      print(t2-t1)
+      browser()
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
