@@ -341,18 +341,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
         ### Calculate a clip value for the gradients to avoid overflow
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-        warm_restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+        restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+        sess$run( setclip_action ) 
         sess$graph$finalize()
       }
       
-      sess$run(  list(setclip_action, 
-                      warm_restart_action ))
+      sess$run(  restart_action ) 
       
       ### For each iteration of SGDs
       print("Training...")
       print( system.time(replicate(sgd_iters, sess$run(learning_group)) ))
       
-      print("Done with training...!")
+      print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm_labeled             = try(sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_last_v, 
                                                                                          IL_sigma_last = IL_sigma_last_v)), T)  
