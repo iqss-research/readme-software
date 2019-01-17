@@ -162,7 +162,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   nCat                  = as.integer( length(labeled_pd) ); 
   nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
   if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
-  rm( dfm ); rm(categoryVec)
+  rm(categoryVec)
+  if(justTransform == F){ rm( dfm )} 
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
@@ -459,10 +460,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     }
     ## If we're just doing the transformation
     if(justTransform == T){ 
-        transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
-        transformed_dfm[which(labeledIndicator==1),] <- out_dfm_labeled
-        transformed_dfm[which(labeledIndicator==0),] <- out_dfm_unlabeled
-
+        browser()
+        transformed_dfm = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm)), T)
         tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
                                transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled)) )
         sess$close(); return(list(transformed_dfm=transformed_dfm))
