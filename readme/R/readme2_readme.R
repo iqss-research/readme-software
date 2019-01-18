@@ -203,6 +203,7 @@ readme <- function(dfm,
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd)),
                                         dtype = tf$float32)
+  nDim = ncol(dfm_labeled_tf)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
