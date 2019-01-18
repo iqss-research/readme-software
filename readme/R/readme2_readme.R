@@ -161,8 +161,7 @@ readme <- function(dfm,
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  #sess <- tf$Session()
-  sess <- tf$Session(graph=tf$Graph())
+  sess <- tf$Session()
   
   ## Construct TensorFlow graph
   if (verbose == T){
