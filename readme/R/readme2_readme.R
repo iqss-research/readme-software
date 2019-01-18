@@ -99,7 +99,8 @@
 #' @import tensorflow
 readme <- function(dfm,
                    dfm_cmd, 
-                   labeledIndicator, categoryVec, 
+                   labeledIndicator,
+                   categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .90,
@@ -107,7 +108,7 @@ readme <- function(dfm,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
-                   batchSizePerCat_match = 15, 
+                   batchSizePerCat_match = 20, 
                    minMatch       = 5,
                    nboot_match    = 50,
                    justTransform  = F,
@@ -158,6 +159,7 @@ readme <- function(dfm,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
+  browser() 
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
