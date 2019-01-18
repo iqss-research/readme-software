@@ -113,6 +113,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    verbose        = T,  
                    diagnostics    = F){ 
    
+  browser()
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nDocuments  = nrow(dfm)
