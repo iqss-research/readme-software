@@ -161,7 +161,8 @@ readme <- function(dfm,
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  sess <- tf$Session()
+  #sess <- tf$Session()
+  sess <- tf$Session(graph=tf$Graph())
   
   ## Construct TensorFlow graph
   if (verbose == T){
@@ -300,8 +301,6 @@ readme <- function(dfm,
   hold_coef[]          = 0
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
-  print(length(tf$contrib$graph_editor$get_tensors(tf$get_default_graph())))
-  #print(tf$contrib$graph_editor$get_tensors(tf$get_default_graph())[1:100])
   ##  Estimate the parameters
   if (verbose == T){
     cat("Estimating...\n")
