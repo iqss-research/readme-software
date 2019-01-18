@@ -218,9 +218,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-  browser()
-  dfm_labeled_tf = tf$constant(dfm_labeled, dtype = tf$float32)
-  rm(dfm_labeled) 
+  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled,dtype = tf$float32)
+  #rm(dfm_labeled) 
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
@@ -230,6 +229,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
+  rm(dfm_labeled_tf)
   }
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
@@ -357,6 +357,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       t1=Sys.time()
       replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
+      browser()
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
