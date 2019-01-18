@@ -110,7 +110,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    nboot_match    = 50,
                    winsorize      = T, 
                    justTransform  = F,
-                   verbose        = F,  
+                   verbose        = T,  
                    diagnostics    = F){ 
    
   ####
@@ -178,8 +178,9 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   # Initialize tensorflow
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(per_process_gpu_memory_fraction = 0.333)
-  gpu_options = tf$GPUOptions(allow_growth = T)
-  sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
+  #gpu_options = tf$GPUOptions(allow_growth = T)
+  #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
+  sess <- tf$Session()
   
   ## Construct TensorFlow graph
   if (verbose == T){
