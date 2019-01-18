@@ -159,11 +159,10 @@ readme <- function(dfm,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
-  browser() 
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  sess <- tf$Session()
+  sess <- tf$Session(graph = tf$Graph())
   
   ## Construct TensorFlow graph
   if (verbose == T){
@@ -187,7 +186,7 @@ readme <- function(dfm,
   tf_float_precision    = tf$float32
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  sgd_learning_ate = 1./ inverse_learning_rate
+  sgd_learning_rate      = 1./ inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -269,7 +268,7 @@ readme <- function(dfm,
                             0.10 * tf$reduce_mean(Spread_tf) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_ate,
+  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
                                                     momentum      = sgd_momentum, 
                                                     use_nesterov  = T)
   ### Calculates the gradients from myOpt_tf
