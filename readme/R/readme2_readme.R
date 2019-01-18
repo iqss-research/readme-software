@@ -319,7 +319,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
   browser()
-  tf.get_default_graph().as_graph_def().node
+  #tf.get_default_graph().as_graph_def().node
   
   ##  Estimate the parameters
   if (verbose == T){
