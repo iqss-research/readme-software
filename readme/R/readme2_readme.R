@@ -226,11 +226,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
+  browser()
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
-  #IL_input            = eval(parse(text = sprintf("tf$reshape(tf$concat(list(%s), 0L), list(as.integer(nCat*NObsPerCat),nDim))", 
-                                                #paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   }
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
@@ -495,7 +494,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Parse output
   ## If no diagnostics wanted
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
-  print(showConnections(all=T))
   if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ) )  }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
