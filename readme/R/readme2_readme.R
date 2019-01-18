@@ -201,9 +201,6 @@ readme <- function(dfm,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-  nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
-  if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
-    
   dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd)),
                                         dtype = tf$float32)
   for(ape in 1:nCat){ 
