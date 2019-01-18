@@ -203,7 +203,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   tf_float_precision    = tf$float32
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  sdg_learning_rate     = tf$constant(1., dtype = tf_float_precision) /  inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -218,14 +217,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled,dtype = tf$float32)
-  #rm(dfm_labeled) 
+  rm(dfm_labeled) 
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  rm(dfm_labeled_tf)
+  #rm(dfm_labeled_tf)
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
@@ -284,7 +283,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                             0.10 * tf$reduce_mean(Spread_tf) )
                               
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sdg_learning_rate,
+  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = tf$truediv(1,inverse_learning_rate),
                                                     momentum      = sgd_momentum, 
                                                     use_nesterov  = T)
   ### Calculates the gradients from myOpt_tf
@@ -318,9 +317,8 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   hold_coef[]          = 0
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
-  browser()
-  #tf.get_default_graph().as_graph_def().node
-  
+  print(length(tf$contrib$graph_editor$get_tensors(tf$get_default_graph())))
+  #print(tf$contrib$graph_editor$get_tensors(tf$get_default_graph())[1:100])
   ##  Estimate the parameters
   if (verbose == T){
     cat("Estimating...\n")
@@ -359,7 +357,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_labeled,
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = sess$run(dfm_labeled_tf),
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled,
