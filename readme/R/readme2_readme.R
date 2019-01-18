@@ -187,6 +187,7 @@ readme <- function(dfm,
   tf_float_precision    = tf$float32
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+  sgd_learning_ate = 1./ inverse_learning_rate
   
   ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
   MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
@@ -266,9 +267,9 @@ readme <- function(dfm,
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                             tf$reduce_mean(FeatDiscrim_tf) + 
                             0.10 * tf$reduce_mean(Spread_tf) )
-                              
+  
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = tf$truediv(1,inverse_learning_rate),
+  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_ate,
                                                     momentum      = sgd_momentum, 
                                                     use_nesterov  = T)
   ### Calculates the gradients from myOpt_tf
