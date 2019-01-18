@@ -110,7 +110,6 @@ readme <- function(dfm,
                    batchSizePerCat_match = 15, 
                    minMatch       = 5,
                    nboot_match    = 50,
-                   winsorize      = T, 
                    justTransform  = F,
                    verbose        = T,  
                    diagnostics    = F){ 
@@ -135,9 +134,7 @@ readme <- function(dfm,
   }
 
   # Winsorize the columns of the document-feature matrix
-  #if(winsorize          == T){
   #dfm                   = apply(dfm, 2, Winsorize_fxn )
-  #}
 
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
