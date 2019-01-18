@@ -357,7 +357,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      browser()
       out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_labeled,
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
