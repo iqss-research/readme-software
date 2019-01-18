@@ -97,7 +97,9 @@
 #'
 #' @export 
 #' @import tensorflow
-readme <- function(dfm, labeledIndicator, categoryVec, 
+readme <- function(dfm,
+                   dfm_cmd, 
+                   labeledIndicator, categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
                    sgd_momentum   = .90,
@@ -113,23 +115,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
                    verbose        = T,  
                    diagnostics    = F){ 
    
-  browser()
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
-  nDocuments  = nrow(dfm)
-  nFeat       = ncol(dfm)
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
 
-  ### Sanity checks
-  if (nDocuments != nLabeled + nUnlabeled){
-    stop("Error: 'dfm' must have the same number of rows as the length of 'labeledIndicator'")
-  }
-  if (nDocuments != length(categoryVec)){
-    stop("Error: 'dfm' must have the same number of rows as the length of 'categoryVec'")
-  }
-  
   if (verbose == T){
     if (kMatch == 0){
       cat("Note: 'kmatch' set to 0, skipping matching procedure for the labeled set")
@@ -139,19 +130,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   ## Print a summary of the input data
   if (verbose == T){
     cat("Data summary:\n")
-    cat(paste("Number of labeled documents: ", nLabeled, "\n", sep=""))
-    cat(paste("Number of unlabeled documents: ", nUnlabeled, "\n", sep=""))
-    cat(paste("Number of features: ", nFeat, "\n", sep=""))   
     cat(paste("Count of documents in each category in the labeled set:\n"))
     print(labeledCt)
   }
 
   # Winsorize the columns of the document-feature matrix
-  if(winsorize          == T){
-  dfm                   = apply(dfm, 2, Winsorize_fxn )
-  }
-  ## Drop invariant columns
-  dfm                   = dfm[,apply(dfm,2,sd)>0]
+  #if(winsorize          == T){
+  #dfm                   = apply(dfm, 2, Winsorize_fxn )
+  #}
 
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
@@ -161,9 +147,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   dfm_labeled           = dfm[labeledIndicator==1,]; 
   dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
-  nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
-  if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
-  rm(categoryVec); rm( dfm )
+  rm(categoryVec);
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
@@ -217,15 +201,18 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-  dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled,dtype = tf$float32)
-  rm(dfm_labeled) 
+  nDim                  = as.integer( ncol(dfm_labeled) )  #nDim = Number of raw features
+  if(batchSizePerCat == nDim){batchSizePerCat = batchSizePerCat + 1}
+    
+  dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd)),
+                                        dtype = tf$float32)
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  #rm(dfm_labeled_tf)
+  rm(dfm_labeled_tf)
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
@@ -358,10 +345,10 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = sess$run(dfm_labeled_tf),
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd)),
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled,
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd)),
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
       
