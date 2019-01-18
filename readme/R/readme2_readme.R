@@ -177,7 +177,6 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   }
   # Initialize tensorflow
   tf$reset_default_graph(); 
-  #gpu_options = tf$GPUOptions(per_process_gpu_memory_fraction = 0.333)
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   sess <- tf$Session()
@@ -219,14 +218,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled,dtype = tf$float32)
-  rm(dfm_labeled) 
+  #rm(dfm_labeled) 
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  #rm(dfm_labeled_tf)
+  rm(dfm_labeled_tf)
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
@@ -357,7 +356,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = sess$run(dfm_labeled_tf),
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_labeled,
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled,
