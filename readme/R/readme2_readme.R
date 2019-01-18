@@ -111,7 +111,7 @@ readme <- function(dfm,
                    minMatch       = 5,
                    nboot_match    = 50,
                    justTransform  = F,
-                   verbose        = T,  
+                   verbose        = F,  
                    diagnostics    = F){ 
    
   ####
