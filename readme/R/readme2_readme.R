@@ -218,6 +218,7 @@ readme <- function(dfm, labeledIndicator, categoryVec,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
+  browser()
   dfm_labeled_tf = tf$constant(dfm_labeled, dtype = tf$float32)
   rm(dfm_labeled) 
   for(ape in 1:nCat){ 
