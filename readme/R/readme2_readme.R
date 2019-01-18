@@ -219,13 +219,14 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
   dfm_labeled_tf = tf$convert_to_tensor(dfm_labeled,dtype = tf$float32)
-  rm(dfm_labeled) 
+  #rm(dfm_labeled) 
   for(ape in 1:nCat){ 
     eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
                         tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
+  rm(dfm_labeled_tf)
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
@@ -304,16 +305,12 @@ readme <- function(dfm, labeledIndicator, categoryVec,
   #Setup the outputs 
   IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
   IL_sigma_last       = tf$placeholder(tf_float_precision, list(nDim) )
-  if(T == T){ 
-    OUTPUT_LFinal_labeled = nonLinearity_fxn(tf$matmul(tf$nn$batch_normalization(dfm_labeled_tf, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0), 
-                                                               WtsMat) + BiasVec)
-    OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
-    OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
-    OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
-  } 
+  
+  OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
+  OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
+  OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
-  rm(dfm_labeled_tf)
   init                 = tf$global_variables_initializer()
   
   # Holding containers for results
@@ -357,12 +354,13 @@ readme <- function(dfm, labeledIndicator, categoryVec,
       t1=Sys.time()
       replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
-      browser()
       
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal_labeled, feed_dict = dict(IL_mu_last = IL_mu_last_v, 
-                                                                                         IL_sigma_last = IL_sigma_last_v)), T)  
+      browser()
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_labeled,
+                                                                                 IL_mu_last = IL_mu_last_v, 
+                                                                                 IL_sigma_last = IL_sigma_last_v)), T)  
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = dfm_unlabeled,
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
