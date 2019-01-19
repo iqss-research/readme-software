@@ -96,7 +96,7 @@
 #'print(readme_results$point_readme)
 #'
 #' @export 
-#' @import tensorflow
+
 readme <- function(dfm,
                    dfm_cmd, 
                    labeledIndicator,
@@ -114,7 +114,9 @@ readme <- function(dfm,
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F){ 
-   
+  print("Detaching + reattaching tensorflow")
+  try(detach("package:tensorflow", unload=TRUE), T)  
+  require("tensorflow")
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -200,7 +202,7 @@ readme <- function(dfm,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-  dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd)),
+  dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                         dtype = tf$float32)
   nDim = ncol(dfm_labeled_tf)
   for(ape in 1:nCat){ 
@@ -249,18 +251,15 @@ readme <- function(dfm,
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
     return(as.integer(indices_))})) , dtype = tf$int32)
-  Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),
-                                    0.30)
+  Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
-                                     tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 
-                                    1.50)
+                                     tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
   
   ## Feature discrimination (row-differences)
   FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
-                                  tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 
-                                  1.50)
+                                  tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 1.50)
   
   ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
   myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
@@ -325,9 +324,10 @@ readme <- function(dfm,
         ### Calculate a clip value for the gradients to avoid overflow
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-        restart_action     = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+        restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
         sess$run( setclip_action ) 
         sess$graph$finalize()
+        tf$get_default_graph()$finalize()
       }
       
       sess$run(  restart_action ) 
@@ -337,16 +337,16 @@ readme <- function(dfm,
       t1=Sys.time()
       replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
-      
+    
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd)),
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd)),
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1],
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
-      
+      tf$reset_default_graph()
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
       if(justTransform == F){ 
@@ -422,7 +422,8 @@ readme <- function(dfm,
         transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
         transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
         
-        sess$close(); return(list(transformed_dfm=transformed_dfm))
+        sess$close();  tf$reset_default_graph()
+        return(list(transformed_dfm=transformed_dfm))
       } 
 
     ## if it's the first iteration
@@ -470,7 +471,7 @@ readme <- function(dfm,
   }
 
   ### Close the TensorFlow session
-  sess$close();
+  sess$close();  tf$reset_default_graph()
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
