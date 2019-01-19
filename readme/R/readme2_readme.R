@@ -293,6 +293,7 @@ readme <- function(dfm,
   OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
+  browser() 
   init                 = tf$global_variables_initializer()
   
   # Holding containers for results
