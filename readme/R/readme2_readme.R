@@ -169,10 +169,9 @@ readme <- function(dfm,
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE, 
-                       log_device_placement = TRUE
+                       log_device_placement = FALSE, 
                        ))
   print("Mapped device")
-  print(tf$VERSION)
 
   ## Construct TensorFlow graph
   if (verbose == T){
