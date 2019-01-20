@@ -164,7 +164,7 @@ readme <- function(dfm,
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  sess <- tf$Session()
+  sess <- tf$Session(graph = tf$get_default_graph())
   
   ## Construct TensorFlow graph
   if (verbose == T){
@@ -293,14 +293,7 @@ readme <- function(dfm,
   OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
-  init = tf$variables_initializer(list(WtsMat,BiasVec,
-                                       clip_tf, inverse_learning_rate))
-  #init                 = tf$global_variables_initializer()
-  
-  
-  browser()
-  sess$run(init)
-  replicate(sgd_iters, sess$run(learning_group))
+  init                 = tf$global_variables_initializer()
   
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
