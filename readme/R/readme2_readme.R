@@ -293,9 +293,15 @@ readme <- function(dfm,
   OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
-  browser()
-  init = tf$variables_initializer(list(WtsMat,BiasVec))
+  init = tf$variables_initializer(list(WtsMat,BiasVec,
+                                       clip_tf, inverse_learning_rate,
+                                       sgd_momentum))
   #init                 = tf$global_variables_initializer()
+  
+  
+  browser()
+  sess$run(init)
+  replicate(sgd_iters, sess$run(learning_group))
   
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
@@ -329,7 +335,6 @@ readme <- function(dfm,
         restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
         sess$run( setclip_action ) 
         sess$graph$finalize()
-        tf$get_default_graph()$finalize()
       }
       
       sess$run(  restart_action ) 
