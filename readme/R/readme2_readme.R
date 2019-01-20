@@ -166,7 +166,6 @@ readme <- function(dfm,
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   sess <- tf$Session(graph = tf$get_default_graph())
   
-  browser() 
   ## Construct TensorFlow graph
   if (verbose == T){
     cat("Constructing TensorFlow graph\n")
