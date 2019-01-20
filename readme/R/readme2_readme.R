@@ -113,7 +113,8 @@ readme <- function(dfm,
                    nboot_match    = 50,
                    justTransform  = F,
                    verbose        = F,  
-                   diagnostics    = F){ 
+                   diagnostics    = F,
+                   use_browser = F){ 
   print("Detaching + reattaching tensorflow")
   try(detach("package:tensorflow", unload=TRUE), T)  
   require("tensorflow")
@@ -164,7 +165,7 @@ readme <- function(dfm,
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  browser()
+  if(use_browser == T){ browser()} 
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE, 
