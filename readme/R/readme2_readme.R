@@ -169,6 +169,7 @@ readme <- function(dfm,
                        allow_soft_placement = TRUE, 
                        log_device_placement = TRUE
                        ))
+  print("Mapped device")
 
   ## Construct TensorFlow graph
   if (verbose == T){
