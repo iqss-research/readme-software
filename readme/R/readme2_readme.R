@@ -164,8 +164,12 @@ readme <- function(dfm,
   tf$reset_default_graph(); 
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  sess <- tf$Session(graph = tf$get_default_graph())
-  
+  sess <- tf$Session(graph = tf$get_default_graph(), 
+                     config = tf$ConfigProto(
+                       allow_soft_placement = TRUE, 
+                       log_device_placement = TRUE
+                       ))
+
   ## Construct TensorFlow graph
   if (verbose == T){
     cat("Constructing TensorFlow graph\n")
