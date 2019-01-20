@@ -294,8 +294,7 @@ readme <- function(dfm,
   
   # Initialize global variables in TensorFlow Graph
   init = tf$variables_initializer(list(WtsMat,BiasVec,
-                                       clip_tf, inverse_learning_rate,
-                                       sgd_momentum))
+                                       clip_tf, inverse_learning_rate))
   #init                 = tf$global_variables_initializer()
   
   
