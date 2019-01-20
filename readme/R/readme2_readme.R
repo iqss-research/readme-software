@@ -168,8 +168,7 @@ readme <- function(dfm,
   if(use_browser == T){ browser()} 
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
-                       allow_soft_placement = TRUE, 
-                       log_device_placement = FALSE, 
+                       allow_soft_placement = TRUE
                        ))
   print("Mapped device")
 
