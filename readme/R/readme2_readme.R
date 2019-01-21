@@ -371,6 +371,7 @@ readme <- function(dfm,
             Y_      = FastScale(Y_, MM1, MM2)
               
             ## If we're using matching
+            browser()
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
                 MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
