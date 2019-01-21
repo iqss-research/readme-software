@@ -166,8 +166,7 @@ readme <- function(dfm,
                      config = tf$ConfigProto(
                        #allow_soft_placement = TRUE,
                        intra_op_parallelism_threads=1L, 
-                       inter_op_parallelism_threads=1L,
-                       collective_graph_key = 1L
+                       inter_op_parallelism_threads=1L
                        ))
   
   #nonlinearity fxn for projection 
