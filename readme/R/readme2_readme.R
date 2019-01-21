@@ -158,15 +158,13 @@ readme <- function(dfm,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
-  try_reset_graph <- try(tf$reset_default_graph(), T); 
-  print( try_reset_graph ) 
-  write.csv(as.character(try_reset_graph), file ="~/TEMP.csv")
+  tf$reset_default_graph()
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   if(use_browser == T){ browser()} 
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
-                       allow_soft_placement = TRUE,
+                       allow_soft_placement = TRUE
                        #intra_op_parallelism_threads=1L, 
                        #inter_op_parallelism_threads=1L
                        #collective_graph_key = 1L,
