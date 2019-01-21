@@ -168,8 +168,13 @@ readme <- function(dfm,
   if(use_browser == T){ browser()} 
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
-                       allow_soft_placement = TRUE
+                       allow_soft_placement = TRUE,
+                       intra_op_parallelism_threads=1, 
+                       inter_op_parallelism_threads=1
                        ))
+  
+  #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+  #sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
   ## Construct TensorFlow graph
   if (verbose == T){
