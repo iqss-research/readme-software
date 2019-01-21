@@ -116,7 +116,7 @@ readme <- function(dfm,
                    diagnostics    = F,
                    use_browser = F){ 
   #try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow", quietly = T)
+  #require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -165,9 +165,9 @@ readme <- function(dfm,
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
                        #allow_soft_placement = TRUE,
-                       #intra_op_parallelism_threads=1L, 
-                       #inter_op_parallelism_threads=1L
-                       #collective_graph_key = 1L,
+                       intra_op_parallelism_threads=1L, 
+                       inter_op_parallelism_threads=1L
+                       collective_graph_key = 1L,
                        ))
   
   #nonlinearity fxn for projection 
