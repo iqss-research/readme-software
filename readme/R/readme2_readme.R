@@ -170,7 +170,7 @@ readme <- function(dfm,
                        allow_soft_placement = TRUE,
                        #intra_op_parallelism_threads=1L, 
                        #inter_op_parallelism_threads=1L
-                       collective_graph_key = 1L,
+                       #collective_graph_key = 1L,
                        ))
   
   #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
