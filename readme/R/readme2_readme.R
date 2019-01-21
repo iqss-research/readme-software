@@ -158,7 +158,9 @@ readme <- function(dfm,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
-  tf$reset_default_graph(); 
+  try_reset_graph <- try(tf$reset_default_graph(), T); 
+  print( try_reset_graph ) 
+  write.csv(as.character(try_reset_graph), file ="~/TEMP.csv")
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   if(use_browser == T){ browser()} 
@@ -169,7 +171,6 @@ readme <- function(dfm,
                        #inter_op_parallelism_threads=1L
                        #collective_graph_key = 1L,
                        ))
-  write.csv(as.character(sess), file ="~/TEMP.csv")
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
