@@ -161,7 +161,6 @@ readme <- function(dfm,
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   tf$reset_default_graph()
-  browser()
   sess <- tf$Session(  graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          #allow_soft_placement = TRUE,
@@ -171,12 +170,9 @@ readme <- function(dfm,
                          device_count=list("CPU"=dev_ct),
                          gpu_options = tf$GPUOptions(allow_growth = T)
                          ))
-  write.csv(as.character(c(unlist(sess$list_devices()))),
+  write.csv(length(c(unlist(sess$list_devices()))),
             file = sprintf("./TEMP_%s.csv", 
                            round(abs(rnorm(1,sd=20)),0)))
-
-  #"/job:<JOB_NAME>/task:<TASK_INDEX>/device:<DEVICE_TYPE>:<DEVICE_INDEX>"
-              
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
