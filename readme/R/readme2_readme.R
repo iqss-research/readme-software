@@ -170,7 +170,6 @@ readme <- function(dfm,
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE
                        ))
-  print("Mapped device")
 
   ## Construct TensorFlow graph
   if (verbose == T){
@@ -375,7 +374,6 @@ readme <- function(dfm,
                 MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                   query = Y_, 
                                                   k     = kMatch)$nn.index) , T) 
-                print(MatchIndices_i)
 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
