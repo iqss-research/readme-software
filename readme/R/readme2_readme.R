@@ -351,7 +351,8 @@ readme <- function(dfm,
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1],
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
-      tf$reset_default_graph()
+      print(out_dfm_labeled[1:5,1:5])
+      print(out_dfm_unlabeled[1:5,1:5])
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
       if(justTransform == F){ 
@@ -371,7 +372,6 @@ readme <- function(dfm,
             Y_      = FastScale(Y_, MM1, MM2)
               
             ## If we're using matching
-            browser()
             if (kMatch != 0){
                 ### KNN matching - find kMatch matches in X_ to Y_
                 MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
