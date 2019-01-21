@@ -115,9 +115,8 @@ readme <- function(dfm,
                    verbose        = F,  
                    diagnostics    = F,
                    use_browser = F){ 
-  print("Detaching + reattaching tensorflow")
-  try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow")
+  #try(detach("package:tensorflow", unload=TRUE), T)  
+  require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -171,6 +170,7 @@ readme <- function(dfm,
                        allow_soft_placement = TRUE,
                        intra_op_parallelism_threads=1L, 
                        inter_op_parallelism_threads=1L
+                       #collective_graph_key = 1L,
                        ))
   
   #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
