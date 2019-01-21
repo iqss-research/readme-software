@@ -115,8 +115,8 @@ readme <- function(dfm,
                    verbose        = F,  
                    diagnostics    = F,
                    use_browser = F){ 
-  try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow", quietly = T)
+  #try(detach("package:tensorflow", unload=TRUE), T)  
+  #require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -158,16 +158,18 @@ readme <- function(dfm,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
-  tf$reset_default_graph()
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  if(use_browser == T){ browser()} 
-  sess <- tf$Session(graph = tf$get_default_graph(), 
-                     config = tf$ConfigProto(
-                       #allow_soft_placement = TRUE,
-                       intra_op_parallelism_threads=1L, 
-                       inter_op_parallelism_threads=1L
-                       ))
+  sess = sess_master
+  if(T == F){ 
+    tf$reset_default_graph()
+    sess <- tf$Session(graph = tf$get_default_graph(), 
+                       config = tf$ConfigProto(
+                         #allow_soft_placement = TRUE,
+                         intra_op_parallelism_threads=1L, 
+                         inter_op_parallelism_threads=1L
+                         ))
+  } 
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
