@@ -115,8 +115,8 @@ readme <- function(dfm,
                    verbose        = F,  
                    diagnostics    = F,
                    use_browser = F){ 
-  #try(detach("package:tensorflow", unload=TRUE), T)  
-  #require("tensorflow", quietly = T)
+  try(detach("package:tensorflow", unload=TRUE), T)  
+  require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
