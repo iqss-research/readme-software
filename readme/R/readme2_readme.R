@@ -351,8 +351,6 @@ readme <- function(dfm,
       out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1],
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
-      print(out_dfm_labeled[1:5,1:5])
-      print(out_dfm_unlabeled[1:5,1:5])
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
       if(justTransform == F){ 
@@ -377,6 +375,7 @@ readme <- function(dfm,
                 MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                   query = Y_, 
                                                   k     = kMatch)$nn.index) , T) 
+                print(MatchIndices_i)
 
                 ## Any category with less than minMatch matches includes all of that category
                 t_              = table( Cat_[unique(MatchIndices_i)] ); 
