@@ -164,11 +164,10 @@ readme <- function(dfm,
   sess <- tf$Session(  graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          #allow_soft_placement = TRUE,
-                         intra_op_parallelism_threads=1L, 
-                         inter_op_parallelism_threads=1L,
+                         #intra_op_parallelism_threads=1L, 
+                         #inter_op_parallelism_threads=1L,
                          log_device_placement = T,
-                         device_count=list("CPU"=dev_ct),
-                         gpu_options = tf$GPUOptions(allow_growth = T)
+                         device_count=list("CPU"=dev_ct)
                          ))
   write.csv(length(c(unlist(sess$list_devices()))),
             file = sprintf("./TEMP_%s.csv", 
@@ -197,6 +196,7 @@ readme <- function(dfm,
     
   #Placeholder settings - to be filled when executing TF operations
   tf_float_precision    = tf$float32
+  
   clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F)
   inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
   sgd_learning_rate      = 1./ inverse_learning_rate
