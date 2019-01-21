@@ -160,16 +160,14 @@ readme <- function(dfm,
   # Initialize tensorflow
   #gpu_options = tf$GPUOptions(allow_growth = T)
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
-  sess = sess_master
-  if(T == F){ 
-    tf$reset_default_graph()
-    sess <- tf$Session(graph = tf$get_default_graph(), 
+  browser() 
+  tf$reset_default_graph()
+  sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          #allow_soft_placement = TRUE,
                          intra_op_parallelism_threads=1L, 
                          inter_op_parallelism_threads=1L
                          ))
-  } 
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
@@ -346,7 +344,7 @@ readme <- function(dfm,
       print("Training...")
       t1=Sys.time()
       #replicate(sgd_iters, sess$run(learning_group))
-      sapply(1:sgd_iters, function(x){print(x);sess$run(learning_group)})
+      sapply(1:sgd_iters, function(x){print(sess$run(learning_group)})
       print(Sys.time()-t1)
     
       print("Done with this round of training...!")
