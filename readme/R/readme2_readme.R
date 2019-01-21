@@ -116,7 +116,7 @@ readme <- function(dfm,
                    diagnostics    = F,
                    use_browser = F){ 
   #try(detach("package:tensorflow", unload=TRUE), T)  
-  #require("tensorflow", quietly = T)
+  require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -162,7 +162,7 @@ readme <- function(dfm,
   #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   browser() 
   tf$reset_default_graph()
-  sess <- tf$Session(graph = tf$get_default_graph(), 
+  sess <- tf$Session(  graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          #allow_soft_placement = TRUE,
                          intra_op_parallelism_threads=1L, 
@@ -171,9 +171,6 @@ readme <- function(dfm,
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
-  
-  #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
-  #sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
   ## Construct TensorFlow graph
   if (verbose == T){
@@ -343,8 +340,7 @@ readme <- function(dfm,
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
-      #replicate(sgd_iters, sess$run(learning_group))
-      sapply(1:sgd_iters, function(x){print(sess$run(learning_group)})
+      replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
     
       print("Done with this round of training...!")
