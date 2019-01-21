@@ -164,9 +164,9 @@ readme <- function(dfm,
   if(use_browser == T){ browser()} 
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
-                       allow_soft_placement = TRUE,
-                       intra_op_parallelism_threads=1L, 
-                       inter_op_parallelism_threads=0L
+                       #allow_soft_placement = TRUE,
+                       #intra_op_parallelism_threads=1L, 
+                       #inter_op_parallelism_threads=1L
                        #collective_graph_key = 1L,
                        ))
   
@@ -344,7 +344,8 @@ readme <- function(dfm,
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
-      replicate(sgd_iters, sess$run(learning_group))
+      #replicate(sgd_iters, sess$run(learning_group))
+      sapply(1:sgd_iters, function(x){print(x);sess$run(learning_group)})
       print(Sys.time()-t1)
     
       print("Done with this round of training...!")
