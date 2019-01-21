@@ -212,7 +212,7 @@ readme <- function(dfm,
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   if(T == T){ 
-  dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
+  dfm_labeled_tf = tf$convert_to_tensor(eval(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]),
                                         dtype = tf$float32)
   nDim = ncol(dfm_labeled_tf)
   for(ape in 1:nCat){ 
@@ -349,10 +349,10 @@ readme <- function(dfm,
     
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = eval(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]),
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1],
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = eval(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]),
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
       ### Here ends the SGD for generating optimal document-feature matrix.
