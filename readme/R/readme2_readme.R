@@ -148,9 +148,6 @@ readme <- function(dfm,
   dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
   rm(categoryVec);
-  
-  #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
 
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
@@ -172,6 +169,10 @@ readme <- function(dfm,
                        #inter_op_parallelism_threads=1L
                        #collective_graph_key = 1L,
                        ))
+  write.csv(as.character(sess), file ="~/TEMP.csv")
+  
+  #nonlinearity fxn for projection 
+  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
   
   #gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
   #sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
