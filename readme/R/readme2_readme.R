@@ -164,9 +164,9 @@ readme <- function(dfm,
   if(use_browser == T){ browser()} 
   sess <- tf$Session(graph = tf$get_default_graph(), 
                      config = tf$ConfigProto(
-                       allow_soft_placement = TRUE
-                       #intra_op_parallelism_threads=1L, 
-                       #inter_op_parallelism_threads=1L
+                       allow_soft_placement = TRUE,
+                       intra_op_parallelism_threads=1L, 
+                       inter_op_parallelism_threads=0L
                        #collective_graph_key = 1L,
                        ))
   
