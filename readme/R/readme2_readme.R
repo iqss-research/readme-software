@@ -115,8 +115,8 @@ readme <- function(dfm = NULL,
                    verbose        = F,  
                    diagnostics    = F,
                    use_browser = F){ 
-  try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow", quietly = T)
+  #try(detach("package:tensorflow", unload=TRUE), T)  
+  #require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -416,7 +416,7 @@ readme <- function(dfm = NULL,
         transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
         transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
         
-        sess$close();  tf$reset_default_graph()
+        sess$close(); tf$reset_default_graph()
         return(list(transformed_dfm=transformed_dfm))
       } 
 
