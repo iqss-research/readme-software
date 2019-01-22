@@ -168,6 +168,8 @@ readme <- function(dfm,
                          #inter_op_parallelism_threads=1L,
                          device_count=list("CPU"=dev_ct)
                          ))
+  print(  sess$list_devices() )  
+
 
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
