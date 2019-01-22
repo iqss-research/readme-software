@@ -265,10 +265,8 @@ readme <- function(dfm = NULL,
                             0.10 * tf$reduce_mean(Spread_tf) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  #myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                    #momentum      = sgd_momentum, use_nesterov  = T)
-  myOpt_tf             = tf$train$GradientDescentOptimizer(learning_rate = sgd_learning_rate)
-  
+  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+                                                    momentum      = sgd_momentum, use_nesterov  = T)
   
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
@@ -293,6 +291,7 @@ readme <- function(dfm = NULL,
   OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
+  browser()
   init                 = tf$global_variables_initializer()
   
   # Holding containers for results
