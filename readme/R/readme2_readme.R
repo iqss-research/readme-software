@@ -267,6 +267,7 @@ readme <- function(dfm = NULL,
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   #myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
                                                     #momentum      = sgd_momentum, use_nesterov  = T)
+  browser()
   myOpt_tf             = tf$train$GradientDescentOptimizer(learning_rate = sgd_learning_rate)
   
   
