@@ -156,7 +156,7 @@ readme <- function(dfm = NULL,
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          allow_soft_placement = TRUE
-                         #intra_op_parallelism_threads=1L, 
+                         intra_op_parallelism_threads=4L, 
                          #inter_op_parallelism_threads=1L,
                          #device_count=list("CPU"=1L)
                          ))
