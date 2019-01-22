@@ -291,9 +291,8 @@ readme <- function(dfm = NULL,
   OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
-  browser()
-  init                 = tf$global_variables_initializer()
-  
+  init                  = tf$variables_initializer(tf$all_variables())
+
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
