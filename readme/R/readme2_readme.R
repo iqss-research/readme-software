@@ -471,7 +471,7 @@ readme <- function(dfm = NULL,
   ## Parse output
   ## If no diagnostics wanted
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
-  if(diagnostics == F){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ) )  }
+  if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T) ) )  }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
