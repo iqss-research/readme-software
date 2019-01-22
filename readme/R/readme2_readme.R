@@ -115,7 +115,7 @@ readme <- function(dfm,
                    verbose        = F,  
                    diagnostics    = F,
                    use_browser = F){ 
-  #try(detach("package:tensorflow", unload=TRUE), T)  
+  try(detach("package:tensorflow", unload=TRUE), T)  
   require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
@@ -127,10 +127,6 @@ readme <- function(dfm,
     if (kMatch == 0){
       cat("Note: 'kmatch' set to 0, skipping matching procedure for the labeled set")
     }
-  }
-  
-  ## Print a summary of the input data
-  if (verbose == T){
     cat("Data summary:\n")
     cat(paste("Count of documents in each category in the labeled set:\n"))
     print(labeledCt)
@@ -163,13 +159,12 @@ readme <- function(dfm,
   tf$reset_default_graph()
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
-                         #allow_soft_placement = TRUE,
+                         allow_soft_placement = TRUE
                          #intra_op_parallelism_threads=1L, 
                          #inter_op_parallelism_threads=1L,
                          #device_count=list("CPU"=1L)
                          ))
-  print(  sess$list_devices() )  
-
+  
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
 
@@ -208,8 +203,7 @@ readme <- function(dfm,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  if(T == T){ 
-  dfm_labeled_tf = tf$convert_to_tensor(eval(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]),
+  dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                         dtype = tf$float32)
   nDim = ncol(dfm_labeled_tf)
   for(ape in 1:nCat){ 
@@ -222,7 +216,6 @@ readme <- function(dfm,
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
-  }
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -346,10 +339,10 @@ readme <- function(dfm,
     
       print("Done with this round of training...!")
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = eval(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]),
+      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)  
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = eval(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]),
+      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1],
                                                                                  IL_mu_last = IL_mu_last_v, 
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
       ### Here ends the SGD for generating optimal document-feature matrix.
