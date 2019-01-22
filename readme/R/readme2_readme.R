@@ -264,7 +264,8 @@ readme <- function(dfm = NULL,
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                    momentum      = sgd_momentum, use_nesterov  = T)
+                                                    momentum      = sgd_momentum, use_nesterov  = T, 
+                                                    use_locking = T)
   
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
