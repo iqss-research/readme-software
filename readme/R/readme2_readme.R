@@ -153,10 +153,7 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   tf$reset_default_graph()
-  temp = tf$train$Server$create_local_server()
-  print(  temp$target )  
-  sess <- tf$Session(temp$target, 
-                     graph = tf$get_default_graph(), 
+  sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          allow_soft_placement = TRUE
                          #intra_op_parallelism_threads=1L, 
