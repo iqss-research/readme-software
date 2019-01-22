@@ -140,8 +140,6 @@ readme <- function(dfm = NULL,
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
   labeled_pd            = vec2prob( categoryVec_labeled )
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
-  dfm_labeled           = dfm[labeledIndicator==1,]; 
-  dfm_unlabeled         = dfm[labeledIndicator==0,]
   nCat                  = as.integer( length(labeled_pd) ); 
   rm(categoryVec);
 
