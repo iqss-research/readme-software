@@ -166,7 +166,7 @@ readme <- function(dfm,
                          #allow_soft_placement = TRUE,
                          #intra_op_parallelism_threads=1L, 
                          #inter_op_parallelism_threads=1L,
-                         log_device_placement = T,
+                         log_device_placement = F,
                          device_count=list("CPU"=dev_ct)
                          ))
   write.csv(length(c(unlist(sess$list_devices()))),
