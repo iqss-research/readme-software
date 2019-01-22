@@ -158,9 +158,9 @@ readme <- function(dfm = NULL,
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          allow_soft_placement = TRUE,
-                         intra_op_parallelism_threads=1L, 
-                         inter_op_parallelism_threads=1L,
-                         device_count=list("CPU"=1L)
+                         #intra_op_parallelism_threads=1L, 
+                         #inter_op_parallelism_threads=1L,
+                         #device_count=list("CPU"=1L)
                          ))
   
   #nonlinearity fxn for projection 
@@ -265,9 +265,11 @@ readme <- function(dfm = NULL,
                             0.10 * tf$reduce_mean(Spread_tf) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                    momentum      = sgd_momentum, 
-                                                    use_nesterov  = T)
+  #myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+                                                    #momentum      = sgd_momentum, use_nesterov  = T)
+  myOpt_tf             = tf$train$GradientDescentOptimizer(learning_rate = sgd_learning_rate)
+  
+  
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
   Gradients_clipped    = Gradients_unclipped
