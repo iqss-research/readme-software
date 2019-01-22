@@ -164,12 +164,11 @@ readme <- function(dfm,
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          allow_soft_placement = TRUE,
-                         #intra_op_parallelism_threads=1L, 
-                         #inter_op_parallelism_threads=1L,
+                         intra_op_parallelism_threads=dev_ct, 
+                         inter_op_parallelism_threads=dev_ct,
                          device_count=list("CPU"=dev_ct)
                          ))
   print(  sess$list_devices() )  
-
 
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
