@@ -11,7 +11,9 @@ if(sampling_scheme == "JustPermutations"){
   
 if(sampling_scheme == "firat2018"){ 
     print("BEGIN firat2018")
-    temp_ <- firat2018(csv_category_ = csv_category)
+    temp_ <- firat2018(csv_category_ = csv_category,
+                       INPUT_labeled_sz = labeled_sz, 
+                       INPUT_unlabeled_sz = unlabeled_sz)
     labeled_indices  <- temp_$labeled_indices 
     unlabeled_indices   <- temp_$unlabeled_indices 
 } 
@@ -113,8 +115,16 @@ if(sampling_scheme == "Historical3"){
 
 if(sampling_scheme == "Ahistorical_NoReuse"){ 
   print("BEGIN Ahistorical NoReuse 1")
-  AHistoricalIndices <- ahistorical_fxn(INPUT_CAT = csv_category ,
-                                        INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
+  AHistoricalIndices <- try(ahistorical_fxn(INPUT_CAT = csv_category ,
+                                        INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz),T) 
+  if(class(AHistoricalIndices) == "try-error"){
+    AHistoricalIndices <- try(ahistorical_fxn(INPUT_CAT = csv_category ,
+                                              INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz),T) 
+  }
+  if(class(AHistoricalIndices) == "try-error"){
+    AHistoricalIndices <- try(ahistorical_fxn(INPUT_CAT = csv_category ,
+                                              INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz),T) 
+  }
   labeled_indices <- AHistoricalIndices$labeled_indices
   unlabeled_indices <- AHistoricalIndices$unlabeled_indices
 } 
@@ -142,14 +152,14 @@ if(sampling_scheme == "Ahistorical_aykut_quantification"){
   previousTestSize <- NULL 
   print("BEGIN Aykut Ahistorical 2")
   AHistoricalIndices_aykut_quantification <- aykut_fxn_quantification(INPUT_CAT = csv_category ,
-                                                                      labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz) 
+                                                                      INPUT_labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz) 
   labeled_indices <- AHistoricalIndices_aykut_quantification$labeled_indices
   unlabeled_indices <- AHistoricalIndices_aykut_quantification$unlabeled_indices
 }
 
 if(sampling_scheme == "breakdown_sampling"){
   print("BEGIN Breakdown Sampling 1")
-  breakdown_sample_results <- breakdown_sample(INPUT_CAT=csv_category, labeled_sz = ceiling(runif(1, 75, 500)), 
+  breakdown_sample_results <- breakdown_sample(INPUT_CAT=csv_category, INPUT_labeled_sz = ceiling(runif(1, 75, 500)), 
                    unlabeled_sz = unlabeled_sz)
   labeled_indices <- breakdown_sample_results$labeled_indices
   unlabeled_indices <- breakdown_sample_results$unlabeled_indices
