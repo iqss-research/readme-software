@@ -154,15 +154,13 @@ readme <- function(dfm,
     cat("Initializing TensorFlow session\n")
   }
   # Initialize tensorflow
-  #gpu_options = tf$GPUOptions(allow_growth = T)
-  #sess <- tf$Session(config=tf$ConfigProto(gpu_options=gpu_options))
   tf$reset_default_graph()
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          allow_soft_placement = TRUE
-                         #intra_op_parallelism_threads=1L, 
-                         #inter_op_parallelism_threads=1L,
-                         #device_count=list("CPU"=1L)
+                         intra_op_parallelism_threads=1L, 
+                         inter_op_parallelism_threads=1L,
+                         device_count=list("CPU"=1L)
                          ))
   
   #nonlinearity fxn for projection 
