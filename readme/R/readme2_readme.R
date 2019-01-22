@@ -97,8 +97,8 @@
 #'
 #' @export 
 
-readme <- function(dfm,
-                   dfm_cmd, 
+readme <- function(dfm = NULL,
+                   dfm_cmd = NULL, 
                    labeledIndicator,
                    categoryVec, 
                    nboot          = 4,  
