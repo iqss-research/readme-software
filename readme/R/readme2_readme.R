@@ -291,7 +291,7 @@ readme <- function(dfm = NULL,
   OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
   
   # Initialize global variables in TensorFlow Graph
-  init                  = tf$variables_initializer(tf$all_variables())
+  init                  = tf$variables_initializer(tf$global_variables())
 
   # Holding containers for results
   boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
