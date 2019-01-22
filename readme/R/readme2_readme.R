@@ -155,10 +155,10 @@ readme <- function(dfm = NULL,
   tf$reset_default_graph()
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
-                         allow_soft_placement = TRUE
-                         intra_op_parallelism_threads=4L, 
                          #inter_op_parallelism_threads=1L,
                          #device_count=list("CPU"=1L)
+                         intra_op_parallelism_threads=4L, 
+                         allow_soft_placement = TRUE
                          ))
   
   #nonlinearity fxn for projection 
