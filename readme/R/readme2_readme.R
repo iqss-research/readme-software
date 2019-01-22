@@ -157,7 +157,7 @@ readme <- function(dfm = NULL,
                        config = tf$ConfigProto(
                          #inter_op_parallelism_threads=1L,
                          #device_count=list("CPU"=1L)
-                         intra_op_parallelism_threads=4L, 
+                         #intra_op_parallelism_threads=4L, 
                          allow_soft_placement = TRUE
                          ))
   
