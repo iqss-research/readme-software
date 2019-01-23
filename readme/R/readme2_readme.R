@@ -264,8 +264,7 @@ readme <- function(dfm = NULL,
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   myOpt_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                    momentum      = sgd_momentum, use_nesterov  = T, 
-                                                    use_locking = T)
+                                                    momentum      = sgd_momentum, use_nesterov  = T)
   
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
@@ -276,7 +275,9 @@ readme <- function(dfm = NULL,
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
+  browser()
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped, 
+                                                   gate_gradients = "GATE_NONE")
 
   #learning consists of gradient updates plus learning rate updates. 
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
