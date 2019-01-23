@@ -159,8 +159,7 @@ readme <- function(dfm = NULL,
                          device_count=list("GPU"=0L, "CPU" = 1L), 
                          allow_soft_placement = T , 
                          inter_op_parallelism_threads = 1L,
-                         intra_op_parallelism_threads = 1L,
-                         session_inter_op_thread_pool = 1L
+                         intra_op_parallelism_threads = 1L
                          ))
   print( length( sess$list_devices() )  )  
   print( sess$list_devices() ) 
