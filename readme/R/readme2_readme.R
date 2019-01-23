@@ -154,15 +154,14 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   tf$reset_default_graph()
   
-  sess <- tf$Session(graph = tf$get_default_graph(), 
-                       config = tf$ConfigProto(
+  tf_hostlist = tf$train$Server$create_local_server()
+  sess <- tf$Session(tf_hostlist$target, graph = tf$get_default_graph(), 
+                      config = tf$ConfigProto(
                          device_count=list("GPU"=0L, "CPU" = 1L), 
                          inter_op_parallelism_threads = 1L,
                          intra_op_parallelism_threads = 1L
                          ))
-  print( length( sess$list_devices() )  )  
-  print( sess$list_devices() ) 
-  
+
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
 
