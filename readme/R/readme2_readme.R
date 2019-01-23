@@ -158,15 +158,16 @@ readme <- function(dfm = NULL,
   try(detach("package:tensorflow", unload=TRUE), T)  
   require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  browser()
   
+  nCores = max(as.numeric(Sys.getenv("CONDOR_JOB_TotalCpus")), 
+              parallel::detectCores(), na.rm = T )
+  print( nCores ) 
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
-                         device_count=list("GPU"=0L, "CPU" = 1L), 
-                         inter_op_parallelism_threads = 1L,
-                         intra_op_parallelism_threads = 1L
-                      )
-                     )
+                         device_count=list("GPU"=0L, "CPU" = nCores), 
+                         inter_op_parallelism_threads = nCores,
+                         intra_op_parallelism_threads = nCores
+                      ))
 
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
