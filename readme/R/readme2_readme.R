@@ -157,12 +157,12 @@ readme <- function(dfm = NULL,
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
                          device_count=list("GPU"=0L), 
-                         inter_op_parallelism_threads=5L,
-                         intra_op_parallelism_threads=5L
+                         allow_soft_placement = T 
+                         #inter_op_parallelism_threads=5L,
+                         #intra_op_parallelism_threads=5L
                          ))
-  browser() 
-  print( length( tf$list_devices())  )  
-  print( tf$list_devices()) 
+  print( length( sess$list_devices() )  )  
+  print( sess$list_devices() ) 
   
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
