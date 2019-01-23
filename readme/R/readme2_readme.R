@@ -115,8 +115,6 @@ readme <- function(dfm = NULL,
                    verbose        = F,  
                    diagnostics    = F,
                    use_browser = F){ 
-  try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow", quietly = T)
   ####
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -150,25 +148,23 @@ readme <- function(dfm = NULL,
   #Start SGD
   if (verbose == T){
     cat("Initializing TensorFlow session\n")
+    cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   # Initialize tensorflow
+  try(detach("package:tensorflow", unload=TRUE), T)  
+  require("tensorflow", quietly = T)
   tf$reset_default_graph()
   
-  sess <- tf$Session(graph = tf$get_default_graph(), 
-                      config = tf$ConfigProto(
-                         device_count=list("GPU"=0L, "CPU" = 1L), 
-                         inter_op_parallelism_threads = 1L,
-                         intra_op_parallelism_threads = 1L
-                         ))
+  sess <- tf$Session(graph = tf$get_default_graph()
+                      #config = tf$ConfigProto(
+                         #device_count=list("GPU"=0L, "CPU" = 1L), 
+                         #inter_op_parallelism_threads = 1L,
+                         #intra_op_parallelism_threads = 1L
+                         #)
+                     )
 
   #nonlinearity fxn for projection 
   nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
-
-  ## Construct TensorFlow graph
-  if (verbose == T){
-    cat("Constructing TensorFlow graph\n")
-    cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
-  }
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
@@ -219,7 +215,8 @@ readme <- function(dfm = NULL,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  initializer_reweighting =  1/sd(replicate(1000, {
+  browser() 
+  initializer_reweighting =  1/sd(replicate(500, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
     beta__[dropout__==1]  <- 0
@@ -419,7 +416,6 @@ readme <- function(dfm = NULL,
         transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
         transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
         
-        sess$close()
         return(list(transformed_dfm=transformed_dfm))
       } 
 
@@ -468,7 +464,6 @@ readme <- function(dfm = NULL,
   }
 
   ### Close the TensorFlow session
-  sess$close()
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
