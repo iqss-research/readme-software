@@ -160,7 +160,7 @@ readme <- function(dfm = NULL,
                          device_count=list("GPU"=0L,
                                            "CPU"=nCores)
                          inter_op_parallelism_threads=nCores,
-                         intra_op_parallelism_threads=nCores, 
+                         intra_op_parallelism_threads=nCores
                          ))
   
   #nonlinearity fxn for projection 
