@@ -160,7 +160,7 @@ readme <- function(dfm = NULL,
   tf$reset_default_graph()
   browser()
   
-  sess <- tf$Session(graph = tf$get_default_graph()
+  sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          device_count=list("GPU"=0L, "CPU" = 1L), 
                          inter_op_parallelism_threads = 1L,
