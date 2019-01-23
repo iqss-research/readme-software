@@ -158,8 +158,8 @@ readme <- function(dfm = NULL,
                        config = tf$ConfigProto(
                          device_count=list("GPU"=0L, "CPU" = 1L), 
                          allow_soft_placement = T , 
-                         inter_op_parallelism_threads=1L,
-                         intra_op_parallelism_threads= 1L
+                         inter_op_parallelism_threads = 0L,
+                         intra_op_parallelism_threads = 0L
                          ))
   print( length( sess$list_devices() )  )  
   print( sess$list_devices() ) 
