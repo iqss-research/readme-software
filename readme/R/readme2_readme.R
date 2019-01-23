@@ -156,10 +156,10 @@ readme <- function(dfm = NULL,
   
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
-                         device_count=list("GPU"=0L), 
+                         device_count=list("GPU"=0L, "CPU" = 1L), 
                          allow_soft_placement = T 
-                         #inter_op_parallelism_threads=5L,
-                         #intra_op_parallelism_threads=5L
+                         inter_op_parallelism_threads=1L,
+                         intra_op_parallelism_threads= 1L
                          ))
   print( length( sess$list_devices() )  )  
   print( sess$list_devices() ) 
@@ -270,8 +270,7 @@ readme <- function(dfm = NULL,
                                                     momentum      = sgd_momentum, use_nesterov  = T)
   
   ### Calculates the gradients from myOpt_tf
-  Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf, 
-                                                     gate_gradients = myOpt_tf$GATE_NONE) 
+  Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
   Gradients_clipped    = Gradients_unclipped
   TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
   for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
