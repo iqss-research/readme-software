@@ -284,10 +284,6 @@ readme <- function(dfm = NULL,
   IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
   IL_sigma_last       = tf$placeholder(tf_float_precision, list(nDim) )
   
-  OUTPUT_IL             = tf$placeholder(tf_float_precision, shape = list(NULL, nDim))
-  OUTPUT_IL_n           = tf$nn$batch_normalization(OUTPUT_IL, mean = IL_mu_last, variance = tf$square(IL_sigma_last), offset = 0, scale = 1, variance_epsilon = 0)
-  OUTPUT_LFinal         = nonLinearity_fxn( tf$matmul(OUTPUT_IL_n, WtsMat) + BiasVec )
-  
   # Initialize global variables in TensorFlow Graph
   init                  = tf$variables_initializer(tf$global_variables())
 
@@ -309,6 +305,7 @@ readme <- function(dfm = NULL,
   IL_sigma_last_v =   sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
   rm(moments_list)
 
+  FinalParams_list <- list() 
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
@@ -317,6 +314,7 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
+        FinalParams_list = list(WtsMat, BiasVec)
         ### Calculate a clip value for the gradients to avoid overflow
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
@@ -332,18 +330,22 @@ readme <- function(dfm = NULL,
       t1=Sys.time()
       replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
-    
+      
       print("Done with this round of training...!")
+      FinalParams_list[[iter_i]] <- sess$run( FinalParams_list )
+  } 
+  sess$close(); try(detach("package:tensorflow", unload=TRUE), T)  
+  
+  for(iter_i in 1:nboot){ 
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled             = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
-                                                                                 IL_mu_last = IL_mu_last_v, 
-                                                                                 IL_sigma_last = IL_sigma_last_v)), T)  
-      out_dfm_unlabeled           = try(sess$run(OUTPUT_LFinal, feed_dict = dict(OUTPUT_IL = as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1],
-                                                                                 IL_mu_last = IL_mu_last_v, 
-                                                                                 IL_sigma_last = IL_sigma_last_v)), T)
+      out_dfm_labeled = t( t(FinalParams_list[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_list[[iter_i]][[2]]))
+      out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
+      
+      out_dfm_unlabeled = t( t(FinalParams_list[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_list[[iter_i]][[2]]))
+      out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
+      
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
-      browser() 
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           MM1           = colMeans(out_dfm_unlabeled); 
