@@ -160,8 +160,7 @@ readme <- function(dfm = NULL,
                          allow_soft_placement = T , 
                          inter_op_parallelism_threads = 1L,
                          intra_op_parallelism_threads = 1L,
-                         session_inter_op_thread_pool = 1L,
-                         session_intra_op_thread_pool = 1L
+                         session_inter_op_thread_pool = 1L
                          ))
   print( length( sess$list_devices() )  )  
   print( sess$list_devices() ) 
