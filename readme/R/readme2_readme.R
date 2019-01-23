@@ -113,9 +113,14 @@ readme <- function(dfm = NULL,
                    nboot_match    = 50,
                    justTransform  = F,
                    verbose        = F,  
-                   diagnostics    = F,
-                   use_browser = F){ 
-  ####
+                   diagnostics    = F){ 
+  ## Holding containers for results
+  boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
+  hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  hold_coef[]          = 0
+  MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
+  
+  
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -157,10 +162,10 @@ readme <- function(dfm = NULL,
   
   sess <- tf$Session(graph = tf$get_default_graph()
                       #config = tf$ConfigProto(
-                         #device_count=list("GPU"=0L, "CPU" = 1L), 
-                         #inter_op_parallelism_threads = 1L,
-                         #intra_op_parallelism_threads = 1L
-                         #)
+                      #   device_count=list("GPU"=0L, "CPU" = 1L), 
+                      #   inter_op_parallelism_threads = 1L,
+                      #   intra_op_parallelism_threads = 1L
+                      #)
                      )
 
   #nonlinearity fxn for projection 
@@ -215,7 +220,6 @@ readme <- function(dfm = NULL,
   
   #SET UP WEIGHTS to be optimized
   #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  browser() 
   initializer_reweighting =  1/sd(replicate(500, {
     beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
     dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
@@ -232,7 +236,7 @@ readme <- function(dfm = NULL,
 
   ### Apply non-linearity + batch normalization 
   LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_m             = tf$nn$moments(LFinal, axes = 0L);
+  LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
   #Find E[S|D] and calculate objective function  
@@ -240,10 +244,10 @@ readme <- function(dfm = NULL,
 
   ## Spread component of objective function
   #Gather slices from params axis axis according to indices.
-  gathering_mat = tf$constant(  (sapply(1:nCat, function(er){ 
+  gathering_mat =   (sapply(1:nCat, function(er){ 
     if(er == 1){indices_ =  1:NObsPerCat-1 }
     if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    return(as.integer(indices_))})) , dtype = tf$int32)
+    return(as.integer(indices_))}))
   Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
 
   ## Category discrimination (absolute difference in all E[S|D] columns)
@@ -277,18 +281,8 @@ readme <- function(dfm = NULL,
   #learning consists of gradient updates plus learning rate updates. 
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
-  #Setup the outputs 
-  IL_mu_last          = tf$placeholder(tf_float_precision, list(nDim) )
-  IL_sigma_last       = tf$placeholder(tf_float_precision, list(nDim) )
-  
   # Initialize global variables in TensorFlow Graph
   init                  = tf$variables_initializer(tf$global_variables())
-
-  # Holding containers for results
-  boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
-  hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
-  hold_coef[]          = 0
-  MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
   
   ##  Estimate the parameters
   if (verbose == T){
