@@ -162,6 +162,7 @@ readme <- function(dfm = NULL,
   nCores = as.integer(max(as.numeric(Sys.getenv("CONDOR_JOB_TotalCpus")), 
               parallel::detectCores(), na.rm = T ))
   print( nCores ) 
+  browser() 
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          device_count=list("GPU"=0L, "CPU" = nCores), 
