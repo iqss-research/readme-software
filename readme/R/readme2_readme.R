@@ -154,8 +154,7 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   tf$reset_default_graph()
   
-  tf_hostlist = tf$train$Server$create_local_server()
-  sess <- tf$Session(tf_hostlist$target, graph = tf$get_default_graph(), 
+  sess <- tf$Session(graph = tf$get_default_graph(), 
                       config = tf$ConfigProto(
                          device_count=list("GPU"=0L, "CPU" = 1L), 
                          inter_op_parallelism_threads = 1L,
@@ -344,6 +343,7 @@ readme <- function(dfm = NULL,
                                                                                  IL_sigma_last = IL_sigma_last_v)), T)
       ### Here ends the SGD for generating optimal document-feature matrix.
       ### If we're also going to do estimation
+      browser() 
       if(justTransform == F){ 
           ## Minimum number of observations to use in each category per bootstrap iteration
           MM1           = colMeans(out_dfm_unlabeled); 
