@@ -159,7 +159,7 @@ readme <- function(dfm = NULL,
   require("tensorflow", quietly = T)
   tf$reset_default_graph()
   
-  nCores = as.integer(parallel::detectCores(), na.rm = T )
+  nCores = as.integer(max(1,parallel::detectCores() - 1 ))
   print( nCores ) 
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
