@@ -277,8 +277,7 @@ readme <- function(dfm = NULL,
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped, 
-                                                   gate_gradients = "GATE_NONE")
+  myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
