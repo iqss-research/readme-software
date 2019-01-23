@@ -114,13 +114,6 @@ readme <- function(dfm = NULL,
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F){ 
-  ## Holding containers for results
-  boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
-  hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
-  hold_coef[]          = 0
-  MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
-  
-  
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -145,6 +138,12 @@ readme <- function(dfm = NULL,
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   nCat                  = as.integer( length(labeled_pd) ); 
   rm(categoryVec);
+  
+  ## Holding containers for results
+  boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
+  hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
+  hold_coef[]          = 0
+  MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
 
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
