@@ -154,12 +154,11 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   tf$reset_default_graph()
   
-  nCores = as.integer(parallel::detectCores())
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
-                         device_count=list("GPU"=0L,"CPU"=nCores),
-                         inter_op_parallelism_threads=nCores,
-                         intra_op_parallelism_threads=nCores
+                         device_count=list("GPU"=0L) 
+                         #inter_op_parallelism_threads=nCores,
+                         #intra_op_parallelism_threads=nCores
                          ))
   
   #nonlinearity fxn for projection 
@@ -418,7 +417,7 @@ readme <- function(dfm = NULL,
         transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
         transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
         
-        sess$close(); tf$reset_default_graph()
+        sess$close()
         return(list(transformed_dfm=transformed_dfm))
       } 
 
@@ -467,7 +466,7 @@ readme <- function(dfm = NULL,
   }
 
   ### Close the TensorFlow session
-  sess$close();  tf$reset_default_graph()
+  sess$close()
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
