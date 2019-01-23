@@ -153,12 +153,14 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   tf$reset_default_graph()
+  
+  nCores = as.integer(parallel::detectCores())
   sess <- tf$Session(graph = tf$get_default_graph(), 
                        config = tf$ConfigProto(
-                         device_count=list("GPU"=0L)
-                         #inter_op_parallelism_threads=1L,
-                         #intra_op_parallelism_threads=1L, 
-                         #allow_soft_placement = TRUE
+                         device_count=list("GPU"=0L,
+                                           "CPU"=nCores)
+                         inter_op_parallelism_threads=nCores,
+                         intra_op_parallelism_threads=nCores, 
                          ))
   
   #nonlinearity fxn for projection 
@@ -267,7 +269,8 @@ readme <- function(dfm = NULL,
                                                     momentum      = sgd_momentum, use_nesterov  = T)
   
   ### Calculates the gradients from myOpt_tf
-  Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf ) 
+  Gradients_unclipped  = myOpt_tf$compute_gradients( myLoss_tf, 
+                                                     gate_gradients = myOpt_tf$GATE_NONE) 
   Gradients_clipped    = Gradients_unclipped
   TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
   for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
@@ -275,7 +278,6 @@ readme <- function(dfm = NULL,
   inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  browser()
   myOpt_tf_apply       = myOpt_tf$apply_gradients( Gradients_clipped, 
                                                    gate_gradients = "GATE_NONE")
 
