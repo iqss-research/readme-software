@@ -159,8 +159,8 @@ readme <- function(dfm = NULL,
   require("tensorflow", quietly = T)
   tf$reset_default_graph()
   
-  nCores = max(as.numeric(Sys.getenv("CONDOR_JOB_TotalCpus")), 
-              parallel::detectCores(), na.rm = T )
+  nCores = as.integer(max(as.numeric(Sys.getenv("CONDOR_JOB_TotalCpus")), 
+              parallel::detectCores(), na.rm = T ))
   print( nCores ) 
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
