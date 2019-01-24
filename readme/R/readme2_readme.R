@@ -283,14 +283,14 @@ readme <- function(dfm = NULL,
 
 
   FinalParams_LIST <- list() 
-  for(iter_i in 1:nboot){ 
   with(tf$Session(graph = G_,
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE 
                        #device_count=list("GPU"=0L, "CPU" = nCores), 
                        #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
                      )) %as% sess, { 
-  sess$graph$finalize()
+      sess$graph$finalize()
+      for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
@@ -298,11 +298,11 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
-        IL_sigma_last_v = list(IL_mu_b,IL_sigma2_b)
-        IL_sigma_last_v = replicate(300, sess$run(IL_sigma_last_v))
-        IL_mu_last_v = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
-        IL_sigma_last_v = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
-        L2_squared_initial_v      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
+        IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
+        IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v))
+        IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
+        IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
+        L2_squared_initial_v  = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
       }
       sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
@@ -315,9 +315,10 @@ readme <- function(dfm = NULL,
       
       print("Done with this round of training...!")
       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
-      sess$close()
-  }) 
-  }  
+  }
+      tf$keras$backend$clear_session(sess)
+      try(sess$close(), T) 
+  })  
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
