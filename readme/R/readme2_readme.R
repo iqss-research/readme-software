@@ -312,7 +312,9 @@ readme <- function(dfm = NULL,
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
+      browser()
       for(j in 1:sgd_iters){ sess$run(learning_group) } 
+      #tensorflow::iterate()
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
