@@ -160,14 +160,15 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  sess <- tf$Session(graph = tf$Graph(),
+  G = tf$Graph()
+  G$as_default()
+  sess <- tf$Session(graph = G,
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
                          #device_count=list("GPU"=0L, "CPU" = nCores), 
                          #inter_op_parallelism_threads = nCores,
                          #intra_op_parallelism_threads = nCores
                       ))
-  sess$as_default()
 
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
