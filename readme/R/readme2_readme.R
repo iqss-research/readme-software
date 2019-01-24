@@ -317,7 +317,8 @@ readme <- function(dfm = NULL,
       t1=Sys.time()
       print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
       print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
-      replicate(sgd_iters, sess$run(learning_group))
+      #replicate(sgd_iters, sess$run(learning_group))
+      for(i in 1:sgd_iters){ sess$run(learning_group) } 
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
