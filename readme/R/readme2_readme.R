@@ -160,9 +160,10 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  G = tf$Graph()
-  G$as_default()
-  sess <- tf$Session(graph = G,
+  #G = tf$Graph()
+  #G$as_default()
+  browser()
+  sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
                          #device_count=list("GPU"=0L, "CPU" = nCores), 
