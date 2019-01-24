@@ -314,7 +314,7 @@ readme <- function(dfm = NULL,
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
-      FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
+      FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
       sess$close()
   }) 
   }  
