@@ -321,7 +321,7 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
   sess$close()
-  tf_junk <- ls()[!ls() %in% c(tf_junk, FinalParams_LIST)]
+  tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST")]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   print( pryr::mem_used())  
   
