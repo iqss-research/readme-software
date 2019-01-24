@@ -165,7 +165,6 @@ readme <- function(dfm = NULL,
                          inter_op_parallelism_threads = nCores,
                          intra_op_parallelism_threads = nCores
                       ))
-  sess$graph$container(sprintf("temp%s", round(runif(1,1,100000)), 0))
   #tf$contrib$training$RandomStrategy(sess)
 
   ## For calculating discrimination - how many possible cross-category contrasts are there
