@@ -160,7 +160,8 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  sess <- tf$Session(graph = tf$get_default_graph(),
+  browser() 
+  sess <- tf$Session(graph = tf$Graph(),
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
                          #device_count=list("GPU"=0L, "CPU" = nCores), 
@@ -318,7 +319,6 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
-  sess$reset(tf$get_default_session())
   sess$close()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
