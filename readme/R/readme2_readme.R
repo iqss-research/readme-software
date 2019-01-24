@@ -156,9 +156,9 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   #try(detach("package:tensorflow", unload=TRUE), T)  
+  #require("tensorflow", quietly = T)
+  nCores = 1L
   tf$reset_default_graph()
-  
-  nCores = 1L#as.integer(max(1,parallel::detectCores() - 1 ))
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          device_count=list("GPU"=0L, "CPU" = nCores), 
@@ -196,6 +196,7 @@ readme <- function(dfm = NULL,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
+  if(T == F){ 
   dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                         dtype = tf$float32)
   nDim = ncol(dfm_labeled_tf)
@@ -205,10 +206,12 @@ readme <- function(dfm = NULL,
                                             length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
     eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
   }
-  rm(dfm_labeled_tf)
   IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
+  rm(dfm_labeled_tf)
+  }
+  IL_input = tf$random_uniform(list(as.integer(NObsPerCat*nCat),200L),-1/sqrt(20), 1/sqrt(20), dtype = tf$float32)
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -308,7 +311,6 @@ readme <- function(dfm = NULL,
         sess$run( setclip_action ) 
         sess$graph$finalize()
       }
-      
       sess$run(  restart_action ) 
       
       ### For each iteration of SGDs
