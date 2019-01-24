@@ -211,7 +211,7 @@ readme <- function(dfm = NULL,
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
   rm(dfm_labeled_tf)
   }
-  IL_input = tf$random_uniform(list(as.integer(NObsPerCat*nCat),200L),-1/sqrt(20), 1/sqrt(20), dtype = tf$float32)
+  nDim = as.integer(200); IL_input = tf$random_uniform(list(as.integer(NObsPerCat*nCat),200L),-1/sqrt(20), 1/sqrt(20), dtype = tf$float32)
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
