@@ -165,6 +165,7 @@ readme <- function(dfm = NULL,
                          inter_op_parallelism_threads = nCores,
                          intra_op_parallelism_threads = nCores
                       ))
+  sess$container(sprintf("temp%s", round(runif(1,1,100000)), 0))
   #tf$contrib$training$RandomStrategy(sess)
 
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -196,7 +197,6 @@ readme <- function(dfm = NULL,
   l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
     
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  if(T == F){ 
   dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                         dtype = tf$float32)
   nDim = ncol(dfm_labeled_tf)
@@ -210,8 +210,6 @@ readme <- function(dfm = NULL,
                                                   paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
   IL_input$set_shape(list(nCat*NObsPerCat,nDim))
   rm(dfm_labeled_tf)
-  }
-  nDim = as.integer(600); IL_input = tf$random_uniform(list(as.integer(NObsPerCat*nCat),nDim),-1/sqrt(20), 1/sqrt(20), dtype = tf$float32)
   IL_m                = tf$nn$moments(IL_input, axes = 0L);
   IL_mu_b             = IL_m[[1]];
   IL_sigma2_b         = IL_m[[2]];
@@ -322,9 +320,6 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
-  print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
-  print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
-  
   sess$close()
   
   for(iter_i in 1:nboot){ 
