@@ -315,15 +315,14 @@ readme <- function(dfm = NULL,
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
-      print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
-      print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
-      #replicate(sgd_iters, sess$run(learning_group))
-      for(i in 1:sgd_iters){ sess$run(learning_group) } 
+      for(j in 1:sgd_iters){ sess$run(learning_group) } 
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
       FinalParams_list[[iter_i]] <- sess$run( FinalParams_list )
   } 
+  print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
+  print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
   sess$close()
   
   for(iter_i in 1:nboot){ 
