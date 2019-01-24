@@ -305,8 +305,7 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
-        FinalParams_list = list(WtsMat, BiasVec)
-        ### Calculate a clip value for the gradients to avoid overflow
+        FinalParams_list        = list(WtsMat, BiasVec)
         L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
         restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
@@ -319,13 +318,14 @@ readme <- function(dfm = NULL,
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
+      print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
       replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
       FinalParams_list[[iter_i]] <- sess$run( FinalParams_list )
   } 
-  sess$close(); try(detach("package:tensorflow", unload=TRUE), T)  
+  sess$close()
   
   for(iter_i in 1:nboot){ 
       ### Given the learned parameters, output the feature transformations for the entire matrix
