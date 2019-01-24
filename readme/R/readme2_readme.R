@@ -293,7 +293,7 @@ readme <- function(dfm = NULL,
   IL_sigma_last_v =   sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
   rm(moments_list)
 
-  FinalParams_list <- list() 
+  FinalParams_LIST <- list() 
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
@@ -319,19 +319,19 @@ readme <- function(dfm = NULL,
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
-      FinalParams_list[[iter_i]] <- sess$run( FinalParams_list )
+      FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
-  browser() 
   print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
   print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
+  
   sess$close()
   
   for(iter_i in 1:nboot){ 
       ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled = t( t(FinalParams_list[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_list[[iter_i]][[2]]))
+      out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
       out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
       
-      out_dfm_unlabeled = t( t(FinalParams_list[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_list[[iter_i]][[2]]))
+      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
       out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
       
       ### Here ends the SGD for generating optimal document-feature matrix.
