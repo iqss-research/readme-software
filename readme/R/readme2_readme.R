@@ -316,7 +316,7 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
   }
-      tf$keras$backend$clear_session(sess)
+      tf$keras$backend$clear_session()
       try(sess$close(), T) 
   })  
   
