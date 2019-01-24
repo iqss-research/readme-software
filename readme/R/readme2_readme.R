@@ -157,7 +157,6 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  nCores = 1L
   tf$reset_default_graph()
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
@@ -321,6 +320,7 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
   print( pryr::mem_used())  
+  browser() 
   sess$close()
   
   for(iter_i in 1:nboot){ 
