@@ -155,6 +155,7 @@ readme <- function(dfm = NULL,
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   # Initialize tensorflow
+  tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
@@ -319,10 +320,12 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
+  tf_junk <- ls()[!ls() %in% c(tf_junk, FinalParams_LIST)]
+  eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   print( pryr::mem_used())  
-  browser() 
   sess$close()
   
+  browser() 
   for(iter_i in 1:nboot){ 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
