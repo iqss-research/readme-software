@@ -168,9 +168,6 @@ readme <- function(dfm = NULL,
                       ))
   tf$contrib$training$RandomStrategy(sess)
 
-  #nonlinearity fxn for projection 
-  nonLinearity_fxn      = function(x){ tf$nn$softsign(x) }
-  
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -235,7 +232,7 @@ readme <- function(dfm = NULL,
   WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
 
   ### Apply non-linearity + batch normalization 
-  LFinal               = nonLinearity_fxn( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+  LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
   LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
   LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
   
@@ -319,6 +316,7 @@ readme <- function(dfm = NULL,
       print("Training...")
       t1=Sys.time()
       print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
+      print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
       replicate(sgd_iters, sess$run(learning_group))
       print(Sys.time()-t1)
       
