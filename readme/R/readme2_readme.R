@@ -269,8 +269,7 @@ readme <- function(dfm = NULL,
   #learning consists of gradient updates plus learning rate updates. 
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
-  # Initialize global variables in TensorFlow Graph
-  #init                  = tf$variables_initializer(tf$global_variables())
+  # Initialize variables in TensorFlow Graph
   init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
                                        my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
                                        my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
@@ -318,10 +317,11 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
   sess$close()
+  tf$keras$backend$clear_session(sess)
+  
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
-  print( pryr::mem_used())  
-  
+
   for(iter_i in 1:nboot){ 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
