@@ -159,7 +159,6 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  browser() 
   tf_ = tf; tf_$reset_default_graph()
   sess <- tf_$Session(graph = tf_$Graph(),
                       config = tf_$ConfigProto(
@@ -168,7 +167,6 @@ readme <- function(dfm = NULL,
                          #inter_op_parallelism_threads = nCores,
                          #intra_op_parallelism_threads = nCores
                       ))
-  #tf_$contrib$training$RandomStrategy(sess)
 
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
@@ -260,11 +258,11 @@ readme <- function(dfm = NULL,
                             0.10 * tf_$reduce_mean(Spread_tf) )
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  myOpt_tf             = train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+  my_optimizer             = tf_$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
                                                     momentum      = sgd_momentum, use_nesterov  = T)
   
   ### Calculates the gradients from myOpt_tf
-  Gradients_unclipped  = myOpt_tf_$compute_gradients( myLoss_tf ) 
+  Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
   Gradients_clipped    = Gradients_unclipped
   TEMP__               = eval(parse(text = sprintf("tf_$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
   for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
@@ -272,7 +270,7 @@ readme <- function(dfm = NULL,
   inverse_learning_rate_update = tf_$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
   
   ### applies the gradient updates
-  myOpt_tf_apply       = myOpt_tf_$apply_gradients( Gradients_clipped )
+  myOpt_tf_apply       = my_optimizer$apply_gradients( Gradients_clipped )
 
   #learning consists of gradient updates plus learning rate updates. 
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
