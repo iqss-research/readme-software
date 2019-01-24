@@ -159,6 +159,7 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
+  browser() 
   tf_ = tf; tf_$reset_default_graph()
   sess <- tf_$Session(graph = tf_$Graph(),
                       config = tf_$ConfigProto(
