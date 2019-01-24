@@ -320,10 +320,10 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
+  sess$close()
   tf_junk <- ls()[!ls() %in% c(tf_junk, FinalParams_LIST)]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   print( pryr::mem_used())  
-  sess$close()
   
   browser() 
   for(iter_i in 1:nboot){ 
