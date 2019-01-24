@@ -161,9 +161,10 @@ readme <- function(dfm = NULL,
   tf$reset_default_graph()
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
-                         device_count=list("GPU"=0L, "CPU" = nCores), 
-                         inter_op_parallelism_threads = nCores,
-                         intra_op_parallelism_threads = nCores
+                         allow_soft_placement = TRUE 
+                         #device_count=list("GPU"=0L, "CPU" = nCores), 
+                         #inter_op_parallelism_threads = nCores,
+                         #intra_op_parallelism_threads = nCores
                       ))
   #tf$contrib$training$RandomStrategy(sess)
 
@@ -319,6 +320,7 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
+  print( pryr::mem_used())  
   sess$close()
   
   for(iter_i in 1:nboot){ 
