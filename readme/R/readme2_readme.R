@@ -280,7 +280,6 @@ readme <- function(dfm = NULL,
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   } ) 
   
-  browser()
   sess <- tf$Session(graph = G_,
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE 
@@ -288,6 +287,7 @@ readme <- function(dfm = NULL,
                        #inter_op_parallelism_threads = nCores,
                        #intra_op_parallelism_threads = nCores
                      ))
+  sess$graph$finalize()
   
   FinalParams_LIST <- list() 
   for(iter_i in 1:nboot){ 
@@ -300,7 +300,6 @@ readme <- function(dfm = NULL,
       if(iter_i == 1){ 
         L2_squared_initial_v      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
-        sess$graph$finalize()
       }
       sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
 
@@ -313,7 +312,7 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
-  #sess$close()
+  sess$close()
   tf$Session$close(sess)
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
