@@ -161,7 +161,7 @@ readme <- function(dfm = NULL,
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
   #G_ = tf$Graph();
-  sess <- tf$Session(graph = tf$get_default_graph,
+  sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
                          #device_count=list("GPU"=0L, "CPU" = nCores), 
