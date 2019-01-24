@@ -321,6 +321,7 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_list[[iter_i]] <- sess$run( FinalParams_list )
   } 
+  browser() 
   print(  tail(sort( sapply(ls(),function(x){object.size(get(x))})) ))
   print(  tail(sort( sapply(ls(envir = globalenv()),function(x){object.size(get(x))})) ))
   sess$close()
@@ -404,6 +405,7 @@ readme <- function(dfm = NULL,
     ## If we're just doing the transformation
     if(justTransform == T){ 
         ### Calculate the transformed DFM
+        f2n = function(.){as.numeric(as.character(.))}
         transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
         transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
         transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
@@ -413,6 +415,7 @@ readme <- function(dfm = NULL,
 
     ## if it's the first iteration
     if(diagnostics == T){ 
+      f2n = function(.){as.numeric(as.character(.))}
       ### Save them as tf_est_results
       tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
                              transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),

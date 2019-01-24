@@ -10,7 +10,7 @@ if(T == T){
     quadprog::solve.QP(t(X)%*%X,matrix(Y,nrow=1)%*%X, Amat, c(1, rep(0,K), rep(-1,K)), meq=1)$solution
   }
   
-  hellinger_QUANT<-function(Y,X, start=NULL){
+  hellinger_QUANT <-function(Y,X, start=NULL){
     K<-ncol(X)
     if (is.null(start)) start = rep(1/K,K)
     Aeq=matrix(1,ncol=K,nrow=1)
