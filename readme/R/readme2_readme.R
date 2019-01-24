@@ -134,6 +134,7 @@ readme <- function(dfm = NULL,
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
+  l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
   labeled_pd            = vec2prob( categoryVec_labeled )
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   nCat                  = as.integer( length(labeled_pd) ); 
@@ -193,9 +194,6 @@ readme <- function(dfm = NULL,
   MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
   MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
 
-  ## Which indices in the labeled set are associated with each category
-  l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
-    
   #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
   dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
                                         dtype = tf$float32)
@@ -325,7 +323,6 @@ readme <- function(dfm = NULL,
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   print( pryr::mem_used())  
   
-  browser() 
   for(iter_i in 1:nboot){ 
       ### Given the learned parameters, output the feature transformations for the entire matrix
       out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
@@ -399,7 +396,7 @@ readme <- function(dfm = NULL,
           ### Average the bootstrapped estimates
           est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
           #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
-          rm(BOOTSTRAP_EST); rm(indices_list) ; 
+          rm(BOOTSTRAP_EST,indices_list) ; 
           if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
     }
     ## If we're just doing the transformation
