@@ -155,8 +155,7 @@ readme <- function(dfm = NULL,
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   # Initialize tensorflow
-  try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow", quietly = T)
+  #try(detach("package:tensorflow", unload=TRUE), T)  
   tf$reset_default_graph()
   
   nCores = 1L#as.integer(max(1,parallel::detectCores() - 1 ))
