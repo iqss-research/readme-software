@@ -317,7 +317,7 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
   sess$close()
-  tf$keras$backend$clear_session(sess)
+  tf$keras$backend$clear_session()
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
