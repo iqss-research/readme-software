@@ -157,10 +157,10 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   tf_junk <- ls()
-  #try(detach("package:tensorflow", unload=TRUE), T)  
-  #require("tensorflow", quietly = T)
+  try(detach("package:tensorflow", unload=TRUE), T)  
+  require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  #G_ = tf$Graph();
+  G_ = tf$Graph();
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
