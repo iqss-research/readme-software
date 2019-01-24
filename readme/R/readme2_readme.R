@@ -157,10 +157,10 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   tf_junk <- ls()
-  try(detach("package:tensorflow", unload=TRUE), T)  
-  require("tensorflow", quietly = T)
+  #try(detach("package:tensorflow", unload=TRUE), T)  
+  #require("tensorflow", quietly = T)
+  tf$keras$backend$set_session()
   tf$reset_default_graph()
-  G_ = tf$Graph();
   sess <- tf$Session(graph = tf$get_default_graph(),
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
@@ -168,7 +168,7 @@ readme <- function(dfm = NULL,
                          #inter_op_parallelism_threads = nCores,
                          #intra_op_parallelism_threads = nCores
                       ))
-
+  
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
