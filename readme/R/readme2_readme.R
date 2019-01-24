@@ -160,7 +160,7 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   #tf$reset_default_graph()
-  G_ = tf$Graph(); 
+  G_ = tf$Graph()
   with(G_$as_default(), {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
@@ -274,21 +274,38 @@ readme <- function(dfm = NULL,
                                        my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
                                        my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
   
+  #other actions 
   FinalParams_list        = list(WtsMat, BiasVec)
   L2_squared_initial      = tf$placeholder(tf$float32)
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+  
+  ###NEW https://stackoverflow.com/questions/44314102/how-do-i-reset-the-graph-displayed-in-tensorboard-for-a-tensroflow-interactive
+  # Get rid of old Tensorboard graph file and just save new one
+  #filesindir = os.listdir(your_graph_location) 
+  # os. calls may be OS-dependent
+  # Make sure there is no subdir as not checking for this!
+  #or file in filesindir:
+  #  try:        
+  #  delfile = graph_location + file
+  #os.remove(delfile)
+  #except: 
+   # print('Warning, Tensorboard file not removed')
+  
+  #train_writer = tf.summary.FileWriter(graph_location)
+  ## Using custom graph as default ("the with wrapper above")
+  #train_writer.add_graph(tf.get_default_graph()) 
+  #train_writer.close()
   } ) 
   
-  sess <- tf$Session(graph = G_,
+  with(tf$Session(graph = G_,
                      config = tf$ConfigProto(
-                       #allow_soft_placement = TRUE 
+                       allow_soft_placement = TRUE 
                        #device_count=list("GPU"=0L, "CPU" = nCores), 
-                       #inter_op_parallelism_threads = nCores,
-                       #intra_op_parallelism_threads = nCores
-                     ))
+                       #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
+                     )) %as% sess, { 
   sess$graph$finalize()
-  
+
   FinalParams_LIST <- list() 
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
@@ -317,6 +334,7 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
   sess$close()
+  }
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
