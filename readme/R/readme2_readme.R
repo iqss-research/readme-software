@@ -161,8 +161,7 @@ readme <- function(dfm = NULL,
   #require("tensorflow", quietly = T)
   #tf$reset_default_graph()
   G_ = tf$Graph(); 
-  #with(G_$as_default(),
-  {
+  with(G_$as_default(), {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -272,15 +271,15 @@ readme <- function(dfm = NULL,
 
   # Initialize global variables in TensorFlow Graph
   #init                  = tf$variables_initializer(tf$global_variables())
-  browser()
-  init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate))
+  init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
+                                       my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
+                                       my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
   
   FinalParams_list        = list(WtsMat, BiasVec)
   L2_squared_initial      = tf$placeholder(tf$float32)
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-  } 
-  #) 
+  } ) 
   
   sess <- tf$Session(graph = G_,
                      config = tf$ConfigProto(
