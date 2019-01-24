@@ -312,14 +312,13 @@ readme <- function(dfm = NULL,
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
-      browser()
       for(j in 1:sgd_iters){ sess$run(learning_group) } 
-      #tensorflow::iterate()
       print(Sys.time()-t1)
       
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
+  sess$reset(tf$get_default_session())
   sess$close()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
