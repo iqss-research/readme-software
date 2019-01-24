@@ -270,7 +270,9 @@ readme <- function(dfm = NULL,
   learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
 
   # Initialize global variables in TensorFlow Graph
-  init                  = tf$variables_initializer(tf$global_variables())
+  #init                  = tf$variables_initializer(tf$global_variables())
+  browser()
+  init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate))
   
   FinalParams_list        = list(WtsMat, BiasVec)
   L2_squared_initial      = tf$placeholder(tf$float32)
