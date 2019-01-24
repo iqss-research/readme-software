@@ -315,9 +315,9 @@ readme <- function(dfm = NULL,
       
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
-  } 
-  sess$close()
-  } ) 
+      sess$close()
+  }) 
+  }  
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
