@@ -159,16 +159,11 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  tf$reset_default_graph()
-  sess <- tf$Session(graph = tf$get_default_graph(),
-                      config = tf$ConfigProto(
-                         allow_soft_placement = TRUE 
-                         #device_count=list("GPU"=0L, "CPU" = nCores), 
-                         #inter_op_parallelism_threads = nCores,
-                         #intra_op_parallelism_threads = nCores
-                      ))
-  tf$keras$backend$set_session(sess)
   
+  tf$reset_default_graph()
+  G_ = tf$Graph()
+  with(G_$as_default(), {
+
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -279,18 +274,21 @@ readme <- function(dfm = NULL,
   # Initialize global variables in TensorFlow Graph
   init                  = tf$variables_initializer(tf$global_variables())
   
-  ##  Estimate the parameters
-  if (verbose == T){
-    cat("Estimating...\n")
-  }
+  FinalParams_list        = list(WtsMat, BiasVec)
+  L2_squared_initial      = tf$placeholder(tf$float32)
+  setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
+  restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+  } ) 
   
-  ### Means and variances for batch normalization of the input layer - initialize starting parameters
-  moments_list    = list(IL_mu_b, IL_sigma2_b)
-  moments_list    =  replicate(300, sess$run(moments_list))
-  IL_mu_last_v    =  rowMeans( do.call(cbind, moments_list[1,]))
-  IL_sigma_last_v =   sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
-  rm(moments_list)
-
+  browser()
+  sess <- tf$Session(graph = G_,
+                     config = tf$ConfigProto(
+                       allow_soft_placement = TRUE 
+                       #device_count=list("GPU"=0L, "CPU" = nCores), 
+                       #inter_op_parallelism_threads = nCores,
+                       #intra_op_parallelism_threads = nCores
+                     ))
+  
   FinalParams_LIST <- list() 
   for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
@@ -300,15 +298,12 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
-        FinalParams_list        = list(WtsMat, BiasVec)
-        L2_squared_initial      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
-        setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-        restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-        sess$run( setclip_action ) 
+        L2_squared_initial_v      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
+        sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
         sess$graph$finalize()
       }
-      sess$run(  restart_action ) 
-      
+      sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+
       ### For each iteration of SGDs
       print("Training...")
       t1=Sys.time()
