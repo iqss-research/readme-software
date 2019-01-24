@@ -159,11 +159,9 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  
-  tf$reset_default_graph()
-  G_ = tf$Graph()
-  with(G_$as_default(), {
-
+  #tf$reset_default_graph()
+  browser()
+  G_ = tf$Graph(); with(G_$as_default(), {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -298,11 +296,10 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
-        destroy_l = list(IL_mu_b,IL_sigma2_b)
-        destroy_l = replicate(300, sess$run(destroy_l))
-        IL_mu_last_v = colMeans(do.call(rbind,destroy_l[1,]))
-        IL_sigma_last_v = sqrt(colMeans(do.call(rbind,destroy_l[2,])))
-        rm(destroy_l)
+        IL_sigma_last_v = list(IL_mu_b,IL_sigma2_b)
+        IL_sigma_last_v = replicate(300, sess$run(IL_sigma_last_v))
+        IL_mu_last_v = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
+        IL_sigma_last_v = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
         L2_squared_initial_v      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
       }
@@ -318,7 +315,6 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
   sess$close()
-  tf$Session$close(sess)
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   print( pryr::mem_used())  
