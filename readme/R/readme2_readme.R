@@ -298,6 +298,7 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
+        browser() 
         L2_squared_initial_v      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
       }
