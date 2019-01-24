@@ -298,7 +298,11 @@ readme <- function(dfm = NULL,
       }
      
       if(iter_i == 1){ 
-        browser() 
+        destroy_l = list(IL_mu_b,IL_sigma2_b)
+        destroy_l = replicate(300, sess$run(destroy_l))
+        IL_mu_last_v = colMeans(do.call(rbind,destroy_l[1,]))
+        IL_sigma_last_v = sqrt(colMeans(do.call(rbind,destroy_l[2,])))
+        rm(destroy_l)
         L2_squared_initial_v      = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
         sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
       }
