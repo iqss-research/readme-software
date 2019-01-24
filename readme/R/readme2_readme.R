@@ -166,7 +166,7 @@ readme <- function(dfm = NULL,
                          inter_op_parallelism_threads = nCores,
                          intra_op_parallelism_threads = nCores
                       ))
-  tf$contrib$training$RandomStrategy(sess)
+  #tf$contrib$training$RandomStrategy(sess)
 
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
