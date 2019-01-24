@@ -159,7 +159,7 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  #tf$reset_default_graph()
+  tf$reset_default_graph()
   G_ = tf$Graph()
   with(G_$as_default(), {
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -279,25 +279,11 @@ readme <- function(dfm = NULL,
   L2_squared_initial      = tf$placeholder(tf$float32)
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-  
-  ###NEW https://stackoverflow.com/questions/44314102/how-do-i-reset-the-graph-displayed-in-tensorboard-for-a-tensroflow-interactive
-  # Get rid of old Tensorboard graph file and just save new one
-  #filesindir = os.listdir(your_graph_location) 
-  # os. calls may be OS-dependent
-  # Make sure there is no subdir as not checking for this!
-  #or file in filesindir:
-  #  try:        
-  #  delfile = graph_location + file
-  #os.remove(delfile)
-  #except: 
-   # print('Warning, Tensorboard file not removed')
-  
-  #train_writer = tf.summary.FileWriter(graph_location)
-  ## Using custom graph as default ("the with wrapper above")
-  #train_writer.add_graph(tf.get_default_graph()) 
-  #train_writer.close()
   } ) 
-  
+
+
+  FinalParams_LIST <- list() 
+  for(iter_i in 1:nboot){ 
   with(tf$Session(graph = G_,
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE 
@@ -305,9 +291,6 @@ readme <- function(dfm = NULL,
                        #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
                      )) %as% sess, { 
   sess$graph$finalize()
-
-  FinalParams_LIST <- list() 
-  for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
       if (verbose == T & iter_i %% 10 == 0){
