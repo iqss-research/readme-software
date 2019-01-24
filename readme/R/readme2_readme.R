@@ -160,9 +160,8 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  #G = tf$Graph()
-  #G$as_default()
-  sess <- tf$Session(graph = tf$get_default_graph(),
+  #G_ = tf$Graph();
+  sess <- tf$Session(graph = tf$get_default_graph,
                       config = tf$ConfigProto(
                          allow_soft_placement = TRUE 
                          #device_count=list("GPU"=0L, "CPU" = nCores), 
@@ -287,7 +286,6 @@ readme <- function(dfm = NULL,
   
   ### Means and variances for batch normalization of the input layer - initialize starting parameters
   moments_list    = list(IL_mu_b, IL_sigma2_b)
-  browser() 
   moments_list    =  replicate(300, sess$run(moments_list))
   IL_mu_last_v    =  rowMeans( do.call(cbind, moments_list[1,]))
   IL_sigma_last_v =   sqrt(rowMeans( (do.call(cbind, moments_list[2,]) )))
@@ -320,7 +318,8 @@ readme <- function(dfm = NULL,
       print("Done with this round of training...!")
       FinalParams_LIST[[iter_i]] <- sess$run( FinalParams_list )
   } 
-  sess$close()
+  #sess$close()
+  tf$Session$close(sess)
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   print( pryr::mem_used())  
