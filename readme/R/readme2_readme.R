@@ -519,11 +519,6 @@ start_reading <- function(nDim,nProj=20){
     ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
     
     ## Spread component of objective function
-    #Gather slices from params axis axis according to indices.
-    #gathering_mat =   (sapply(1:nCat, function(er){ 
-    #if(er == 1){indices_ =  1:NObsPerCat-1 }
-    #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    #return(as.integer(indices_))}))
     Spread_tf            = tf$sqrt(tf$clip_by_value(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf),0.01, 0.30))
     
     ## Category discrimination (absolute difference in all E[S|D] columns)
