@@ -4,8 +4,8 @@
 \alias{readme}
 \title{readme}
 \usage{
-readme(dfm, dfm_cmd, labeledIndicator, categoryVec, nboot = 4,
-  sgd_iters = 1000, sgd_momentum = 0.9, numProjections = 20,
+readme(dfm = NULL, dfm_cmd = NULL, labeledIndicator, categoryVec,
+  nboot = 4, sgd_iters = 1000, numProjections = 20,
   dropout_rate = 0.5, batchSizePerCat = 10, kMatch = 3,
   batchSizePerCat_match = 20, minMatch = 5, nboot_match = 50,
   justTransform = F, verbose = F, diagnostics = F)
@@ -23,8 +23,6 @@ The entires of this vector should correspond with the rows of \code{dtm}. If \co
 \item{nboot}{A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).}
 
 \item{sgd_iters}{How many stochastic gradient descent iterations should be used? Input should be a positive number.}
-
-\item{sgd_momentum}{Momentum parameter for stochastic gradient descent (default = 0.90)}
 
 \item{numProjections}{How many projections should be calculated? Input should be a positive number. Minimum number of projections = number of categories + 2.}
 
