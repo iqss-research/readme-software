@@ -566,6 +566,7 @@ start_reading <- function(nDim,nProj=20){
 
   ', nDim,nProj, nCores)
   if(  !"G_" %in% ls()){ 
-  eval(parse(text=eval_text), envir = globalenv())
+    print("Starting up ... ")
+    eval(parse(text=eval_text), envir = globalenv())
   } 
 }
