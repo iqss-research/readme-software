@@ -109,7 +109,9 @@ readme <- function(dfm = NULL,
                    nboot_match    = 50,
                    justTransform  = F,
                    verbose        = F,  
-                   diagnostics    = F, S_){ 
+                   diagnostics    = F, 
+                   nCores = 1L, 
+                   nCores_OnJob = 1L ){ 
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -181,7 +183,13 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),]
 )"
   
-   for(iter_i in 1:nboot){ 
+  with( tf$Session(graph = G_,
+                   config = tf$ConfigProto(
+                     allow_soft_placement = T, 
+                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
+                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) ) %as% S_, 
+    { 
+          for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
@@ -206,11 +214,11 @@ IL_input = dfm_labeled[grab_samp(),]
                       
                       print("Done with this round of training...!")
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
-                    }
-  #try(S_$close(), T) 
-  #tf$keras$backend$clear_session()
-  #tf$keras$backend$reset_uids()
-  #tf$reset_default_graph()
+              }
+          try(S_$close(), T) 
+          try(tf$keras$backend$clear_session(), T) 
+          try(tf$keras$backend$reset_uids(), T)
+    })
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   
@@ -457,7 +465,7 @@ IL_input = dfm_labeled[grab_samp(),]
 #'print(readme_results$point_readme)
 #'
 #' @export 
-start_reading <- function(nDim,nProj=20, nCores = 1){
+start_reading <- function(nDim,nProj=20){
   eval_text = sprintf('require(tensorflow, quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
@@ -562,9 +570,6 @@ start_reading <- function(nDim,nProj=20, nCores = 1){
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
   G_$finalize()
-   
-  nCores_ = as.integer(%s)
- 
   ', nDim,nProj, nCores)
   if(  !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
