@@ -563,8 +563,13 @@ start_reading <- function(nDim,nProj=20, nCores = 1){
   })
   G_$finalize()
    
-
-  nCores_ = as.integer(%s)', nDim,nProj, nCores)
+  nCores_ = as.integer(%s)
+  S_ = tf$Session(graph = G_,
+                         config = tf$ConfigProto(
+                      allow_soft_placement = F, 
+                      device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
+                      inter_op_parallelism_threads = 1L,intra_op_parallelism_threads = 1L) )
+  ', nDim,nProj, nCores)
   if(  !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
   } 
