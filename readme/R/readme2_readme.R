@@ -181,8 +181,7 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),]
 )"
   
-with(environment(), { 
-                    for(iter_i in 1:nboot){ 
+   for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
@@ -208,8 +207,7 @@ with(environment(), {
                       print("Done with this round of training...!")
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
                     }
-                    #try(sess$close(), T) 
-                    }) 
+  #try(sess$close(), T) 
   #tf$keras$backend$clear_session()
   #tf$keras$backend$reset_uids()
   #tf$reset_default_graph()
@@ -218,7 +216,7 @@ with(environment(), {
   
   for(iter_i in 1:nboot){ 
     ### Given the learned parameters, output the feature transformations for the entire matrix
-    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
     
     out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
