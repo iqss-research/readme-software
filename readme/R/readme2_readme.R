@@ -181,7 +181,7 @@ redund_indices2 = redund_indices2_v,
 axis_FeatDiscrim = axis_FeatDiscrim_v, 
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
-  )"
+)"
   
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
@@ -217,8 +217,8 @@ IL_input = dfm_labeled[grab_samp(),]
                     }
                     try(sess$close(), T) 
                     }) 
-  #tf$keras$backend$clear_session()
-  #tf$keras$backend$reset_uids()
+  tf$keras$backend$clear_session()
+  tf$keras$backend$reset_uids()
   tf$reset_default_graph()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
@@ -371,7 +371,7 @@ IL_input = dfm_labeled[grab_samp(),]
 
 
 if(T == F){ 
-library(tensorflow)
+#library(tensorflow)
 tf$reset_default_graph()
 G_ = tf$Graph()
 with(G_$as_default(), {
@@ -475,6 +475,6 @@ with(G_$as_default(), {
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
 } )
-#G_$finalize();
+G_$finalize();
 
 } 
