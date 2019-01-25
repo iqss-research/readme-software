@@ -375,6 +375,7 @@ IL_input = dfm_labeled[grab_samp(),]
   }
 
 
+library(tensorflow)
 tf$reset_default_graph()
 G_ = tf$Graph()
 with(G_$as_default(), {
