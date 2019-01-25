@@ -93,7 +93,8 @@
 #'                          nboot = 2, sgd_iters = 500)
 #'print(readme_results$point_readme)
 #'
-#' @export 
+#' @export readme 
+#' @export start_reading
 
 readme <- function(dfm = NULL,
                    dfm_cmd = NULL, 
@@ -367,114 +368,115 @@ IL_input = dfm_labeled[grab_samp(),]
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
-  }
+}
 
-
+start_reading_ <- function(){
+  require(tensorflow, quietly = T)
+  tf$reset_default_graph()
+  G_ = tf$Graph()
+  with(G_$as_default(), {
+    #Assumptions 
+    dropout_rate <- 0.50 
+    nProj = as.integer(  20  )  
+    NObsPerCat = as.integer(  10 )  
+    nDim <- as.integer( 600 ) 
+    
+    #INPUTS 
+    axis_FeatDiscrim = tf$placeholder(tf$int32)
+    contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
+    contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
+    redund_indices1            = tf$placeholder(tf$int32,list(NULL))
+    redund_indices2            = tf$placeholder(tf$int32,list(NULL))
+    IL_input            = tf$placeholder(tf$float32,list(NULL, nDim))
+    MultMat_tf          = tf$placeholder(tf$float32,list(NULL, NULL))
+    L2_squared_initial      = tf$placeholder(tf$float32)
+    
+    
+    #Placeholder settings - to be filled when executing TF operations
+    clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
+    inverse_learning_rate = tf$Variable(1, dtype = tf$float32, trainable = F)
+    sgd_learning_rate      = 1. / inverse_learning_rate
+    
+    IL_m                = tf$nn$moments(IL_input, axes = 0L);
+    IL_mu_b             = IL_m[[1]];
+    IL_sigma2_b         = IL_m[[2]];
+    IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+    
+    #SET UP WEIGHTS to be optimized
+    #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
+    initializer_reweighting =  1/sd(replicate(500, {
+      beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
+      dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
+      beta__[dropout__==1]  <- 0
+      beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
+      sum(beta__) }))
+    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = T)
+    BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
+    
+    ### Drop-out transformation
+    ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
+    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
+    WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
+    
+    ### Apply non-linearity + batch normalization 
+    LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+    LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
+    LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+    
+    #Find E[S|D] and calculate objective function  
+    ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+    
+    ## Spread component of objective function
+    #Gather slices from params axis axis according to indices.
+    #gathering_mat =   (sapply(1:nCat, function(er){ 
+    #if(er == 1){indices_ =  1:NObsPerCat-1 }
+    #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
+    #return(as.integer(indices_))}))
+    Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
+    
+    ## Category discrimination (absolute difference in all E[S|D] columns)
+    CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
+                                               tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
+    
+    ## Feature discrimination (row-differences)
+    FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
+                                               tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 1.50)
+    
+    ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
+    myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
+                                tf$reduce_mean(FeatDiscrim_tf) + 
+                                0.10 * tf$reduce_mean(Spread_tf) )
+    
+    ### Initialize an optimizer using stochastic gradient descent w/ momentum
+    my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+                                                          momentum      = 0.90, use_nesterov  = T)
+    
+    ### Calculates the gradients from myOpt_tf
+    Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
+    Gradients_clipped    = Gradients_unclipped
+    TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
+    for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+    L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
+    inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
+    
+    ### applies the gradient updates
+    myOpt_tf_apply       = my_optimizer$apply_gradients( Gradients_clipped )
+    
+    #learning consists of gradient updates plus learning rate updates. 
+    learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
+    
+    # Initialize variables in TensorFlow Graph
+    init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
+                                         my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
+                                         my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
+    
+    #other actions 
+    FinalParams_list        = list(WtsMat, BiasVec)
+    setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
+    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+  } )
+  G_$finalize();
+}
 start_reading <- function(){
-require(tensorflow, quietly = T)
-tf$reset_default_graph()
-G_ = tf$Graph()
-with(G_$as_default(), {
-  #Assumptions 
-  dropout_rate <- 0.50 
-  nProj = as.integer(  20  )  
-  NObsPerCat = as.integer(  10 )  
-  nDim <- as.integer( 600 ) 
-  
-  #INPUTS 
-  axis_FeatDiscrim = tf$placeholder(tf$int32)
-  contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
-  contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
-  redund_indices1            = tf$placeholder(tf$int32,list(NULL))
-  redund_indices2            = tf$placeholder(tf$int32,list(NULL))
-  IL_input            = tf$placeholder(tf$float32,list(NULL, nDim))
-  MultMat_tf          = tf$placeholder(tf$float32,list(NULL, NULL))
-  L2_squared_initial      = tf$placeholder(tf$float32)
-  
-  
-  #Placeholder settings - to be filled when executing TF operations
-  clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
-  inverse_learning_rate = tf$Variable(1, dtype = tf$float32, trainable = F)
-  sgd_learning_rate      = 1. / inverse_learning_rate
-  
-  IL_m                = tf$nn$moments(IL_input, axes = 0L);
-  IL_mu_b             = IL_m[[1]];
-  IL_sigma2_b         = IL_m[[2]];
-  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
-  
-  #SET UP WEIGHTS to be optimized
-  #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  initializer_reweighting =  1/sd(replicate(500, {
-    beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
-    dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
-    beta__[dropout__==1]  <- 0
-    beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
-    sum(beta__) }))
-  WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = T)
-  BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
-  
-  ### Drop-out transformation
-  ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-  MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
-  WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
-  
-  ### Apply non-linearity + batch normalization 
-  LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
-  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
-  
-  #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
-  
-  ## Spread component of objective function
-  #Gather slices from params axis axis according to indices.
-  #gathering_mat =   (sapply(1:nCat, function(er){ 
-  #if(er == 1){indices_ =  1:NObsPerCat-1 }
-  #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-  #return(as.integer(indices_))}))
-  Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
-  
-  ## Category discrimination (absolute difference in all E[S|D] columns)
-  CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
-                                             tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
-  
-  ## Feature discrimination (row-differences)
-  FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
-                                             tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 1.50)
-  
-  ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
-                              tf$reduce_mean(FeatDiscrim_tf) + 
-                              0.10 * tf$reduce_mean(Spread_tf) )
-  
-  ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                        momentum      = 0.90, use_nesterov  = T)
-  
-  ### Calculates the gradients from myOpt_tf
-  Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
-  Gradients_clipped    = Gradients_unclipped
-  TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
-  for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
-  inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
-  
-  ### applies the gradient updates
-  myOpt_tf_apply       = my_optimizer$apply_gradients( Gradients_clipped )
-  
-  #learning consists of gradient updates plus learning rate updates. 
-  learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
-  
-  # Initialize variables in TensorFlow Graph
-  init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
-                                       my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
-                                       my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
-  
-  #other actions 
-  FinalParams_list        = list(WtsMat, BiasVec)
-  setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-  restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-} )
-G_$finalize();
-} 
-environment(start_reading) <- globalenv()
+  environment(start_reading_) <- globalenv()
+}
