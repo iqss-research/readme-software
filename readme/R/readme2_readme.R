@@ -153,6 +153,7 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   
+  dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
   FinalParams_LIST <- list(); tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
@@ -163,8 +164,7 @@ readme <- function(dfm = NULL,
   redund_indices1_v     = as.integer((combn(1:nProj, 2) - 1)[1,])
   redund_indices2_v     = as.integer((combn(1:nProj, 2) - 1)[2,])
   axis_FeatDiscrim_v    = as.integer(nCat!=2)
-  
-  dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
+
   grab_samp <- function(){ 
       unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = 0.90*(NObsPerCat > length(zed))) }))
   }
