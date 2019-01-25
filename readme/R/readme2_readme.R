@@ -173,16 +173,16 @@ readme <- function(dfm = NULL,
   MultMat_tf_v          = t(do.call(rbind,sapply(1:nCat,function(x){
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
-  IL_input_v            = tf$placeholder(tf$float32,list(NULL, nDim))
-  MultMat_tf_v          = tf$placeholder(tf$float32, list(NULL, NULL))
-  
+
   eval_dict = "dict( contrast_indices1 = contrast_indices1_v, 
 contrast_indices2 = contrast_indices2_v, 
 redund_indices1 = redund_indices1_v, 
+redund_indices2 = redund_indices2_v, 
 axis_FeatDiscrim = axis_FeatDiscrim_v, 
+MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
   )"
-  browser()
+  
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
@@ -217,9 +217,8 @@ IL_input = dfm_labeled[grab_samp(),]
                     }
                     try(sess$close(), T) 
                     }) 
-  
-  tf$keras$backend$clear_session()
-  tf$keras$backend$reset_uids()
+  #tf$keras$backend$clear_session()
+  #tf$keras$backend$reset_uids()
   tf$reset_default_graph()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
@@ -389,7 +388,8 @@ with(G_$as_default(), {
   redund_indices1            = tf$placeholder(tf$int32,list(NULL))
   redund_indices2            = tf$placeholder(tf$int32,list(NULL))
   IL_input            = tf$placeholder(tf$float32,list(NULL, nDim))
-  MultMat_tf          = tf$placeholder(tf$float32, list(NULL, NULL))
+  MultMat_tf          = tf$placeholder(tf$float32,list(NULL, NULL))
+  L2_squared_initial      = tf$placeholder(tf$float32)
   
   
   #Placeholder settings - to be filled when executing TF operations
@@ -434,8 +434,6 @@ with(G_$as_default(), {
   #return(as.integer(indices_))}))
   Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
   
-  contrast_indices1 = tf$placeholder(tf$int32,NULL)
-  contrast_indices2 = tf$placeholder(tf$int32,NULL)
   ## Category discrimination (absolute difference in all E[S|D] columns)
   CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                              tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
@@ -474,7 +472,6 @@ with(G_$as_default(), {
   
   #other actions 
   FinalParams_list        = list(WtsMat, BiasVec)
-  L2_squared_initial      = tf$placeholder(tf$float32)
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
 } )
