@@ -180,13 +180,14 @@ readme <- function(dfm = NULL,
     
   tf$reset_default_graph()
   G_ = tf$Graph()
-  with(eval(parse(text = sprintf("G_$as_default()", nCat_)) ), {
+  with(G_$as_default(), {
     #Assumptions 
     nProj = as.integer(  20  )  
     NObsPerCat = as.integer(  10 )  
     nDim <- as.integer( 600 ) 
     
     #INPUTS 
+    axis_FeatDiscrim = tf$placeholder(tf$int32)
     contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
     contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
@@ -283,6 +284,7 @@ readme <- function(dfm = NULL,
   } ) 
   G_$finalize(); 
   
+  browser() 
   
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
