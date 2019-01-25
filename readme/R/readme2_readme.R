@@ -559,6 +559,8 @@ start_reading <- function(nDim,nProj=20){
   })
   G_$finalize()
 
+    nCores <- 1L
+    nCores_OnJob <- 1L
     S_ = tf$Session(graph = G_,
                    config = tf$ConfigProto(
                      allow_soft_placement = T, 
