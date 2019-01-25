@@ -182,13 +182,6 @@ axis_FeatDiscrim = axis_FeatDiscrim_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
-     
-    S_ = tf$Session(graph = G_,
-                   config = tf$ConfigProto(
-                     allow_soft_placement = T, 
-                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
-    
           for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -565,6 +558,12 @@ start_reading <- function(nDim,nProj=20){
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
   G_$finalize()
+
+    S_ = tf$Session(graph = G_,
+                   config = tf$ConfigProto(
+                     allow_soft_placement = T, 
+                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
+                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
   ', nDim,nProj, nCores)
   if(  !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
