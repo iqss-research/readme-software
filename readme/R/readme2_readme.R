@@ -162,6 +162,7 @@ readme <- function(dfm = NULL,
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
+  print("with1")
   with(G_$as_default(), {
     ## For calculating discrimination - how many possible cross-category contrasts are there
     contrasts_mat       = combn(1:nCat, 2) - 1
@@ -282,6 +283,7 @@ readme <- function(dfm = NULL,
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   } ) 
   G_$finalize(); 
+  print("with2")
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
@@ -317,6 +319,7 @@ readme <- function(dfm = NULL,
                     try(sess$close(), T) 
                     })  
   
+  print("cleanups")
   G_ = tf$graph()
   tf$keras$backend$clear_session()
   tf$keras$backend$reset_uids()
