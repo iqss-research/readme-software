@@ -562,15 +562,10 @@ start_reading <- function(nDim,nProj=20, nCores = 1){
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
   G_$finalize()
-  
-  nCores = as.integer(%s)
-  S_ <- tf$Session(graph = G_,
-           config = tf$ConfigProto(
-  allow_soft_placement = TRUE, 
-  device_count=list("GPU"=0L, "CPU" = nCores), 
-  inter_op_parallelism_threads = 1L,intra_op_parallelism_threads = 1L)
-  )', nDim,nProj, nCores)
-  if( !"S_"%in%ls() & !"G_" %in% ls()){ 
+   
+
+  nCores_ = as.integer(%s)', nDim,nProj, nCores)
+  if(  !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
   } 
 }
