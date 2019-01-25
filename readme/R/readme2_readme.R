@@ -156,6 +156,8 @@ readme <- function(dfm = NULL,
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   # Initialize tensorflow
+  
+  browser() 
   FinalParams_LIST <- list() 
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
@@ -178,7 +180,6 @@ readme <- function(dfm = NULL,
     
   tf$reset_default_graph()
   G_ = tf$Graph()
-  browser() 
   with(eval(parse(text = sprintf("G_$as_default()", nCat_)) ), {
     #Assumptions 
     nProj = as.integer(  20  )  
