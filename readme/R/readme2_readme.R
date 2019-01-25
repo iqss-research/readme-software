@@ -93,7 +93,7 @@
 #'                          nboot = 2, sgd_iters = 500)
 #'print(readme_results$point_readme)
 #'
-#' @import tensorflow, FNN
+#' @import tensorflow
 #' @export 
 
 readme <- function(dfm = NULL,
