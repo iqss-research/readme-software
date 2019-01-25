@@ -156,14 +156,14 @@ readme <- function(dfm = NULL,
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
   # Initialize tensorflow
+  FinalParams_LIST <- list() 
   tf_junk <- ls()
-  #try(detach("package:tensorflow", unload=TRUE), T)  
-  #try(detach("package:reticulate", unload=TRUE), T)  
-  #require("tensorflow", quietly = T)
+  try(detach("package:tensorflow", unload=TRUE), T)  
+  try(detach("package:reticulate", unload=TRUE), T)  
+  require("tensorflow", quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
-  browser() 
-  with(G_$as_default, {
+  with(G_$as_default(), {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -282,8 +282,7 @@ readme <- function(dfm = NULL,
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   } ) 
-
-  G_$finalize(); FinalParams_LIST <- list() 
+  G_$finalize(); 
   with(tf$Session(graph = G_,
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE 
@@ -317,10 +316,11 @@ readme <- function(dfm = NULL,
       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
 }
       try(sess$close(), T) 
+      try(tf$keras$backend$clear(), T)  
   })  
   
   tf$reset_default_graph()
-  tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
+  tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
 
   for(iter_i in 1:nboot){ 
