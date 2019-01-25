@@ -477,4 +477,4 @@ with(G_$as_default(), {
 } )
 G_$finalize();
 } 
-environment(startup_readme) <- globalenv()
+environment(start_reading) <- globalenv()
