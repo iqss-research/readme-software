@@ -158,9 +158,11 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
+  #try(detach("package:reticulate", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
+  browser() 
   with(G_$as_default, {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
