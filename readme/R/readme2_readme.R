@@ -317,8 +317,7 @@ readme <- function(dfm = NULL,
                     try(sess$close(), T) 
                     })  
   
-  browser() 
-  G_ = tf$graph()
+  G_ = tf$Graph()
   tf$keras$backend$clear_session()
   tf$keras$backend$reset_uids()
   tf$reset_default_graph()
