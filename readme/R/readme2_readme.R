@@ -112,7 +112,7 @@ readme <- function(dfm = NULL,
                    diagnostics    = F, 
                    nCores = 1L, 
                    nCores_OnJob = 1L ){ 
-  start_reading(nDim=600,nProj=numProjections)
+  start_reading(nDim=600,nProj=20)
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -158,8 +158,6 @@ readme <- function(dfm = NULL,
   
   dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
   FinalParams_LIST <- list(); tf_junk <- ls()
-  #try(detach("package:tensorflow", unload=TRUE), T)  
-  #require("tensorflow", quietly = T)
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrast_indices1_v       = as.integer( (combn(1:nCat, 2) - 1)[1,])
