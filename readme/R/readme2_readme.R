@@ -118,7 +118,7 @@ readme <- function(dfm = NULL,
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
   labeledCt   = table(categoryVec[labeledIndicator == 1])
-
+  
   if (verbose == T){
     if (kMatch == 0){
       cat("Note: 'kmatch' set to 0, skipping matching procedure for the labeled set")
@@ -127,10 +127,10 @@ readme <- function(dfm = NULL,
     cat(paste("Count of documents in each category in the labeled set:\n"))
     print(labeledCt)
   }
-
+  
   # Winsorize the columns of the document-feature matrix
   #dfm                   = apply(dfm, 2, Winsorize_fxn )
-
+  
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
@@ -145,7 +145,7 @@ readme <- function(dfm = NULL,
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
   hold_coef[]          = 0
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
-
+  
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
   nProj                 = as.integer(max( numProjections, nCat+1) ); ## Number of projections
@@ -161,257 +161,256 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  #G_ = tf$Graph()
-  with(tf$Session(graph = tf$Graph()$as_default(),
+  G_ = tf$Graph()
+  with(G_$as_default(), {
+    ## For calculating discrimination - how many possible cross-category contrasts are there
+    contrasts_mat       = combn(1:nCat, 2) - 1
+    contrast_indices1   = as.integer(contrasts_mat[1,])
+    contrast_indices2   = as.integer(contrasts_mat[2,])
+    
+    ## For calculating feature novelty - how many possible cross-feature contrasts are there
+    redund_mat          = combn(1:nProj, 2) - 1
+    redund_indices1     = as.integer(redund_mat[1,])
+    redund_indices2     = as.integer(redund_mat[2,])
+    axis_FeatDiscrim    = as.integer(nCat!=2)
+    rm(redund_mat)
+    
+    #Placeholder settings - to be filled when executing TF operations
+    tf_float_precision    = tf$float32
+    clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F )
+    inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+    sgd_learning_rate      = 1. / inverse_learning_rate
+    
+    ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
+    MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
+      urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+      return( list(MM) )  } )) )
+    MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
+    MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
+    
+    #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
+    dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
+                                          dtype = tf$float32)
+    nDim = ncol(dfm_labeled_tf)
+    for(ape in 1:nCat){ 
+      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
+                                tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000L,
+                                length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
+      eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
+    }
+    IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
+                                                    paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
+    IL_input$set_shape(list(nCat*NObsPerCat,nDim))
+    rm(dfm_labeled_tf)
+    IL_m                = tf$nn$moments(IL_input, axes = 0L);
+    IL_mu_b             = IL_m[[1]];
+    IL_sigma2_b         = IL_m[[2]];
+    IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+    
+    #SET UP WEIGHTS to be optimized
+    #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
+    initializer_reweighting =  1/sd(replicate(500, {
+      beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
+      dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
+      beta__[dropout__==1]  <- 0
+      beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
+      sum(beta__) }))
+    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
+    BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
+    
+    ### Drop-out transformation
+    ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
+    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
+    WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
+    
+    ### Apply non-linearity + batch normalization 
+    LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
+    LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
+    LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
+    
+    #Find E[S|D] and calculate objective function  
+    ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
+    
+    ## Spread component of objective function
+    #Gather slices from params axis axis according to indices.
+    gathering_mat =   (sapply(1:nCat, function(er){ 
+      if(er == 1){indices_ =  1:NObsPerCat-1 }
+      if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
+      return(as.integer(indices_))}))
+    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
+    
+    ## Category discrimination (absolute difference in all E[S|D] columns)
+    CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
+                                               tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
+    
+    ## Feature discrimination (row-differences)
+    FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
+                                               tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 1.50)
+    
+    ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
+    myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
+                                tf$reduce_mean(FeatDiscrim_tf) + 
+                                0.10 * tf$reduce_mean(Spread_tf) )
+    
+    ### Initialize an optimizer using stochastic gradient descent w/ momentum
+    my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+                                                          momentum      = sgd_momentum, use_nesterov  = T)
+    
+    ### Calculates the gradients from myOpt_tf
+    Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
+    Gradients_clipped    = Gradients_unclipped
+    TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
+    for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
+    L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
+    inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
+    
+    ### applies the gradient updates
+    myOpt_tf_apply       = my_optimizer$apply_gradients( Gradients_clipped )
+    
+    #learning consists of gradient updates plus learning rate updates. 
+    learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
+    
+    # Initialize variables in TensorFlow Graph
+    init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
+                                         my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
+                                         my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
+    
+    #other actions 
+    FinalParams_list        = list(WtsMat, BiasVec)
+    L2_squared_initial      = tf$placeholder(tf$float32)
+    setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
+    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+  } ) 
+  G_$finalize(); 
+  with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
                     #device_count=list("GPU"=0L, "CPU" = nCores), 
                     #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
-                  )) %as% sess,{
-                    
-  ## For calculating discrimination - how many possible cross-category contrasts are there
-  contrasts_mat       = combn(1:nCat, 2) - 1
-  contrast_indices1   = as.integer(contrasts_mat[1,])
-  contrast_indices2   = as.integer(contrasts_mat[2,])
+                  )) %as% sess, { 
+                    for(iter_i in 1:nboot){ 
+                      sess$run(init) # Initialize TensorFlow graph
+                      ## Print iteration count
+                      if (verbose == T & iter_i %% 10 == 0){
+                        cat(paste("Bootstrap iteration: ", iter_i, "\n"))
+                      }
+                      
+                      if(iter_i == 1){ 
+                        IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
+                        IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v))
+                        IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
+                        IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
+                        L2_squared_initial_v  = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
+                        sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                      }
+                      sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                      
+                      ### For each iteration of SGDs
+                      print("Training...")
+                      t1=Sys.time()
+                      for(j in 1:sgd_iters){ sess$run(learning_group) } 
+                      print(Sys.time()-t1)
+                      
+                      print("Done with this round of training...!")
+                      FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
+                    }
+                    try(sess$close(), T) 
+                    })  
   
-  ## For calculating feature novelty - how many possible cross-feature contrasts are there
-  redund_mat          = combn(1:nProj, 2) - 1
-  redund_indices1     = as.integer(redund_mat[1,])
-  redund_indices2     = as.integer(redund_mat[2,])
-  axis_FeatDiscrim    = as.integer(nCat!=2)
-  rm(redund_mat)
-    
-  #Placeholder settings - to be filled when executing TF operations
-  tf_float_precision    = tf$float32
-  clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F )
-  inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
-  sgd_learning_rate      = 1. / inverse_learning_rate
-
-  ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
-  MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-                          urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-                          return( list(MM) )  } )) )
-  MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
-  MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
-
-  #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-  dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
-                                        dtype = tf$float32)
-  nDim = ncol(dfm_labeled_tf)
-  for(ape in 1:nCat){ 
-    eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
-                        tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000L,
-                                            length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
-    eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
-  }
-  IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
-                                                  paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
-  IL_input$set_shape(list(nCat*NObsPerCat,nDim))
-  rm(dfm_labeled_tf)
-  IL_m                = tf$nn$moments(IL_input, axes = 0L);
-  IL_mu_b             = IL_m[[1]];
-  IL_sigma2_b         = IL_m[[2]];
-  IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
-  
-  #SET UP WEIGHTS to be optimized
-  #var(X_1*Beta_1 + ... + X_k * Beta_k) = \sum_i var(X_i) +  var(\sum_i Beta_i)
-  initializer_reweighting =  1/sd(replicate(500, {
-    beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
-    dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
-    beta__[dropout__==1]  <- 0
-    beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
-    sum(beta__) }))
-  WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-  BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
-
-  ### Drop-out transformation
-  ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-  MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
-  WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
-
-  ### Apply non-linearity + batch normalization 
-  LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
-  LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
-  LFinal_n             = tf$nn$batch_normalization(LFinal, mean = LFinal_m[[1]], variance = LFinal_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
-  
-  #Find E[S|D] and calculate objective function  
-  ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
-
-  ## Spread component of objective function
-  #Gather slices from params axis axis according to indices.
-  gathering_mat =   (sapply(1:nCat, function(er){ 
-    if(er == 1){indices_ =  1:NObsPerCat-1 }
-    if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-    return(as.integer(indices_))}))
-  Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
-
-  ## Category discrimination (absolute difference in all E[S|D] columns)
-  CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
-                                     tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
-  
-  ## Feature discrimination (row-differences)
-  FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
-                                  tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 1.50)
-  
-  ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-  myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
-                            tf$reduce_mean(FeatDiscrim_tf) + 
-                            0.10 * tf$reduce_mean(Spread_tf) )
-  
-  ### Initialize an optimizer using stochastic gradient descent w/ momentum
-  my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                    momentum      = sgd_momentum, use_nesterov  = T)
-  
-  ### Calculates the gradients from myOpt_tf
-  Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
-  Gradients_clipped    = Gradients_unclipped
-  TEMP__               = eval(parse(text = sprintf("tf$clip_by_global_norm(list(%s),clip_tf)",paste(sprintf('Gradients_unclipped[[%s]][[1]]', 1:length(Gradients_unclipped)), collapse = ","))))
-  for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
-  L2_squared_clipped   = eval(parse( text = paste(sprintf("tf$reduce_sum(tf$square(Gradients_clipped[[%s]][[1]]))", 1:length(Gradients_unclipped)), collapse = "+") ) )
-  inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
-  
-  ### applies the gradient updates
-  myOpt_tf_apply       = my_optimizer$apply_gradients( Gradients_clipped )
-
-  #learning consists of gradient updates plus learning rate updates. 
-  learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
-
-  # Initialize variables in TensorFlow Graph
-  init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
-                                       my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
-                                       my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
-  
-  #other actions 
-  FinalParams_list        = list(WtsMat, BiasVec)
-  L2_squared_initial      = tf$placeholder(tf$float32)
-  setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-  restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-  
-      for(iter_i in 1:nboot){ 
-      sess$run(init) # Initialize TensorFlow graph
-      ## Print iteration count
-      if (verbose == T & iter_i %% 10 == 0){
-        cat(paste("Bootstrap iteration: ", iter_i, "\n"))
-      }
-     
-      if(iter_i == 1){ 
-        IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
-        IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v))
-        IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
-        IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
-        L2_squared_initial_v  = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
-        sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
-      }
-      sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
-
-      ### For each iteration of SGDs
-      print("Training...")
-      t1=Sys.time()
-      for(j in 1:sgd_iters){ sess$run(learning_group) } 
-      print(Sys.time()-t1)
-      
-      print("Done with this round of training...!")
-      FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
-}
-      try(sess$close(), T) 
-      try(tf$keras$backend$clear(), T)  
-  
-  })
-  
-  #G_ = tf$Graph()
+  G_ = tf$graph()
   tf$keras$backend$clear_session()
   tf$keras$backend$reset_uids()
   tf$reset_default_graph()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
-
+  
   for(iter_i in 1:nboot){ 
-      ### Given the learned parameters, output the feature transformations for the entire matrix
-      out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
-      out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
+    ### Given the learned parameters, output the feature transformations for the entire matrix
+    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
+    
+    out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
+    
+    ### Here ends the SGD for generating optimal document-feature matrix.
+    ### If we're also going to do estimation
+    if(justTransform == F){ 
+      ## Minimum number of observations to use in each category per bootstrap iteration
+      MM1           = colMeans(out_dfm_unlabeled); 
+      MM2_          = colSds(out_dfm_unlabeled,MM1);
+      indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
+                                                                                                       replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+      BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
+        Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
+        X_      = out_dfm_labeled[indices_list[[boot_iter]],];
+        Y_      = out_dfm_unlabeled
+        
+        ### Normalize X and Y
+        MM2     = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
+        X_      = FastScale(X_, MM1, MM2);
+        Y_      = FastScale(Y_, MM1, MM2)
+        
+        ## If we're using matching
+        if (kMatch != 0){
+          ### KNN matching - find kMatch matches in X_ to Y_
+          MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
+                                                query = Y_, 
+                                                k     = kMatch)$nn.index) , T) 
+          
+          ## Any category with less than minMatch matches includes all of that category
+          t_              = table( Cat_[unique(MatchIndices_i)] ); 
+          t_              = t_[t_<minMatch]
+          if(length(t_) > 0){ for(t__ in names(t_)){
+            MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; 
+            MatchIndices_i = c(MatchIndices_i,
+                               sample(which(Cat_ == t__ ), 
+                                      minMatch, 
+                                      replace = T))
+          }
+          }
+        }else{ ## Otherwise use all the indices
+          MatchIndices_i  = 1:nrow(X_)
+        }
+        categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
+        MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch),
+                                      categoryVec_LabMatch, function(x){c(x) })
+        
+        ### Carry out estimation on the matched samples
+        est_readme2_ = try((  sapply(1:nboot_match, function(eare){ 
+          MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
+                                                                                          batchSizePerCat_match, 
+                                                                                          replace = length(sae) * 0.75 < batchSizePerCat_match ) })
+          X__                          = X_m[unlist(MatchIndices_byCat_),]; 
+          categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
+          
+          ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+          colnames(ESGivenD_sampled)   = names(labeled_pd)
+          ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
+                                                            Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
+          return( ED_sampled )  
+        } )), T)
+        ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
+        
+        return( list(ED_sampled_averaged) )
+      })
       
-      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
-      out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
-      
-      ### Here ends the SGD for generating optimal document-feature matrix.
-      ### If we're also going to do estimation
-      if(justTransform == F){ 
-          ## Minimum number of observations to use in each category per bootstrap iteration
-          MM1           = colMeans(out_dfm_unlabeled); 
-          MM2_          = colSds(out_dfm_unlabeled,MM1);
-          indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
-                                                                                                           replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-          BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
-            Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
-            X_      = out_dfm_labeled[indices_list[[boot_iter]],];
-            Y_      = out_dfm_unlabeled
-          
-            ### Normalize X and Y
-            MM2     = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
-            X_      = FastScale(X_, MM1, MM2);
-            Y_      = FastScale(Y_, MM1, MM2)
-              
-            ## If we're using matching
-            if (kMatch != 0){
-                ### KNN matching - find kMatch matches in X_ to Y_
-                MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
-                                                  query = Y_, 
-                                                  k     = kMatch)$nn.index) , T) 
-
-                ## Any category with less than minMatch matches includes all of that category
-                t_              = table( Cat_[unique(MatchIndices_i)] ); 
-                t_              = t_[t_<minMatch]
-                if(length(t_) > 0){ for(t__ in names(t_)){
-                  MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; 
-                  MatchIndices_i = c(MatchIndices_i,
-                                     sample(which(Cat_ == t__ ), 
-                                            minMatch, 
-                                            replace = T))
-                    }
-                  }
-            }else{ ## Otherwise use all the indices
-                MatchIndices_i  = 1:nrow(X_)
-            }
-            categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
-            MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch),
-                                          categoryVec_LabMatch, function(x){c(x) })
-          
-            ### Carry out estimation on the matched samples
-            est_readme2_ = try((  sapply(1:nboot_match, function(eare){ 
-                MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
-                                                                                                batchSizePerCat_match, 
-                                                                                                replace = length(sae) * 0.75 < batchSizePerCat_match ) })
-                X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-                categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
-
-                ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-                colnames(ESGivenD_sampled)   = names(labeled_pd)
-                ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
-                                                                  Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
-                return( ED_sampled )  
-              } )), T)
-              ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
-              
-              return( list(ED_sampled_averaged) )
-          })
-          
-          ### Average the bootstrapped estimates
-          est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
-          #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
-          rm(BOOTSTRAP_EST,indices_list) ; 
-          if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
+      ### Average the bootstrapped estimates
+      est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
+      #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
+      rm(BOOTSTRAP_EST,indices_list) ; 
+      if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
     }
     ## If we're just doing the transformation
     if(justTransform == T){ 
-        ### Calculate the transformed DFM
-        f2n = function(.){as.numeric(as.character(.))}
-        transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
-        transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
-        transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
-        
-        return(list(transformed_dfm=transformed_dfm))
-      } 
-
+      ### Calculate the transformed DFM
+      f2n = function(.){as.numeric(as.character(.))}
+      transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
+      transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
+      transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
+      
+      return(list(transformed_dfm=transformed_dfm))
+    } 
+    
     ## if it's the first iteration
     if(diagnostics == T){ 
       f2n = function(.){as.numeric(as.character(.))}
@@ -450,13 +449,13 @@ readme <- function(dfm = NULL,
       OrigESGivenD_div[iter_i]    = try(ESGivenD_div["OrigESGivenD_div_",1], T) 
       MatchedESGivenD_div[iter_i] = try(ESGivenD_div["MatchedESGivenD_div_",1], T)  
     }
-      
+    
     ## Save results 
     temp_est_readme                            = hold_coef 
     temp_est_readme[names(est_readme2)]         = est_readme2
     boot_readme[iter_i,names(temp_est_readme)] = temp_est_readme
   }
-
+  
   ### Close the TensorFlow session
   if(verbose==T){ cat("Finished!") }
   ## Parse output
@@ -469,5 +468,5 @@ readme <- function(dfm = NULL,
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
-}
+  }
 
