@@ -162,22 +162,7 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  
-  
-    ## For calculating discrimination - how many possible cross-category contrasts are there
-    nCat_ = tf$placeholder(tf$int32)
-    contrasts_mat       = combn(1:nCat_, 2) - 1
-    contrast_indices1   = as.integer(contrasts_mat[1,])
-    contrast_indices2   = as.integer(contrasts_mat[2,])
-    
-    ## For calculating feature novelty - how many possible cross-feature contrasts are there
-    redund_mat          = combn(1:nProj, 2) - 1
-    redund_indices1     = as.integer(redund_mat[1,])
-    redund_indices2     = as.integer(redund_mat[2,])
-    axis_FeatDiscrim    = as.integer(nCat_!=2)
-    rm(redund_mat)
-    
-    
+
   tf$reset_default_graph()
   G_ = tf$Graph()
   with(G_$as_default(), {
@@ -286,6 +271,29 @@ readme <- function(dfm = NULL,
   
   browser() 
   
+  ## For calculating discrimination - how many possible cross-category contrasts are there
+  contrast_indices1_v       = as.integer( (combn(1:nCat, 2) - 1)[1,])
+  contrast_indices2_v       = as.integer( (combn(1:nCat, 2) - 1)[2,])
+  redund_indices1_v     = as.integer((combn(1:nProj, 2) - 1)[1,])
+  redund_indices2_v     = as.integer((combn(1:nProj, 2) - 1)[2,])
+  axis_FeatDiscrim_v    = as.integer(nCat!=2)
+  
+  dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
+  grab_samp <- function(){ 
+      unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = 0.90*(NObsPerCat > length(zed))) }))
+  }
+  MultMat_tf_v          = t(do.call(rbind,sapply(1:nCat,function(x){
+    urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
+  IL_input_v            = tf$placeholder(tf$float32,list(NULL, nDim))
+  MultMat_tf_v          = tf$placeholder(tf$float32, list(NULL, NULL))
+  
+  eval_dict = "dict( contrast_indices1 = contrast_indices1_v, 
+contrast_indices2 = contrast_indices2_v, 
+redund_indices1 = redund_indices1_v, 
+axis_FeatDiscrim = axis_FeatDiscrim_v, 
+IL_input = dfm_labeled[grab_samp(),]
+  )"
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
@@ -299,12 +307,12 @@ readme <- function(dfm = NULL,
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       
-                      if(iter_i == 1){ 
+                      if(iter_i == 1){
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
-                        IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v))
+                        IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
                         IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
                         IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
-                        L2_squared_initial_v  = median(c(unlist(replicate(50, sess$run(L2_squared_clipped)))))
+                        L2_squared_initial_v  = median(c(unlist(replicate(50, sess$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
                         sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
                       sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
@@ -312,16 +320,16 @@ readme <- function(dfm = NULL,
                       ### For each iteration of SGDs
                       print("Training...")
                       t1=Sys.time()
-                      for(j in 1:sgd_iters){ sess$run(learning_group) } 
+                      for(j in 1:sgd_iters){ sess$run(learning_group,eval(parse(text = eval_dict))) } 
                       print(Sys.time()-t1)
                       
                       print("Done with this round of training...!")
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
                     }
                     try(sess$close(), T) 
-                    })  
+                    }) 
   
-  G_ = tf$Graph()
+  browser() 
   tf$keras$backend$clear_session()
   tf$keras$backend$reset_uids()
   tf$reset_default_graph()
