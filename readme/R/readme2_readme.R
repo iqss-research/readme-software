@@ -183,12 +183,12 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),]
 )"
   
-  with( tf$Session(graph = G_,
+    S_ = tf$Session(graph = G_,
                    config = tf$ConfigProto(
                      allow_soft_placement = T, 
                      device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) ) %as% S_, 
-    { 
+                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
+    
           for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -218,7 +218,7 @@ IL_input = dfm_labeled[grab_samp(),]
           try(S_$close(), T) 
           try(tf$keras$backend$clear_session(), T) 
           try(tf$keras$backend$reset_uids(), T)
-    })
+  
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   
