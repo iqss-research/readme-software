@@ -457,14 +457,14 @@ IL_input = dfm_labeled[grab_samp(),]
 #'print(readme_results$point_readme)
 #'
 #' @export 
-start_reading <- function(){
-  eval_text = 'require(tensorflow, quietly = T)
+start_reading <- function(nDim,nProj=20, nCores = 1){
+  eval_text = sprintf('require(tensorflow, quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
   with(G_$as_default(), {
     #Assumptions 
-    nDim <- as.integer( 600 ) 
-    nProj = as.integer(  20  )  
+    nDim <- as.integer( %s ) 
+    nProj = as.integer(  %s  )  
     NObsPerCat = as.integer(  10 )  
     dropout_rate <- 0.50 
     
@@ -563,12 +563,13 @@ start_reading <- function(){
   })
   G_$finalize()
   
+  nCores = as.integer(%s)
   S_ <- tf$Session(graph = G_,
            config = tf$ConfigProto(
   allow_soft_placement = TRUE 
-  #device_count=list("GPU"=0L, "CPU" = nCores), 
-  #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
-  ))'
+  device_count=list("GPU"=0L, "CPU" = nCores), 
+  inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
+  ))', nDim,nProj, nCores)
   if( !"S_"%in%ls() & !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
   } 
