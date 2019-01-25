@@ -93,6 +93,7 @@
 #'                          nboot = 2, sgd_iters = 500)
 #'print(readme_results$point_readme)
 #'
+#' @import tensorflow, FNN
 #' @export 
 
 readme <- function(dfm = NULL,
@@ -370,7 +371,8 @@ IL_input = dfm_labeled[grab_samp(),]
   }
 
 
-if(T == F){ 
+if(T == T){ 
+save_text 
 #library(tensorflow)
 tf$reset_default_graph()
 G_ = tf$Graph()
