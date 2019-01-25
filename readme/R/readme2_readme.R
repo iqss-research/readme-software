@@ -208,11 +208,11 @@ with(sess, {
                       print("Done with this round of training...!")
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
                     }
-                    try(sess$close(), T) 
+                    #try(sess$close(), T) 
                     }) 
-  tf$keras$backend$clear_session()
-  tf$keras$backend$reset_uids()
-  tf$reset_default_graph()
+  #tf$keras$backend$clear_session()
+  #tf$keras$backend$reset_uids()
+  #tf$reset_default_graph()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   
