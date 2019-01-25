@@ -371,9 +371,7 @@ IL_input = dfm_labeled[grab_samp(),]
   }
 
 
-if(T == T){ 
-save_text 
-#library(tensorflow)
+start_reading <- function(){ 
 tf$reset_default_graph()
 G_ = tf$Graph()
 with(G_$as_default(), {
@@ -478,5 +476,5 @@ with(G_$as_default(), {
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
 } )
 G_$finalize();
-
 } 
+environment(startup_readme) <- globalenv()
