@@ -23,8 +23,6 @@
 #' @param diagnostics Should diagnostics be returned? Input should be a Boolean. 
 #'  
 #' @param sgd_iters How many stochastic gradient descent iterations should be used? Input should be a positive number.   
-#' 
-#' @param sgd_momentum Momentum parameter for stochastic gradient descent (default = 0.90)
 #'  
 #' @param justTransform A Boolean indicating whether the user wants to extract the quanficiation-optimized 
 #' features only. 
@@ -103,7 +101,6 @@ readme <- function(dfm = NULL,
                    categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
-                   sgd_momentum   = .90,
                    numProjections = 20,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
@@ -454,7 +451,7 @@ with(G_$as_default(), {
   
   ### Initialize an optimizer using stochastic gradient descent w/ momentum
   my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
-                                                        momentum      = sgd_momentum, use_nesterov  = T)
+                                                        momentum      = 0.90, use_nesterov  = T)
   
   ### Calculates the gradients from myOpt_tf
   Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
