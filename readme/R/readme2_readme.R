@@ -465,7 +465,7 @@ IL_input = dfm_labeled[grab_samp(),]
 #'print(readme_results$point_readme)
 #'
 #' @export 
-start_reading <<- function(){
+start_reading <- function(){
   require(tensorflow, quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
