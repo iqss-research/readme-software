@@ -160,11 +160,11 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  tf$reset_default_graph()
-  G_ = tf$Graph()
-  with(G_$as_default(), {
+  
+  
     ## For calculating discrimination - how many possible cross-category contrasts are there
-    contrasts_mat       = combn(1:nCat, 2) - 1
+    nCat_ = tf$placeholder(tf$int32)
+    contrasts_mat       = combn(1:nCat_, 2) - 1
     contrast_indices1   = as.integer(contrasts_mat[1,])
     contrast_indices2   = as.integer(contrasts_mat[2,])
     
@@ -172,36 +172,33 @@ readme <- function(dfm = NULL,
     redund_mat          = combn(1:nProj, 2) - 1
     redund_indices1     = as.integer(redund_mat[1,])
     redund_indices2     = as.integer(redund_mat[2,])
-    axis_FeatDiscrim    = as.integer(nCat!=2)
+    axis_FeatDiscrim    = as.integer(nCat_!=2)
     rm(redund_mat)
     
+    
+  tf$reset_default_graph()
+  G_ = tf$Graph()
+  browser() 
+  with(eval(parse(text = sprintf("G_$as_default()", nCat_)) ), {
+    #Assumptions 
+    nProj = as.integer(  20  )  
+    NObsPerCat = as.integer(  10 )  
+    nDim <- as.integer( 600 ) 
+    
+    #INPUTS 
+    contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
+    contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
+    redund_indices1            = tf$placeholder(tf$int32,list(NULL))
+    redund_indices2            = tf$placeholder(tf$int32,list(NULL))
+    IL_input            = tf$placeholder(tf$float32,list(NULL, nDim))
+    MultMat_tf          = tf$placeholder(tf$float32, list(NULL, NULL))
+    
+    
     #Placeholder settings - to be filled when executing TF operations
-    tf_float_precision    = tf$float32
-    clip_tf               = tf$Variable(10000., dtype = tf_float_precision, trainable = F )
-    inverse_learning_rate = tf$Variable(1, dtype = tf_float_precision, trainable = F)
+    clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
+    inverse_learning_rate = tf$Variable(1, dtype = tf$float32, trainable = F)
     sgd_learning_rate      = 1. / inverse_learning_rate
-    
-    ## Transformation matrix from features to E[S|D] (urat determines how much smoothing we do across categories)
-    MultMat_tf          = t(do.call(rbind,sapply(1:nCat,function(x){
-      urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
-      return( list(MM) )  } )) )
-    MultMat_tf          = MultMat_tf  / rowSums( MultMat_tf )
-    MultMat_tf          = tf$constant(MultMat_tf, dtype = tf_float_precision)
-    
-    #SET UP INPUT layer to TensorFlow and apply batch normalization for the input layer
-    dfm_labeled_tf = tf$convert_to_tensor(as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1],
-                                          dtype = tf$float32)
-    nDim = ncol(dfm_labeled_tf)
-    for(ape in 1:nCat){ 
-      eval(parse(text = sprintf("d_%s = tf$data$Dataset$from_tensor_slices(
-                                tf$gather(dfm_labeled_tf,indices = as.integer(l_indices_by_cat[[ape]]-1),axis = 0L))$`repeat`()$shuffle(as.integer(min(1000L,
-                                length(l_indices_by_cat[[ape]])+1)))$batch(NObsPerCat)$prefetch(buffer_size = 1L)", ape)) )
-      eval(parse(text = sprintf("b_%s = d_%s$make_one_shot_iterator()$get_next()", ape,ape)) )
-    }
-    IL_input            = eval(parse(text = sprintf("tf$concat(list(%s), 0L)", 
-                                                    paste(paste("b_", 1:nCat, sep = ""), collapse = ","))))
-    IL_input$set_shape(list(nCat*NObsPerCat,nDim))
-    rm(dfm_labeled_tf)
+  
     IL_m                = tf$nn$moments(IL_input, axes = 0L);
     IL_mu_b             = IL_m[[1]];
     IL_sigma2_b         = IL_m[[2]];
@@ -215,12 +212,12 @@ readme <- function(dfm = NULL,
       beta__[dropout__==1]  <- 0
       beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
       sum(beta__) }))
-    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf_float_precision),dtype = tf_float_precision, trainable = T)
-    BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf_float_precision)
+    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = T)
+    BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
     
     ### Drop-out transformation
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf_float_precision))), 1 / (ulim1/(ulim1+0.5)))
+    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
     WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
     
     ### Apply non-linearity + batch normalization 
@@ -233,12 +230,14 @@ readme <- function(dfm = NULL,
     
     ## Spread component of objective function
     #Gather slices from params axis axis according to indices.
-    gathering_mat =   (sapply(1:nCat, function(er){ 
-      if(er == 1){indices_ =  1:NObsPerCat-1 }
-      if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
-      return(as.integer(indices_))}))
-    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
+    #gathering_mat =   (sapply(1:nCat, function(er){ 
+      #if(er == 1){indices_ =  1:NObsPerCat-1 }
+      #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
+      #return(as.integer(indices_))}))
+    Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
     
+    contrast_indices1 = tf$placeholder(tf$int32,NULL)
+    contrast_indices2 = tf$placeholder(tf$int32,NULL)
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                                tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
@@ -282,6 +281,8 @@ readme <- function(dfm = NULL,
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   } ) 
   G_$finalize(); 
+  
+  
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
