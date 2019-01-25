@@ -569,7 +569,7 @@ start_reading <- function(){
   #device_count=list("GPU"=0L, "CPU" = nCores), 
   #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
   ))'
-  if( !S_%in%ls() & !G_ %in% ls()){ 
+  if( !"S_"%in%ls() & !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
   } 
 }
