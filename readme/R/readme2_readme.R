@@ -568,7 +568,7 @@ start_reading <- function(nDim,nProj=20, nCores = 1){
            config = tf$ConfigProto(
   allow_soft_placement = TRUE, 
   device_count=list("GPU"=0L, "CPU" = nCores), 
-  inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores)
+  inter_op_parallelism_threads = 1L,intra_op_parallelism_threads = 1L)
   )', nDim,nProj, nCores)
   if( !"S_"%in%ls() & !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
