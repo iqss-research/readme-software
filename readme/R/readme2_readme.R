@@ -112,6 +112,7 @@ readme <- function(dfm = NULL,
                    diagnostics    = F, 
                    nCores = 1L, 
                    nCores_OnJob = 1L ){ 
+  start_reading(nDim=600,nProj=numProjections)
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -163,9 +164,9 @@ readme <- function(dfm = NULL,
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrast_indices1_v       = as.integer( (combn(1:nCat, 2) - 1)[1,])
   contrast_indices2_v       = as.integer( (combn(1:nCat, 2) - 1)[2,])
-  redund_indices1_v     = as.integer((combn(1:nProj, 2) - 1)[1,])
-  redund_indices2_v     = as.integer((combn(1:nProj, 2) - 1)[2,])
-  axis_FeatDiscrim_v    = as.integer(nCat!=2)
+  redund_indices1_v         = as.integer((combn(1:nProj, 2) - 1)[1,])
+  redund_indices2_v         = as.integer((combn(1:nProj, 2) - 1)[2,])
+  axis_FeatDiscrim_v        = as.integer(nCat!=2)
 
   grab_samp <- function(){ 
       unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = 0.90*(NObsPerCat > length(zed))) }))
@@ -182,6 +183,12 @@ axis_FeatDiscrim = axis_FeatDiscrim_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
+  
+          S_ = tf$Session(graph = G_,
+                  config = tf$ConfigProto(
+                    allow_soft_placement = T, 
+                    device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
+                    inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
           for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -208,9 +215,9 @@ IL_input = dfm_labeled[grab_samp(),]
                       print("Done with this round of training...!")
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
-          #try(S_$close(), T) 
-          #try(tf$keras$backend$clear_session(), T) 
-          #try(tf$keras$backend$reset_uids(), T)
+          try(S_$close(), T) 
+          try(tf$keras$backend$clear_session(), T) 
+          try(tf$keras$backend$reset_uids(), T)
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
@@ -559,13 +566,6 @@ start_reading <- function(nDim,nProj=20){
   })
   G_$finalize()
 
-    nCores <- 1L
-    nCores_OnJob <- 1L
-    S_ = tf$Session(graph = G_,
-                   config = tf$ConfigProto(
-                     allow_soft_placement = T, 
-                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
   ', nDim,nProj, nCores)
   if(  !"G_" %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
