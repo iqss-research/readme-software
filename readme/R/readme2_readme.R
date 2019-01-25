@@ -160,7 +160,8 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  with(G_$as_default(), {
+  G_ = tf$Graph()
+  with(G_$as_default, {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
   contrast_indices1   = as.integer(contrasts_mat[1,])
@@ -280,15 +281,13 @@ readme <- function(dfm = NULL,
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   } ) 
 
-
-  FinalParams_LIST <- list() 
+  G_$finalize(); FinalParams_LIST <- list() 
   with(tf$Session(graph = G_,
                      config = tf$ConfigProto(
                        allow_soft_placement = TRUE 
                        #device_count=list("GPU"=0L, "CPU" = nCores), 
                        #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
                      )) %as% sess, { 
-      sess$graph$finalize()
       for(iter_i in 1:nboot){ 
       sess$run(init) # Initialize TensorFlow graph
       ## Print iteration count
@@ -319,8 +318,6 @@ readme <- function(dfm = NULL,
   })  
   
   tf$reset_default_graph()
-  tf$keras$backend$clear_session()
-  tf$keras$backend$reset_uids()
   tf_junk <- ls()[!ls() %in% c(tf_junk, "FinalParams_LIST", "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
 
