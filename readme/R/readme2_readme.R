@@ -380,6 +380,7 @@ tf$reset_default_graph()
 G_ = tf$Graph()
 with(G_$as_default(), {
   #Assumptions 
+  dropout_rate <- 0.50 
   nProj = as.integer(  20  )  
   NObsPerCat = as.integer(  10 )  
   nDim <- as.integer( 600 ) 
