@@ -182,7 +182,8 @@ axis_FeatDiscrim = axis_FeatDiscrim_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
-  
+     
+    browser() 
     S_ = tf$Session(graph = G_,
                    config = tf$ConfigProto(
                      allow_soft_placement = T, 
