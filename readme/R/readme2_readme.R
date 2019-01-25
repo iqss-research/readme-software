@@ -160,7 +160,6 @@ readme <- function(dfm = NULL,
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
-  G_ = tf$Graph()
   with(G_$as_default(), {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
