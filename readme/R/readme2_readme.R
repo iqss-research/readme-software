@@ -153,8 +153,7 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   
-  FinalParams_LIST <- list() 
-  tf_junk <- ls()
+  FinalParams_LIST <- list(); tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
   
@@ -182,19 +181,14 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),]
 )"
   
-  with(tf$Session(graph = G_,
-                  config = tf$ConfigProto(
-                    allow_soft_placement = TRUE 
-                    #device_count=list("GPU"=0L, "CPU" = nCores), 
-                    #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
-                  )) %as% sess, { 
+with(sess, { 
                     for(iter_i in 1:nboot){ 
-                      sess$run(init) # Initialize TensorFlow graph
-                      ## Print iteration count
                       if (verbose == T & iter_i %% 10 == 0){
+                        ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       
+                      sess$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
                         IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
@@ -471,10 +465,10 @@ start_reading <- function(){
   G_ = tf$Graph()
   with(G_$as_default(), {
     #Assumptions 
-    dropout_rate <- 0.50 
+    nDim <- as.integer( 600 ) 
     nProj = as.integer(  20  )  
     NObsPerCat = as.integer(  10 )  
-    nDim <- as.integer( 600 ) 
+    dropout_rate <- 0.50 
     
     #INPUTS 
     axis_FeatDiscrim = tf$placeholder(tf$int32)
