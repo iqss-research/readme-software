@@ -208,9 +208,9 @@ IL_input = dfm_labeled[grab_samp(),]
                       print("Done with this round of training...!")
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
-          try(S_$close(), T) 
-          try(tf$keras$backend$clear_session(), T) 
-          try(tf$keras$backend$reset_uids(), T)
+          #try(S_$close(), T) 
+          #try(tf$keras$backend$clear_session(), T) 
+          #try(tf$keras$backend$reset_uids(), T)
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
