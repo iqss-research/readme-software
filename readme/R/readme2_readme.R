@@ -181,7 +181,7 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),]
 )"
   
-with(, { 
+with(environment(), { 
                     for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
