@@ -524,7 +524,7 @@ start_reading <- function(nDim,nProj=20){
     #if(er == 1){indices_ =  1:NObsPerCat-1 }
     #if(er > 1){indices_ =  ((er-1)*NObsPerCat):(er*NObsPerCat-1) }
     #return(as.integer(indices_))}))
-    Spread_tf            = tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)
+    Spread_tf            = tf$sqrt(tf$clip_by_value(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf),0.01, 0.30))
     
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
