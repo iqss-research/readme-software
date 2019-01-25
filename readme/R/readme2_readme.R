@@ -93,8 +93,10 @@
 #'                          nboot = 2, sgd_iters = 500)
 #'print(readme_results$point_readme)
 #'
-#' @export readme 
-#' @export start_reading
+#' @export 
+
+#' start_reading
+#' @export 
 
 readme <- function(dfm = NULL,
                    dfm_cmd = NULL, 
