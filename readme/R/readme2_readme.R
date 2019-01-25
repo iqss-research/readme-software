@@ -162,13 +162,13 @@ readme <- function(dfm = NULL,
   #require("tensorflow", quietly = T)
   tf$reset_default_graph()
   G_ = tf$Graph()
-  with(G_$as_default(), 
+  with(list(G_$as_default(), 
        tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
                     #device_count=list("GPU"=0L, "CPU" = nCores), 
                     #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
-                  )) %as% sess
+                  )) %as% sess)
        , {
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrasts_mat       = combn(1:nCat, 2) - 1
@@ -319,7 +319,10 @@ readme <- function(dfm = NULL,
   })
   
   G_ = tf$Graph()
+  tf$keras$backend$clear_session()
+  tf$keras$backend$reset_uids()
   tf$reset_default_graph()
+  reset_uids
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
 
