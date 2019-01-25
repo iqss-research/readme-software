@@ -187,27 +187,27 @@ IL_input = dfm_labeled[grab_samp(),]
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       
-                      sess$run(init) # Initialize TensorFlow graph
+                      S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
-                        IL_sigma_last_v       = replicate(300, sess$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
+                        IL_sigma_last_v       = replicate(300, S_$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
                         IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
                         IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
-                        L2_squared_initial_v  = median(c(unlist(replicate(50, sess$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
-                        sess$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                        L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
+                        S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
-                      sess$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                      S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       
                       ### For each iteration of SGDs
                       print("Training...")
                       t1=Sys.time()
-                      for(j in 1:sgd_iters){ sess$run(learning_group,eval(parse(text = eval_dict))) } 
+                      for(j in 1:sgd_iters){ S_$run(learning_group,eval(parse(text = eval_dict))) } 
                       print(Sys.time()-t1)
                       
                       print("Done with this round of training...!")
-                      FinalParams_LIST[[length(FinalParams_LIST)+1]] <- sess$run( FinalParams_list )
+                      FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
                     }
-  #try(sess$close(), T) 
+  #try(S_$close(), T) 
   #tf$keras$backend$clear_session()
   #tf$keras$backend$reset_uids()
   #tf$reset_default_graph()
@@ -563,11 +563,13 @@ start_reading <- function(){
   })
   G_$finalize()
   
-  sess <- tf$Session(graph = G_,
+  S_ <- tf$Session(graph = G_,
            config = tf$ConfigProto(
   allow_soft_placement = TRUE 
   #device_count=list("GPU"=0L, "CPU" = nCores), 
   #inter_op_parallelism_threads = nCores,intra_op_parallelism_threads = nCores
   ))'
+  if( !S_%in%ls() & !G_ %in% ls()){ 
   eval(parse(text=eval_text), envir = globalenv())
+  } 
 }
