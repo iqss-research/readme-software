@@ -158,7 +158,6 @@ readme <- function(dfm = NULL,
   tf_junk <- ls()
   #try(detach("package:tensorflow", unload=TRUE), T)  
   #require("tensorflow", quietly = T)
-  browser() 
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrast_indices1_v       = as.integer( (combn(1:nCat, 2) - 1)[1,])
@@ -372,6 +371,7 @@ IL_input = dfm_labeled[grab_samp(),]
   }
 
 
+if(T == F){ 
 library(tensorflow)
 tf$reset_default_graph()
 G_ = tf$Graph()
@@ -477,5 +477,7 @@ with(G_$as_default(), {
   L2_squared_initial      = tf$placeholder(tf$float32)
   setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
   restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-} ) 
-G_$finalize(); 
+} )
+#G_$finalize();
+
+} 
