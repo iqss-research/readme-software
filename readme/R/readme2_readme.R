@@ -182,6 +182,7 @@ redund_indices1 = redund_indices1_v,
 axis_FeatDiscrim = axis_FeatDiscrim_v, 
 IL_input = dfm_labeled[grab_samp(),]
   )"
+  browser()
   with(tf$Session(graph = G_,
                   config = tf$ConfigProto(
                     allow_soft_placement = TRUE 
@@ -217,7 +218,6 @@ IL_input = dfm_labeled[grab_samp(),]
                     try(sess$close(), T) 
                     }) 
   
-  browser() 
   tf$keras$backend$clear_session()
   tf$keras$backend$reset_uids()
   tf$reset_default_graph()
