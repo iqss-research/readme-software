@@ -565,8 +565,8 @@ start_reading <- function(nDim,nProj=20){
   G_$finalize()
 
   ', nDim,nProj, nCores)
-  if(  !"G_" %in% ls()){ 
-    print("Starting up ... ")
+  if(  !"G_" %in% ls(env = glovalenv())){ 
     eval(parse(text=eval_text), envir = globalenv())
+    print("Readme is initialized!")
   } 
 }
