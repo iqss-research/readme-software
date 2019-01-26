@@ -186,8 +186,6 @@ IL_input = dfm_labeled[grab_samp(),]
                     allow_soft_placement = T, 
                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
                     inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
-  browser()
-  gathering_mat
           for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -195,9 +193,11 @@ IL_input = dfm_labeled[grab_samp(),]
                       }
                       
                       S_$run(init) # Initialize TensorFlow graph
+                      S_$run(gathering_mat, feed_dict = eval(parse(text = eval_dict)))
                       if(iter_i == 1){
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
                         IL_sigma_last_v       = replicate(300, S_$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
+                      
                         IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
                         IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
                         L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
@@ -517,8 +517,8 @@ start_reading <- function(nDim,nProj=20){
     ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
     
     ## Spread component of objective function 
-    gathering_mat = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]]+1L, delta = 1L, dtype = tf$int32)
-    gathering_mat = tf$reshape(gathering_mat, shape = list(NObsPerCat, -1L) )
+    gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
+    gathering_mat        = tf$reshape(gathering_mat, shape = list(NObsPerCat, -1L) )
     Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
