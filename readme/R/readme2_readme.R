@@ -156,7 +156,9 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   
+  browser() 
   dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
+  dfm_labeled = apply(dfm_labeled,2,Winsorize_fxn)
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
