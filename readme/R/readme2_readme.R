@@ -518,7 +518,7 @@ start_reading <- function(nDim,nProj=20){
     
     ## Spread component of objective function 
     gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
-    gathering_mat        = tf$reshape(gathering_mat, shape = list(NObsPerCat, -1L) )
+    gathering_mat        = tf$transpose(tf$reshape(gathering_mat, shape = list(-1, NObsPerCat) ))
     Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
