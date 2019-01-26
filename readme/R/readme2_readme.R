@@ -165,6 +165,7 @@ readme <- function(dfm = NULL,
   redund_indices1_v         = as.integer((combn(1:nProj, 2) - 1)[1,])
   redund_indices2_v         = as.integer((combn(1:nProj, 2) - 1)[2,])
   axis_FeatDiscrim_v        = as.integer(nCat!=2)
+  browser()
 
   grab_samp <- function(){ 
       unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = 0.90*(NObsPerCat > length(zed))) }))

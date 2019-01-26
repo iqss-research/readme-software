@@ -1,3 +1,11 @@
+rdirichlet <- function(n, alpha) {
+  normalize <- function(.) . / sum(.)
+  samps <- vapply(alpha, function(al) stats::rgamma(n, al, 1), numeric(n))
+  if(class(samps) == "matrix" ){ ret_q <- t(apply(samps, 1, normalize)) }
+  if(class(samps) == "numeric" ){ ret_q <- normalize(samps) }
+  return( ret_q ) 
+}
+
 firat2018 <- function(csv_category_,INPUT_labeled_sz,INPUT_unlabeled_sz){ 
   labeled_indices <- sample(1:length(csv_category_), INPUT_labeled_sz)
   labeled_pd <- prop.table(table(csv_category_[labeled_indices]))
