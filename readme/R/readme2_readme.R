@@ -193,7 +193,6 @@ IL_input = dfm_labeled[grab_samp(),]
                       }
                       
                       S_$run(init) # Initialize TensorFlow graph
-                      print(S_$run(gathering_mat, feed_dict = eval(parse(text = eval_dict))))
                       if(iter_i == 1){
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
                         IL_sigma_last_v       = replicate(300, S_$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
