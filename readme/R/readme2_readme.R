@@ -162,13 +162,12 @@ readme <- function(dfm = NULL,
   ## For calculating discrimination - how many possible cross-category contrasts are there
   contrast_indices1_v       = as.integer( (combn(1:nCat, 2) - 1)[1,])
   contrast_indices2_v       = as.integer( (combn(1:nCat, 2) - 1)[2,])
-  redund_indices1_v         = as.integer((combn(1:nProj, 2) - 1)[1,])
-  redund_indices2_v         = as.integer((combn(1:nProj, 2) - 1)[2,])
-  axis_FeatDiscrim_v        = as.integer(nCat!=2)
-  browser()
+  if(nCat == 2){dim(contrast_indices1_v) <- dim(contrast_indices2_v) <- 1}
+  redund_indices1_v         = as.vector(as.integer((combn(1:nProj, 2) - 1)[1,]))
+  redund_indices2_v         = as.vector(as.integer((combn(1:nProj, 2) - 1)[2,]))
 
   grab_samp <- function(){ 
-      unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = 0.90*(NObsPerCat > length(zed))) }))
+      unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = length(zed) <(0.95*NObsPerCat) ) }))
   }
   MultMat_tf_v          = t(do.call(rbind,sapply(1:nCat,function(x){
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
@@ -178,7 +177,6 @@ readme <- function(dfm = NULL,
 contrast_indices2 = contrast_indices2_v, 
 redund_indices1 = redund_indices1_v, 
 redund_indices2 = redund_indices2_v, 
-axis_FeatDiscrim = axis_FeatDiscrim_v, 
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
@@ -476,7 +474,6 @@ start_reading <- function(nDim,nProj=20){
     dropout_rate <- 0.50 
     
     #INPUTS 
-    axis_FeatDiscrim = tf$placeholder(tf$int32)
     contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
     contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
@@ -518,15 +515,15 @@ start_reading <- function(nDim,nProj=20){
     ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
     
     ## Spread component of objective function
-    Spread_tf            = tf$sqrt(tf$clip_by_value(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf),0.01, 0.30))
+    Spread_tf            = tf$sqrt(tf$clip_by_value(tf$matmul(MultMat_tf,tf$square(LFinal_n)) - tf$square(ESGivenD_tf)+0.001^2,0, 0.30))
     
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
                                                tf$gather(ESGivenD_tf, indices = contrast_indices2, axis = 0L)), 1.50)
     
     ## Feature discrimination (row-differences)
-    FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = axis_FeatDiscrim) -
-                                               tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = axis_FeatDiscrim)), 1.50)
+    FeatDiscrim_tf       = tf$minimum(tf$abs(tf$gather(CatDiscrim_tf,  indices = redund_indices1, axis = 1L) -
+                                               tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = 1L)), 1.50)
     
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
