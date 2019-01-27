@@ -6,7 +6,7 @@ toDTM <- function(myText){
   myText_ = tokenizers::tokenize_word_stems(myText)
   myText_ = lapply(myText_, function(x){unique(x)})
   myStems_tab = table(unlist(myText_))
-  myStems_keep <- names( myStems_tab[myStems_tab > 0.005 * length(myText)] )
+  myStems_keep <- names( myStems_tab[myStems_tab > 0.075 * length(myText)] )
   myText_ = lapply(myText_, function(x){x[x %in% myStems_keep]})
   dfm_ = as.data.frame( matrix(0, nrow = length(myText), ncol = length(myStems_keep)) ) 
   colnames(dfm_) <- myStems_keep
