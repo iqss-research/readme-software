@@ -2,7 +2,7 @@
 #' 
 #' Implements the quantification algorithm described in Jerzak, King, and Strezhnev (2018) which is meant to improve on the ideas in Hopkins and King (2010).
 #' Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate. 
-#' Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
+#' Automatic differentiation, stochastic gradient descent, and knn_adaptbatch re-normalization are used to carry out the optimization.
 #' Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership 
 #' (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
 #' Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
@@ -126,10 +126,7 @@ readme <- function(dfm = NULL,
     cat(paste("Count of documents in each category in the labeled set:\n"))
     print(labeledCt)
   }
-  
-  # Winsorize the columns of the document-feature matrix
-  #dfm                   = apply(dfm, 2, Winsorize_fxn )
-  
+
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
@@ -156,9 +153,19 @@ readme <- function(dfm = NULL,
   }
   # Initialize tensorflow
   
-  browser() 
+  #Winsorize
   dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
-  dfm_labeled = apply(dfm_labeled,2,Winsorize_fxn)
+  WinsValues = apply(dfm_labeled,2,Winsorize_values)
+  WinsMat = function(dfm_, values_){ 
+      sapply(1:ncol(dfm_), 
+             function(sa){ 
+               zap = dfm_[,sa]
+               bounds_ = values_[,sa]
+               zap[zap < bounds_[1]] <- bounds_[1]
+               zap[zap > bounds_[2]] <- bounds_[2]
+               return( zap )   })
+  }
+  dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -227,7 +234,7 @@ IL_input = dfm_labeled[grab_samp(),]
     out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
     
-    out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
     
     ### Here ends the SGD for generating optimal document-feature matrix.

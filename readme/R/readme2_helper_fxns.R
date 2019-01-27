@@ -120,42 +120,14 @@ cleanme <- function(my_text){
   return( my_text )  
 }
 
-Winsorize_fxn <- function(x){ 
-  sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
-  x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_
-  return(x)
-}
-
 Winsorize_values <- function(x){ 
   sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
-  x[x < sum_x[2]- qr_] <-sum_x[2]- qr_; x[x > sum_x[5]+qr_] <- sum_x[5] + qr_
-  return( c( sum_x[2] - qr,  sum_x[5]+qr) )  
+  return( c( sum_x[2] - qr_,  sum_x[5]+qr_) )  
 }
 
 vec2prob <- function(.){x <- table(.); x/sum(x)}
 
 f2n <- function(.){as.numeric(as.character(.))}
-
-knn_adapt <- function(reweightSet = NULL, fixedSet = NULL, k=1, distMat = NULL){
-  if(is.null(distMat)){ 
-    fixedSet <- as.data.frame(  cbind(1, fixedSet)) ; colnames(fixedSet)[1] <- "fixed_indicator"
-    reweightSet <- as.data.frame(  cbind(0, reweightSet))  ; colnames(reweightSet)[1] <- "fixed_indicator"
-    distMat <- eval(parse(text = sprintf('optmatch::match_on(%s, 
-                                          data = rbind(reweightSet, fixedSet),
-                                          method = "euclidean")', 
-                                          sprintf("fixed_indicator~%s", paste(colnames(reweightSet)[-1], collapse = "+"))) ) )
-  }
-  match_indices_list <- apply(distMat, 1, function(x){ list(which(x <= sort(x)[k] )[1:k]) }) #we must assume that the data are scrambled
-  max_matched_dists <- sapply(1:nrow(distMat),function(x){  max(distMat[x,match_indices_list[[x]][[1]]]) })
-  addback_radius <- summary(max_matched_dists)[2] 
-  
-  within_radius_indices <- which( colSums(distMat < addback_radius) > 0)
-  matched_indices <- unlist(match_indices_list)
-  return_indices <-   c(matched_indices,within_radius_indices[!within_radius_indices %in% matched_indices])
-  return(list(return_indices=return_indices,
-              distMat = distMat))
-}
-
 
 colSds <- function (x, center = NULL, dim. = dim(x)){ n <- dim.[1]; x <- x * x; x <- colMeans(x); x <- (x - center^2); sqrt (  x * (n/(n - 1)) )  }
 FastScale <- function(x,cm=NULL,csd=NULL){
@@ -169,6 +141,4 @@ readme_est_fxn <- function(X, Y){
                                                                           F=c(1.), G=diag(rep(1, ncol(X))), H = rep(0., ncol(X)))$X, TRUE)
   return( solution_ )  
   }
-
-scale_fxn <- function(old_seq, newmin, newmax){(newmax - newmin) * (old_seq - min(old_seq)) / (max(old_seq) - min(old_seq)) + newmin}
 
