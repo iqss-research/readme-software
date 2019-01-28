@@ -169,6 +169,7 @@ readme <- function(dfm = NULL,
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
+  browser() 
   contrast_indices1_v       = as.integer( (combn(1:nCat, 2) - 1)[1,])
   contrast_indices2_v       = as.integer( (combn(1:nCat, 2) - 1)[2,])
   if(nCat == 2){dim(contrast_indices1_v) <- dim(contrast_indices2_v) <- 1}
