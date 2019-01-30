@@ -4,11 +4,11 @@
 \alias{readme}
 \title{readme}
 \usage{
-readme(dfm = NULL, dfm_cmd = NULL, labeledIndicator, categoryVec,
-  nboot = 4, sgd_iters = 1000, numProjections = 20,
-  dropout_rate = 0.5, batchSizePerCat = 10, kMatch = 3,
-  batchSizePerCat_match = 20, minMatch = 5, nboot_match = 50,
-  justTransform = F, verbose = F, diagnostics = F)
+readme(dfm = NULL, labeledIndicator, categoryVec, nboot = 4,
+  sgd_iters = 1000, numProjections = 20, dropout_rate = 0.5,
+  batchSizePerCat = 10, kMatch = 3, batchSizePerCat_match = 20,
+  minMatch = 5, nboot_match = 50, justTransform = F, verbose = F,
+  diagnostics = F, nCores = 1L, nCores_OnJob = 1L)
 }
 \arguments{
 \item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature.}
@@ -55,7 +55,7 @@ A list consiting of \itemize{
 \description{
 Implements the quantification algorithm described in Jerzak, King, and Strezhnev (2018) which is meant to improve on the ideas in Hopkins and King (2010).
 Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate. 
-Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
+Automatic differentiation, stochastic gradient descent, and knn_adaptbatch re-normalization are used to carry out the optimization.
 Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership 
 (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
 Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).

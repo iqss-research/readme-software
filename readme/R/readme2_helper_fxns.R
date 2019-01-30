@@ -141,4 +141,3 @@ readme_est_fxn <- function(X, Y){
                                                                           F=c(1.), G=diag(rep(1, ncol(X))), H = rep(0., ncol(X)))$X, TRUE)
   return( solution_ )  
   }
-

@@ -93,6 +93,7 @@
 #'                          nboot = 2, sgd_iters = 500)
 #'print(readme_results$point_readme)
 #'
+#' @import tensorflow 
 #' @export 
 readme <- function(dfm = NULL,
                    labeledIndicator,
@@ -111,6 +112,7 @@ readme <- function(dfm = NULL,
                    diagnostics    = F, 
                    nCores = 1L, 
                    nCores_OnJob = 1L ){ 
+  require(tensorflow, quietly = T)
   start_reading(nDim=600,nProj=20)
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
@@ -375,105 +377,8 @@ IL_input = dfm_labeled[grab_samp(),]
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
 }
 
-
-#' start_reading
-#' 
-#' Implements the quantification algorithm described in Jerzak, King, and Strezhnev (2018) which is meant to improve on the ideas in Hopkins and King (2010).
-#' Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate. 
-#' Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization.
-#' Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership 
-#' (with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
-#' Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
-#' 
-#' @param dfm 'document-feature matrix'. A data frame where each row represents a document and each column a unique feature. 
-#'
-#' @param labeledIndicator An indicator vector where each entry corresponds to a row in \code{dfm}. 
-#' \code{1} represents document membership in the labeled class. \code{0} represents document membership in the unlabeled class. 
-#' 
-#' @param categoryVec An factor vector where each entry corresponds to the document category. 
-#' The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
-#' \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
-#'
-#' @param nboot A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).
-#'
-#' @param verbose Should progress updates be given? Input should be a Boolean. 
-#' 
-#' @param diagnostics Should diagnostics be returned? Input should be a Boolean. 
-#'  
-#' @param sgd_iters How many stochastic gradient descent iterations should be used? Input should be a positive number.   
-#'  
-#' @param justTransform A Boolean indicating whether the user wants to extract the quanficiation-optimized 
-#' features only. 
-#' 
-#' @param numProjections How many projections should be calculated? Input should be a positive number. Minimum number of projections = number of categories + 2. 
-#' 
-#' @param batchSizePerCat What should the batch size per category be in the sgd optimization and knn matching? 
-#' 
-#' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
-#' 
-#' @param batchSizePerCat_match What should the batch size per category be in the bagged knn matching? 
-#' 
-#' @param nboot_match How many bootstrap samples should we aggregiate when doing the knn matching? 
-#' 
-#' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
-#' 
-#' @param winsorize Should columns of the raw \code{dfm} be Windorized? 
-#' 
-#' @return A list consiting of \itemize{
-#'   \item estimated category proportions in the unlabeled set (\code{point_readme});
-#'   \item the transformed dfm optimized for quantification (\code{transformed_dfm}); 
-#'   \item (optional) a list of diagnostics (\code{diagnostics}); 
-#' }
-#'
-#' @section References:
-#' \itemize{ 
-#' \item Hopkins, Daniel, and King, Gary (2010), 
-#' \emph{A Method of Automated Nonparametric Content Analysis for Social Science},
-#' \emph{American Journal of Political Science}, Vol. 54, No. 1, January 2010, p. 229-247. 
-#' \url{https://gking.harvard.edu/files/words.pdf} 
-#' 
-#' \item Jerzak, Connor, King, Gary, and Strezhnev, Anton. Working Paper. 
-#' \emph{An Improved Method of Automated Nonparametric Content Analysis for Social Science}. 
-#' \url{https://gking.harvard.edu/words} 
-#' }
-#' 
-#' @examples 
-#' #set seed 
-#' set.seed(1)
-#' 
-#' #Generate synthetic 25-d word vector corpus. 
-#' my_wordVecs <- matrix(rnorm(11*25), ncol = 25)
-#' row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be")
-#' 
-#' #Generate 100 ``documents'' of 5-10 words each. 
-#' my_documentText <- replicate(100, 
-#'                              paste(sample(row.names(my_wordVecs), 
-#'                                           sample(5:10, 1), 
-#'                                           replace = T), 
-#'                                    collapse = " ") ) 
-#' 
-#' #Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled. 
-#' my_labeledIndicator <- rep(1, times = 100)
-#' my_labeledIndicator[51:100] <- 0
-#' 
-#' #Assign category membership randomly 
-#' my_categoryVec <- sample(c("C1", "C2", "C3", "C4"), 100, replace = T)
-#' true_unlabeled_pd <- prop.table(table(my_categoryVec[my_labeledIndicator==0]))
-#' my_categoryVec[my_labeledIndicator == 0] <- NA
-#' 
-#' #Get word vector summaries 
-#' my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
-#' 
-#' #perform estimation
-#' readme_results <- readme(dfm = my_dfm,  
-#'                          labeledIndicator = my_labeledIndicator, 
-#'                          categoryVec = my_categoryVec, 
-#'                          nboot = 2, sgd_iters = 500)
-#'print(readme_results$point_readme)
-#'
-#' @export 
 start_reading <- function(nDim,nProj=20){
-  eval_text = sprintf('require(tensorflow, quietly = T)
+  eval_text = sprintf('
   tf$reset_default_graph()
   G_ = tf$Graph()
   with(G_$as_default(), {
