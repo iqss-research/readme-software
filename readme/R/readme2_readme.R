@@ -95,7 +95,6 @@
 #'
 #' @export 
 readme <- function(dfm = NULL,
-                   dfm_cmd = NULL, 
                    labeledIndicator,
                    categoryVec, 
                    nboot          = 4,  
@@ -154,7 +153,8 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   
   #Winsorize
-  dfm_labeled = as.matrix(data.table::fread(cmd = dfm_cmd$labeled_cmd))[,-1]
+  browser() 
+  dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
   WinsMat = function(dfm_, values_){ 
       sapply(1:ncol(dfm_), 
