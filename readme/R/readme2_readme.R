@@ -238,7 +238,7 @@ IL_input = dfm_labeled[grab_samp(),]
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
     
     if(dfm_class == "list"){ 
-      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     } 
     if(dfm_class != "list"){ 
       out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_labeled, WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
