@@ -155,8 +155,9 @@ readme <- function(dfm = NULL,
   # Initialize tensorflow
   
   #Winsorize
-  browser() 
-  dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]
+  dfm_class = class(dfm)
+  if(dfm_class == "list"){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]} 
+  if(dfm_class != "list"){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)} 
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
   WinsMat = function(dfm_, values_){ 
       sapply(1:ncol(dfm_), 
@@ -236,7 +237,12 @@ IL_input = dfm_labeled[grab_samp(),]
     out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
     
-    out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    if(dfm_class == "list"){ 
+      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm_cmd$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    } 
+    if(dfm_class != "list"){ 
+      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_labeled, WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    } 
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
     
     ### Here ends the SGD for generating optimal document-feature matrix.
