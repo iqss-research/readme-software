@@ -95,25 +95,24 @@
 #'
 #' @import tensorflow 
 #' @export 
-readme <- function(dfm = NULL,
+readme <- function(dfm , 
                    labeledIndicator,
                    categoryVec, 
                    nboot          = 4,  
                    sgd_iters      = 1000,
+                   ndim = NULL, 
                    numProjections = 20,
                    dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
-                   minMatch       = 5,
+                   minMatch       = 8,
                    nboot_match    = 50,
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F, 
                    nCores = 1L, 
                    nCores_OnJob = 1L ){ 
-  require(tensorflow, quietly = T)
-  start_reading(nDim=600,nProj=20)
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -169,6 +168,10 @@ readme <- function(dfm = NULL,
                return( zap )   })
   }
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
+  
+  require(tensorflow, quietly = T)
+  start_reading(nDim=ncol(dfm_labeled),nProj=numProjections)
+  
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -451,7 +454,7 @@ start_reading <- function(nDim,nProj=20){
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                0.10 * tf$reduce_mean(Spread_tf) )
+                                0.10 * tf$reduce_mean(tf$log(Spread_tf) ) )
     
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
