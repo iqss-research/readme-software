@@ -169,7 +169,7 @@ readme <- function(dfm ,
   }
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   
-  if(!"tensorflow" %in% loadedNamespaces()){require(tensorflow, quietly = T)}
+  require(tensorflow, quietly = T)
   start_reading(nDim=ncol(dfm_labeled),nProj=numProjections)
   
   FinalParams_LIST <- list(); tf_junk <- ls()
