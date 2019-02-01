@@ -1,3 +1,5 @@
+#library(quadprog)
+
 va2 <-
   function(termMatrix,seed, nsymps=2, ...) {
     # This is the function which runs all of the VA2 clusters and merges them into a single "ensemble" estimate.
@@ -234,7 +236,7 @@ va2 <-
       if (!is.null(orthnorm)) {
         oind<-orthnorm
         for ( i in oind)
-          omat[i,] <- omat[i,]/c(t(omat[i,]%*%omat[i,]))^0.5
+          omat[i,] <- c(omat[i,])/c(t(omat[i,]%*%omat[i,]))^0.5
       }
       return(omat)
     }
@@ -316,9 +318,6 @@ va2 <-
     }
     
     mnlclassifier <- function(data){
-      
-      ## load mnl library
-      #library2(maxent, loadin = F)
       
       # Fit MNL classifier
       #max_out <- maxent::maxent(feature_matrix=data$train[,2:length(data$train[1,])], 

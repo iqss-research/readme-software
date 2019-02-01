@@ -1,7 +1,6 @@
 GetLabeledUnlabeledIndices <- function(csv_category, labeled_sz, unlabeled_sz, sampling_scheme, 
-                                       docSummaries_input = NULL){ 
+                                       docSummaries_input = NULL, ProjectionsMat_input = NULL){ 
 if(sampling_scheme == "JustPermutations"){ 
-  print("BEGIN Just Permutations")
   labeled_indices <- sample(1:length(csv_category), labeled_sz, replace = F)
   remaining_indices <- (1:length(csv_category))
   remaining_indices <- remaining_indices[!remaining_indices %in% labeled_indices]
@@ -10,16 +9,13 @@ if(sampling_scheme == "JustPermutations"){
 } 
   
 if(sampling_scheme == "firat2018"){ 
-    print("BEGIN firat2018")
-    temp_ <- firat2018(csv_category_ = csv_category,
-                       INPUT_labeled_sz = labeled_sz, 
+    temp_ <- firat2018(csv_category_ = csv_category, INPUT_labeled_sz = labeled_sz, 
                        INPUT_unlabeled_sz = unlabeled_sz)
     labeled_indices  <- temp_$labeled_indices 
     unlabeled_indices   <- temp_$unlabeled_indices 
 } 
   
 if(sampling_scheme == "MinDiv"){ 
-  print("BEGIN Min Div.")
   bestV <- Inf
   for(i in 1:1000){ 
       labeled_indices <- sample(1:length(csv_category), labeled_sz, replace = F)
@@ -47,7 +43,6 @@ if(sampling_scheme == "MinDiv"){
 } 
 
 if(sampling_scheme == "MaxDiv"){ 
-  print("BEGIN Max Div.")
   bestV <- -Inf
   for(i in 1:1000){ 
     labeled_indices <- sample(1:length(csv_category), labeled_sz, replace = F)
@@ -75,62 +70,53 @@ if(sampling_scheme == "MaxDiv"){
 }
 
 if(sampling_scheme == "Historical"){ 
-  print("BEGIN Historical")
-  HistoricalIndices <- historical_fxn(INPUT_CAT = corpus_categoryVec , INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
-  unlabeled_indices <- HistoricalIndices$unlabeled_indices
-  labeled_indices <- HistoricalIndices$labeled_indices
-} 
-
-if(sampling_scheme == "HistoricalHugeTrain"){ 
-  print("HistoricalHugeTrain")
-  HistoricalIndices <- historical_fxn(INPUT_DATA = csv_category, INPUT_CAT = csv_category , 
-                                      INPUT_labeled_sz = nrow(csv_category)-unlabeled_sz, 
-                                      INPUT_unlabeled_sz = unlabeled_sz)
+  HistoricalIndices <- historical_fxn(INPUT_CAT = csv_category , INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
   unlabeled_indices <- HistoricalIndices$unlabeled_indices
   labeled_indices <- HistoricalIndices$labeled_indices
 } 
 
 if(sampling_scheme == "HistoricalVarySampSize"){ 
-  print("BEGIN_HistoricalVarySampSize")
+  train_sz_sampled = sample(c(100, 300, 500, 1000), 1)
+  test_sz_sampled =  unlabeled_sz
+  if(train_sz_sampled+test_sz_sampled >  length(csv_category)){
+    train_sz_sampled = length(csv_category) / 2
+    test_sz_sampled =  min(length(csv_category)-train_sz_sampled, unlabeled_sz)
+  }
   HistoricalIndices <- historical_fxn(INPUT_CAT = csv_category , 
-                                      INPUT_labeled_sz = sample(c(100, 300, 500, 1000), 1), 
-                                      INPUT_unlabeled_sz = unlabeled_sz)
+                                      INPUT_labeled_sz = train_sz_sampled, 
+                                      INPUT_unlabeled_sz = min(length(csv_category)-train_sz_sampled, 
+                                                                unlabeled_sz) )  
   unlabeled_indices <- HistoricalIndices$unlabeled_indices
   labeled_indices <- HistoricalIndices$labeled_indices
 } 
 
-if(sampling_scheme == "Historical2"){ 
-  print("BEGIN Historical2")
-  HistoricalIndices <- historical_fxn2(INPUT_CAT = csv_category , INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
+if(sampling_scheme == "Sequential"){ 
+  HistoricalIndices <- sequential_fxn(INPUT_CAT = csv_category , INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
   unlabeled_indices <- HistoricalIndices$unlabeled_indices
   labeled_indices <- HistoricalIndices$labeled_indices
 } 
 
-if(sampling_scheme == "Historical3"){ 
-  print("BEGIN Historical3")
-  HistoricalIndices <- historical_fxn3(INPUT_CAT = csv_category , INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
+if(sampling_scheme == "HistoricalMaxU"){ 
+  HistoricalIndices <- historical_maxout(INPUT_CAT = csv_category , INPUT_labeled_sz = labeled_sz)
   unlabeled_indices <- HistoricalIndices$unlabeled_indices
   labeled_indices <- HistoricalIndices$labeled_indices
 } 
+  
+  if(sampling_scheme == "HistoricalMaxL"){ 
+    HistoricalIndices <- historical_maxout(INPUT_CAT = csv_category , INPUT_labeled_sz = length(csv_category)-unlabeled_sz)
+    unlabeled_indices <- HistoricalIndices$unlabeled_indices
+    labeled_indices <- HistoricalIndices$labeled_indices
+  } 
+  
 
 if(sampling_scheme == "Ahistorical_NoReuse"){ 
-  print("BEGIN Ahistorical NoReuse 1")
-  AHistoricalIndices <- try(ahistorical_fxn(INPUT_CAT = csv_category ,
-                                        INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz),T) 
-  if(class(AHistoricalIndices) == "try-error"){
-    AHistoricalIndices <- try(ahistorical_fxn(INPUT_CAT = csv_category ,
-                                              INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz),T) 
-  }
-  if(class(AHistoricalIndices) == "try-error"){
-    AHistoricalIndices <- try(ahistorical_fxn(INPUT_CAT = csv_category ,
-                                              INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz),T) 
-  }
+  AHistoricalIndices <- ahistorical_fxn(INPUT_CAT = csv_category ,
+                                        INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
   labeled_indices <- AHistoricalIndices$labeled_indices
   unlabeled_indices <- AHistoricalIndices$unlabeled_indices
 } 
 
 if(sampling_scheme == "Ahistorical_NoReuse2"){ 
-  print("BEGIN Ahistorical NoReuse 2")
   AHistoricalIndices <- ahistorical_fxn2(INPUT_CAT = csv_category ,
                                         INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz)
   labeled_indices <- AHistoricalIndices$labeled_indices
@@ -139,7 +125,6 @@ if(sampling_scheme == "Ahistorical_NoReuse2"){
 
 previousTestSize <- NULL 
 if(sampling_scheme == "Ahistorical_aykut"){
-  print("BEGIN Aykut Ahistorical")
   AHistoricalIndices_aykut <- aykut_fxn(INPUT_CAT = csv_category ,
                                         INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz, 
                                           previousTestSize=previousTestSize) 
@@ -150,58 +135,53 @@ if(sampling_scheme == "Ahistorical_aykut"){
 
 if(sampling_scheme == "Ahistorical_aykut_quantification"){
   previousTestSize <- NULL 
-  print("BEGIN Aykut Ahistorical 2")
   AHistoricalIndices_aykut_quantification <- aykut_fxn_quantification(INPUT_CAT = csv_category ,
-                                                                      INPUT_labeled_sz = labeled_sz, unlabeled_sz = unlabeled_sz) 
+                                                                      INPUT_labeled_sz = labeled_sz, INPUT_unlabeled_sz = unlabeled_sz) 
   labeled_indices <- AHistoricalIndices_aykut_quantification$labeled_indices
   unlabeled_indices <- AHistoricalIndices_aykut_quantification$unlabeled_indices
 }
 
 if(sampling_scheme == "breakdown_sampling"){
-  print("BEGIN Breakdown Sampling 1")
-  breakdown_sample_results <- breakdown_sample(INPUT_CAT=csv_category, INPUT_labeled_sz = ceiling(runif(1, 75, 500)), 
-                   unlabeled_sz = unlabeled_sz)
+  breakdown_sample_results <- breakdown_sample(INPUT_CAT=csv_category, 
+                                               INPUT_labeled_sz = labeled_sz, 
+                                               INPUT_unlabeled_sz = unlabeled_sz)
   labeled_indices <- breakdown_sample_results$labeled_indices
   unlabeled_indices <- breakdown_sample_results$unlabeled_indices
 } 
 
 if(sampling_scheme == "breakdown_sampling2"){
-  print("BEGIN Breakdown Sampling 2")
   breakdown_sample2_results <- breakdown_sample2(INPUT_CAT = csv_category, 
-                                               labeled_sz = labeled_sz, 
-                                               unlabeled_sz = unlabeled_sz, 
-                                               VECS_INPUT = docSummaries_input)
+                                                 INPUT_labeled_sz = labeled_sz, 
+                                                 INPUT_unlabeled_sz = unlabeled_sz, 
+                                               PROJECTIONS_INPUT=ProjectionsMat_input)
   labeled_indices <- breakdown_sample2_results$labeled_indices
   unlabeled_indices <- breakdown_sample2_results$unlabeled_indices
 } 
 
 if(sampling_scheme == "Uniform_XDiv"){
-  print("BEGIN Uniform_XDiv")
-  Uniform_XDiv_results <- Uniform_XDiv(INPUT_CAT=csv_category,
-                                       labeled_sz = labeled_sz, 
-                                       unlabeled_sz = unlabeled_sz, 
-                                       VECS_INPUT=docSummaries_input)
+  Uniform_XDiv_results <- Uniform_XDiv(INPUT_CAT  = csv_category,
+                                       INPUT_labeled_sz = labeled_sz, 
+                                       INPUT_unlabeled_sz = unlabeled_sz, 
+                                       PROJECTIONS_INPUT=ProjectionsMat_input)
   labeled_indices <- Uniform_XDiv_results$labeled_indices
   unlabeled_indices <- Uniform_XDiv_results$unlabeled_indices
 } 
 
 if(sampling_scheme == "Max_XDiv"){
-  print("BEGIN Max_XDiv")
   Max_XDiv_results <- Max_XDiv(INPUT_CAT=csv_category, 
-                               labeled_sz = labeled_sz, 
-                               unlabeled_sz = unlabeled_sz, 
-                               VECS_INPUT=docSummaries_input)
+                               INPUT_labeled_sz = labeled_sz, 
+                               INPUT_unlabeled_sz = unlabeled_sz, 
+                               PROJECTIONS_INPUT=ProjectionsMat_input)
   labeled_indices <- Max_XDiv_results$labeled_indices
   unlabeled_indices <- Max_XDiv_results$unlabeled_indices
 } 
 
 if(sampling_scheme == "Min_XDiv"){
-  print("BEGIN Min_XDiv")
   Min_XDiv_results <- Min_XDiv(INPUT_DATA = csv_category, 
                                INPUT_CAT=csv_category, 
-                               labeled_sz = labeled_sz, 
-                               unlabeled_sz = unlabeled_sz, 
-                               VECS_INPUT=docSummaries_input)
+                               INPUT_labeled_sz = labeled_sz, 
+                               INPUT_unlabeled_sz = unlabeled_sz, 
+                               PROJECTIONS_INPUT=ProjectionsMat_input)
   labeled_indices <- Min_XDiv_results$labeled_indices
   unlabeled_indices <- Min_XDiv_results$unlabeled_indices
 } 

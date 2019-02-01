@@ -16,6 +16,9 @@
 #Save the embeddings in "./readme-software/data" as a .txt file where the first entry is the word key and the remaining entries are the features.
 #The formatting should be the same as in this database of pre-trained vectors: http://nlp.stanford.edu/data/glove.twitter.27B.zip
 
+#clear workspace 
+rm(list=ls())
+
 #Set directory, modify as needed. 
 mainDir <- "~/Downloads/readme-software" 
 setwd(mainDir)
@@ -30,9 +33,6 @@ iterations <- 1
 wordVecs_pointer <- "~/Downloads/glove.twitter.27B.200d.txt" #from <http://nlp.stanford.edu/data/glove.twitter.27B.zip>
 
 #Run battery. 
-#For users interested in speeding up this protocol, 
-#the ``for(ijack in global_iter_seq){''loop in "./support/readme2_master_public.R"
-#loop can be modified to be run entirely in parallel. 
 source("./support/readme2_sim_internals.R")
 
 #Check out the results! 

@@ -488,7 +488,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
   readme_graph$finalize()
 
   ', nDim,nProj)
-  if(  !"readme_graph" %in% ls(env = globalenv()) | regraph == T){
+  if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
       print("Performance warning: Using variable number of continuous features requires rebuilding tensorflow graph...")
       rm(readme_graph, envir = globalenv()); tf$reset_default_graph()

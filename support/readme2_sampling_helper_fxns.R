@@ -6,7 +6,8 @@ rdirichlet <- function(n, alpha) {
   return( ret_q ) 
 }
 
-firat2018 <- function(csv_category_,INPUT_labeled_sz,INPUT_unlabeled_sz){ 
+
+firat2018 <- function(csv_category_, INPUT_labeled_sz, INPUT_unlabeled_sz){ 
   labeled_indices <- sample(1:length(csv_category_), INPUT_labeled_sz)
   labeled_pd <- prop.table(table(csv_category_[labeled_indices]))
   n_cat <- length(labeled_pd)
@@ -80,7 +81,7 @@ historical_fxn <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_s
   unlabeled_indices <- na.omit( unlabeled_indices )  
   labeled_indices <- na.omit( labeled_indices )  
   
-  ## First INPUT_labeled_sz docs are the labeled set.
+  ## First labeled_sz docs are the labeled set.
   
   ### Combine unlabeled set and labeled set 
   INPUT_CAT <- as.character( INPUT_CAT  )
@@ -95,7 +96,7 @@ historical_fxn <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_s
               unlabeled_indices = unlabeled_indices))
 } 
 
-historical_fxn2 <- function( INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100){ 
+sequential_fxn <- function( INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100){
   ## Get all indices
   all_indices <- 1:length(INPUT_CAT)
   
@@ -118,13 +119,14 @@ historical_fxn2 <- function( INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled
   labeled_indices <- joint_indices[1:floor(length(joint_indices)/2)]
   unlabeled_indices <- joint_indices[-c(1:floor(length(joint_indices)/2))]
   
-  INPUT_labeled_sz  <- table(as.character(   INPUT_CAT[labeled_indices]) )
-  unlabeled_indices <- unlabeled_indices[INPUT_CAT[unlabeled_indices] %in% names(INPUT_labeled_sz) ]
+  labeled_sz  <- table(as.character(   INPUT_CAT[labeled_indices]) )
+  unlabeled_indices <- unlabeled_indices[INPUT_CAT[unlabeled_indices] %in% names(labeled_sz) ]
   return(list(labeled_indices = labeled_indices, 
               unlabeled_indices = unlabeled_indices))
-} 
+}
 
-historical_fxn3 <- function( INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100){ 
+historical_maxout <- function( INPUT_CAT , INPUT_labeled_sz = 100, max_sz = 1000){
+  if(INPUT_labeled_sz > max_sz){INPUT_labeled_sz <- max_sz}
   ## Get all indices
   all_indices <- 1:length(INPUT_CAT)
   
@@ -145,10 +147,11 @@ historical_fxn3 <- function( INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled
   }
   
   labeled_indices <- joint_indices[1:length(joint_indices)]
-  unlabeled_indices <- all_indices[!(all_indices %in% labeled_indices)]
+  select_ = which(!(all_indices %in% labeled_indices))
+  unlabeled_indices <- all_indices[sample(select_, min(length(select_), max_sz), replace = F)]
   
-  INPUT_labeled_sz  <- table(as.character(   INPUT_CAT[labeled_indices]) )
-  unlabeled_indices <- unlabeled_indices[INPUT_CAT[unlabeled_indices] %in% names(INPUT_labeled_sz) ]
+  labeled_sz  <- table(as.character(   INPUT_CAT[labeled_indices]) )
+  unlabeled_indices <- unlabeled_indices[INPUT_CAT[unlabeled_indices] %in% names(labeled_sz) ]
   return(list(labeled_indices = labeled_indices, 
               unlabeled_indices = unlabeled_indices))
 } 
@@ -158,62 +161,82 @@ ahistorical_fxn <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
   n_total_docs <- length(INPUT_CAT)
   category_vec <- as.factor(  INPUT_CAT )  
   category_vec_numeric <- as.numeric(  as.factor(category_vec) )  
-  overall_cat_proportions <- c(table( category_vec_numeric ) / sum(table(category_vec_numeric)))
+  overall_cat_proportions <- prop.table(table( category_vec_numeric ))
   nCat <- length(unique( category_vec_numeric ))
   indices_by_cat_master <- indices_by_cat <- tapply(1:length(INPUT_CAT), category_vec_numeric, function(y) y)
   
   return_trial_pd_div <- c() 
   return_unlabeledsz_indices_list <- return_trainsz_indices_list <- list()  
+  minLabeledPerCat = 20
   for(outer_i in 1:10){ 
-    candidate_draws <- rdirichlet(n = 10000, alpha = rep(1, times = nCat)) 
+    candidate_draws <- rdirichlet(n = 500, alpha = rep(1, times = nCat)) 
+    colnames(candidate_draws) <- 1:nCat
     tempa <- candidate_draws*INPUT_labeled_sz
-    tempa[tempa<30] <- 0
-    labeled_pd <- candidate_draws[which(rowSums(tempa!=0)>2)[1],] #take first as train pd 
+    tempa[tempa<minLabeledPerCat] <- 0
+    labeled_pd <- candidate_draws[which(rowSums(tempa!=0)>=(max(2,nCat-2)))[1],] #take first as train pd 
     train_target_numb <- sapply(ceiling(labeled_pd * INPUT_labeled_sz), function(x) x)
-    train_target_numb[train_target_numb < 30] <- 0 
+    train_target_numb[train_target_numb < minLabeledPerCat] <- 0 
     train_target_numb <- round(INPUT_labeled_sz * (train_target_numb/ (sum(train_target_numb))))
-    labeled_pd <- train_target_numb/sum(train_target_numb)
+    labeled_pd <- prop.table(train_target_numb)
+    labeled_pd = labeled_pd[which(labeled_pd > 0)]
+    train_target_numb <- train_target_numb[train_target_numb> 0]
+    candidate_draws <- candidate_draws[-1,names(labeled_pd)]
 
-    pr_div_vec <- apply(candidate_draws[-1,], 1, function(ax){ 
-        unlabeled_target_numb <- sapply(ceiling(ax * INPUT_unlabeled_sz), function(x) x)
-        unlabeled_target_numb[train_target_numb == 0] <- 0 
-        unlabeled_pd_cand <- unlabeled_target_numb/sum(unlabeled_target_numb)
-        sum(abs(labeled_pd-unlabeled_pd_cand))
+    pr_div_vec <- apply(candidate_draws, 1, function(ax){
+        unlabeled_pd_cand <- prop.table(sapply(ceiling(ax * INPUT_unlabeled_sz), function(x) x))
+      
+        unlabeled_target_numb <- unlabeled_pd_cand * INPUT_unlabeled_sz
+        
+        #get possible indices 
+        unlabeled_indices_list <- labeled_indices_list <- list() 
+        indices_by_cat <- indices_by_cat_master[names(train_target_numb)]
+        for(cati in names(train_target_numb)){
+          labeled_indices_list[[cati]] <- unlist(sample(indices_by_cat[[cati]], size = min(c(train_target_numb[cati], 
+                                                                                             length(indices_by_cat[[cati]]))), replace = F))
+          remaining_cands <- unlist( indices_by_cat[[cati]][!indices_by_cat[[cati]] %in% labeled_indices_list[[cati]]])
+          try_t = try(sample(remaining_cands, size = min(c(unlabeled_target_numb[cati], length(remaining_cands))), replace = F), T)
+          if(class(try_t) == "try-error"){try_t <- c()}
+          unlabeled_indices_list[[cati]] <- try_t
+        } 
+        labeled_indices <- unlist(labeled_indices_list)
+        unlabeled_indices <- unlist(unlabeled_indices_list)
+        
+        labeled_pd <- prop.table(table(INPUT_CAT[labeled_indices] ) )
+        unlabeled_pd <- prop.table(table( INPUT_CAT[unlabeled_indices] ) )
+        sum(abs(labeled_pd-unlabeled_pd))
     } ) 
     
     div_from_target <- abs(pr_div_vec - target_pr_d_divergence)
-    unlabeled_pd <- candidate_draws[-1,][which(div_from_target == min(div_from_target))[1],]
-    unlabeled_target_numb <- ceiling(unlabeled_pd * INPUT_unlabeled_sz)
-    unlabeled_target_numb[train_target_numb == 0] <- 0 
-    unlabeled_target_numb <- round(INPUT_unlabeled_sz * (unlabeled_target_numb/sum(unlabeled_target_numb)))
+    unlabeled_pd <- candidate_draws[which.min(div_from_target)[1],]
+    unlabeled_target_numb <- unlabeled_pd * INPUT_unlabeled_sz
 
     #get indices 
     unlabeled_indices_list <- labeled_indices_list <- list() 
-    indices_by_cat <- indices_by_cat_master#[names(train_target_numb)]
-    for(ij in 1:length(train_target_numb)){
-      labeled_indices_list[[ij]] <- sample(indices_by_cat[[ij]], size = min(c(train_target_numb[ij], 
-                                                                               length(indices_by_cat[[ij]]))), replace = F)
-      remaining_cands <- indices_by_cat[[ij]][!indices_by_cat[[ij]] %in% labeled_indices_list[[ij]]]
-      unlabeled_indices_list[[ij]] <- sample(remaining_cands, size = min(c(unlabeled_target_numb[ij], 
-                                                                      length(remaining_cands))), replace = F)
+    indices_by_cat <- indices_by_cat_master[names(train_target_numb)]
+    for(cati in names(train_target_numb)){
+      labeled_indices_list[[cati]] <- unlist(sample(indices_by_cat[[cati]], size = min(c(train_target_numb[cati], 
+                                                                               length(indices_by_cat[[cati]]))), replace = F))
+      remaining_cands <- unlist( indices_by_cat[[cati]][!indices_by_cat[[cati]] %in% labeled_indices_list[[cati]]])
+      try_t = try(sample(remaining_cands, size = min(c(unlabeled_target_numb[cati], length(remaining_cands))), replace = F), T)
+      if(class(try_t) == "try-error"){try_t <- c()}
+      unlabeled_indices_list[[cati]] <- try_t
     } 
-    
     labeled_indices <- unlist(labeled_indices_list)
     unlabeled_indices <- unlist(unlabeled_indices_list)
   
-    labeled_pd <- table(INPUT_CAT[labeled_indices] ) / sum(table( INPUT_CAT[labeled_indices] ) ) 
-    unlabeled_pd <- table( INPUT_CAT[unlabeled_indices] ) / sum(table( INPUT_CAT[unlabeled_indices] ) ) 
+    labeled_pd <- prop.table(table(INPUT_CAT[labeled_indices] ) )
+    unlabeled_pd <- prop.table(table( INPUT_CAT[unlabeled_indices] ) )
     
-    myDiv <- try(sum(abs(unlabeled_pd - labeled_pd )  ),T) 
+    myDiv <- sum(abs(unlabeled_pd - labeled_pd )  )
     return_trainsz_indices_list[[outer_i]] <- labeled_indices
     return_unlabeledsz_indices_list[[outer_i]] <- unlabeled_indices
     return_trial_pd_div[outer_i] <- myDiv ;
   } 
   
-  
   #get final labeled + unlabeled indices 
-  diff_v <-abs(return_trial_pd_div - target_pr_d_divergence) 
-  select_index <- which(diff_v == min(diff_v))[1]
+  nu_size = lapply(return_unlabeledsz_indices_list, function(x){length(x)})
+  diff_v <-abs(return_trial_pd_div - target_pr_d_divergence) + 20*(nu_size<25)
+  select_index <- which.min(diff_v)[1]
   labeled_indices <- na.omit( return_trainsz_indices_list[[select_index]] )
   unlabeled_indices <- na.omit(  return_unlabeledsz_indices_list[[select_index]] ) 
   
@@ -221,11 +244,11 @@ ahistorical_fxn <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
        unlabeled_indices = unlabeled_indices)
 } 
 
-ahistorical_fxn2 <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){ 
+ahistorical_fxn2 <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
   n_total_docs <- length(INPUT_CAT)
   category_vec <- as.factor(  INPUT_CAT )  
   category_vec_numeric <- as.numeric(  as.factor(category_vec) )  
-  overall_cat_proportions <- c(table( category_vec_numeric ) / sum(table(category_vec_numeric)))
+  overall_cat_proportions <- prop.table(table( category_vec_numeric ))
   nCat <- length(unique( category_vec_numeric ))
   indices_by_cat_master <- tapply(1:length(INPUT_CAT), category_vec_numeric, function(y) y)
   
@@ -241,17 +264,33 @@ ahistorical_fxn2 <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
     labeled_pd_target <- candidate_draws[1,]
     unlabeled_pd_target <- candidate_draws[2,]
     names(labeled_pd_target) <- names(unlabeled_pd_target) <- 1:length(unlabeled_pd_target)
-
+    
     #get train indices 
-    thres_train <- 30 
+    thres_train <- 30
     train_target_numb <- ceiling(labeled_pd_target * INPUT_labeled_sz)
     unlabeled_target_numb <- ceiling(unlabeled_pd_target * INPUT_unlabeled_sz)
     unlabeled_target_numb[train_target_numb<thres_train] <- 0 
     train_target_numb[train_target_numb<thres_train] <- 0
-    
+
     IsZeroTrain <- (train_target_numb==0)
     if(mean(IsZeroTrain) <= 0.5 ){
-      while_ok <- T
+      unlabeled_target_numb <- unlabeled_target_numb[train_target_numb!=0]
+      train_target_numb <- train_target_numb[train_target_numb!=0]
+      train_target_numb <- ceiling(INPUT_labeled_sz *  prop.table(train_target_numb))
+      unlabeled_target_numb <- ceiling(INPUT_unlabeled_sz *  prop.table(unlabeled_target_numb))
+      unlabeled_indices_list <- labeled_indices_list <- list() 
+      indices_by_cat <- indices_by_cat_master[names(train_target_numb)]
+      for(ij in 1:length(train_target_numb)){
+        #sort the indices 
+        labeled_indices_list[[ij]] <- sample(indices_by_cat[[ij]], size = min(c(train_target_numb[ij], 
+                                                                                length(indices_by_cat[[ij]]))), replace = F)
+        remaining_cands <- indices_by_cat[[ij]][!indices_by_cat[[ij]] %in% labeled_indices_list[[ij]]]
+        unlabeled_indices_list[[ij]] <- sample(remaining_cands, size = min(c(unlabeled_target_numb[ij], 
+                                                                             length(remaining_cands))), replace = F)
+      } 
+      if(length(unlist(unlabeled_indices_list)) > 30){ 
+        while_ok <- T
+      }
     } 
     
     if(mean(IsZeroTrain) > 0.5){
@@ -264,7 +303,6 @@ ahistorical_fxn2 <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
     } 
       
     counted_ <- counted_ + 1 
-    
     if(counted_  > 100000){
       while_ok <- T
       train_target_numb <- train_target_numb_best
@@ -274,11 +312,10 @@ ahistorical_fxn2 <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
   
     unlabeled_target_numb <- unlabeled_target_numb[train_target_numb!=0]
     train_target_numb <- train_target_numb[train_target_numb!=0]
-    train_target_numb <- ceiling(INPUT_labeled_sz *  train_target_numb/sum(train_target_numb))
-    unlabeled_target_numb <- ceiling(INPUT_unlabeled_sz *  unlabeled_target_numb/sum(unlabeled_target_numb))
+    train_target_numb <- ceiling(INPUT_labeled_sz *  prop.table(train_target_numb))
+    unlabeled_target_numb <- ceiling(INPUT_unlabeled_sz *  prop.table(unlabeled_target_numb))
     unlabeled_indices_list <- labeled_indices_list <- list() 
     indices_by_cat <- indices_by_cat_master[names(train_target_numb)]
-    
     for(ij in 1:length(train_target_numb)){
       #sort the indices 
       labeled_indices_list[[ij]] <- sample(indices_by_cat[[ij]], size = min(c(train_target_numb[ij], 
@@ -311,12 +348,10 @@ ahistorical_fxn2 <- function(INPUT_CAT, INPUT_labeled_sz, INPUT_unlabeled_sz){
     }
     if(  (length(unlabeled_indices) >= INPUT_unlabeled_sz-10) & (length(A1) == length(A2)) ){outer_ok <- T  }
     outer_counter <- outer_counter + 1 
-    } 
+  }
     
-  
     labeled_pd <- table( INPUT_CAT[labeled_indices] ) / sum(table( INPUT_CAT[labeled_indices] ) ) 
     unlabeled_pd <- table( INPUT_CAT[unlabeled_indices] ) / sum(table( INPUT_CAT[unlabeled_indices] ) ) 
-    print(paste("PrD Target:" , sum(abs(unlabeled_pd-labeled_pd))))
       
   list(labeled_indices = labeled_indices, 
        unlabeled_indices = unlabeled_indices)
@@ -484,41 +519,31 @@ breakdown_sample <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled
        unlabeled_indices = na.omit(unlabeled_indices_keep) ) )  
 } 
 
-breakdown_sample2 <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, VECS_INPUT=NULL){ 
-  mySharpy <- colSums( ( t(VECS_INPUT) - colMeans(VECS_INPUT) )^2 / apply(VECS_INPUT, 2, var) )
+breakdown_sample2 <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, PROJECTIONS_INPUT=NULL){ 
+  mySharpy <- colSums( ( t(PROJECTIONS_INPUT) - colMeans(PROJECTIONS_INPUT) )^2 / apply(PROJECTIONS_INPUT, 2, var) )
   mySharpy <- mySharpy + rnorm(length(mySharpy), mean = 0, sd = 0.0001 * sd(mySharpy))
   mySharpy_sorted <- sort(mySharpy, decreasing = T)
   labeled_indices_keep <- which(mySharpy >= mySharpy_sorted[INPUT_labeled_sz ])
   remaining_indices <- (1:length(mySharpy))[!(1:length(mySharpy) %in% labeled_indices_keep)]
   unlabeled_indices_keep <- sample(remaining_indices , 
                                min(length(remaining_indices), INPUT_unlabeled_sz), replace =F ) 
-
+  
   return(  list(labeled_indices = labeled_indices_keep, 
                 unlabeled_indices = na.omit(unlabeled_indices_keep) ) )
 } 
 
-XDiv_helper_fxn <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, VECS_INPUT=NULL){ 
-    red_indices <- sample(1:nrow(VECS_INPUT), min(nrow(VECS_INPUT), 500))
-    DOCS_MAT_USE <- as.matrix(VECS_INPUT[red_indices,] )  
-    INPUT_CAT_RED_USE <- INPUT_CAT[red_indices]
-    
-    labeledIndicator_XDiv <- rep(0, times = nrow(VECS_INPUT))
-    labeledIndicator_XDiv[red_indices] <- 1 
-    DOCS_MAT <- readme(dfm = VECS_INPUT, 
-           labeledIndicator = labeledIndicator_XDiv, 
-           categoryVec = INPUT_CAT_RED_USE, 
-           nboot = 1, justTransform = T)$transformed_dfm
-    n_cand <- 1000
-    myDiv_vec <- rep(NA, times = n_cand)
-    labeled_mat <- matrix(logical(), nrow = n_cand, ncol = INPUT_labeled_sz)
-    unlabeled_mat <- matrix(logical(), nrow = n_cand, ncol = INPUT_unlabeled_sz)
+XDiv_helper_fxn <- function(INPUT_CAT , INPUT_labeled_sz_ = 100, INPUT_unlabeled_sz_ = 100, PROJECTIONS_INPUT2 =NULL){ 
+  n_cand <- 1000
+  myDiv_vec <- rep(NA, times = n_cand)
+  labeled_mat <- matrix(logical(), nrow = n_cand, ncol = INPUT_labeled_sz_)
+  unlabeled_mat <- matrix(logical(), nrow = n_cand, ncol = INPUT_unlabeled_sz_)
   for(xcv in 1:n_cand){
-    labeled_indices <- sample(1:nrow(DOCS_MAT), size = INPUT_labeled_sz, replace = F)
-    remaining_indices <- (1:nrow(DOCS_MAT))[!(1:nrow(DOCS_MAT) %in% labeled_indices)]
-    unlabeled_indices <- sample(remaining_indices, size = INPUT_unlabeled_sz, replace = F)
+    labeled_indices <- sample(1:nrow(PROJECTIONS_INPUT2), size = INPUT_labeled_sz_, replace = F)
+    remaining_indices <- (1:nrow(PROJECTIONS_INPUT2))[!(1:nrow(PROJECTIONS_INPUT2) %in% labeled_indices)]
+    unlabeled_indices <- sample(remaining_indices, size = INPUT_unlabeled_sz_, replace = F)
     
-    DOCS_TRAIN <- DOCS_MAT[labeled_indices,]
-    DOCS_TEST <- DOCS_MAT[unlabeled_indices,]
+    DOCS_TRAIN <- PROJECTIONS_INPUT2[labeled_indices,]
+    DOCS_TEST <- PROJECTIONS_INPUT2[unlabeled_indices,]
     X_L <- try(tapply(1:nrow(DOCS_TRAIN), as.character(INPUT_CAT[labeled_indices]), 
                       function(as){colMeans(DOCS_TRAIN[as,])}), T)
     X_L <- try(do.call(rbind, X_L), T) 
@@ -538,8 +563,9 @@ XDiv_helper_fxn <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_
               unlabeled_mat = unlabeled_mat))
 }
 
-Uniform_XDiv <- function(INPUT_DATA, INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, VECS_INPUT=NULL){ 
-  XDiv_helper_results <- XDiv_helper_fxn(INPUT_CAT =INPUT_CAT , INPUT_labeled_sz = INPUT_labeled_sz, INPUT_unlabeled_sz = INPUT_unlabeled_sz, VECS_INPUT=VECS_INPUT)
+Uniform_XDiv <- function(INPUT_DATA, INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, PROJECTIONS_INPUT=NULL){ 
+  XDiv_helper_results <- XDiv_helper_fxn(INPUT_CAT = INPUT_CAT , INPUT_labeled_sz_ = INPUT_labeled_sz, 
+                                         INPUT_unlabeled_sz_ = INPUT_unlabeled_sz, PROJECTIONS_INPUT2=PROJECTIONS_INPUT)
   myDiv_vec <- XDiv_helper_results$myDiv_vec
   labeled_mat <- XDiv_helper_results$labeled_mat
   unlabeled_mat <- XDiv_helper_results$unlabeled_mat
@@ -550,14 +576,14 @@ Uniform_XDiv <- function(INPUT_DATA, INPUT_CAT , INPUT_labeled_sz = 100, INPUT_u
   best_index <- which(dist_value == min(dist_value, na.rm = T) )[1]
   labeled_indices <- labeled_mat[best_index,]
   unlabeled_indices <- unlabeled_mat[best_index,]
-  print(sprintf("Actual: %s", round(myDiv_vec[best_index], 3)))
-  
+
   return(  list(labeled_indices = labeled_indices, 
                 unlabeled_indices = unlabeled_indices ) ) 
 } 
 
-Max_XDiv <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, VECS_INPUT=NULL){ 
-  XDiv_helper_results <- XDiv_helper_fxn(INPUT_CAT =INPUT_CAT , INPUT_labeled_sz = INPUT_labeled_sz, INPUT_unlabeled_sz = INPUT_unlabeled_sz, VECS_INPUT=VECS_INPUT)
+Max_XDiv <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, PROJECTIONS_INPUT=NULL){ 
+  XDiv_helper_results <- XDiv_helper_fxn(INPUT_CAT = INPUT_CAT , INPUT_labeled_sz_ = INPUT_labeled_sz, 
+                                         INPUT_unlabeled_sz_ = INPUT_unlabeled_sz, PROJECTIONS_INPUT2=PROJECTIONS_INPUT)
   myDiv_vec <- XDiv_helper_results$myDiv_vec
   labeled_mat <- XDiv_helper_results$labeled_mat
   unlabeled_mat <- XDiv_helper_results$unlabeled_mat
@@ -566,14 +592,14 @@ Max_XDiv <- function(INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 10
   best_index <- which(myDiv_vec == max(myDiv_vec, na.rm = T) )[1]
   labeled_indices <- labeled_mat[best_index,]
   unlabeled_indices <- unlabeled_mat[best_index,]
-  print(sprintf("Actual: %s", round(myDiv_vec[best_index], 3)))
-  
+
   return(  list(labeled_indices = labeled_indices, 
                 unlabeled_indices = unlabeled_indices ) ) 
 } 
 
-Min_XDiv <- function(INPUT_DATA, INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, VECS_INPUT=NULL){ 
-  XDiv_helper_results <- XDiv_helper_fxn(INPUT_CAT =INPUT_CAT , INPUT_labeled_sz = INPUT_labeled_sz, INPUT_unlabeled_sz = INPUT_unlabeled_sz, VECS_INPUT=VECS_INPUT)
+Min_XDiv <- function(INPUT_DATA, INPUT_CAT , INPUT_labeled_sz = 100, INPUT_unlabeled_sz = 100, PROJECTIONS_INPUT=NULL){ 
+  XDiv_helper_results <- XDiv_helper_fxn(INPUT_CAT = INPUT_CAT , INPUT_labeled_sz_ = INPUT_labeled_sz, 
+                                         INPUT_unlabeled_sz_ = INPUT_unlabeled_sz, PROJECTIONS_INPUT2=PROJECTIONS_INPUT)
   myDiv_vec <- XDiv_helper_results$myDiv_vec
   labeled_mat <- XDiv_helper_results$labeled_mat
   unlabeled_mat <- XDiv_helper_results$unlabeled_mat

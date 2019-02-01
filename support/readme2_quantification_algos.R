@@ -1,8 +1,5 @@
 if(T == T){ 
-  #check to see that these are installed 
-  #require(linprog)
   #require(quadprog)
-  
   #Optimization Functions
   quad.constrain_QUANT<-function(Y,X){ 
     K<-ncol(X)
@@ -10,7 +7,7 @@ if(T == T){
     quadprog::solve.QP(t(X)%*%X,matrix(Y,nrow=1)%*%X, Amat, c(1, rep(0,K), rep(-1,K)), meq=1)$solution
   }
   
-  hellinger_QUANT <-function(Y,X, start=NULL){
+  hellinger_QUANT<-function(Y,X, start=NULL){
     K<-ncol(X)
     if (is.null(start)) start = rep(1/K,K)
     Aeq=matrix(1,ncol=K,nrow=1)
@@ -35,6 +32,7 @@ if(T == T){
     Beq=matrix(1,1,1)
     conf<-function(x) return(list(ceq=NULL,c=NULL))
     #objfun<-function(beta){q<-X%*%beta; q[q<0]<-0; p<-Y; sum(abs(p-q))}
+    #library2(NlcOptim)
     #as.numeric(NlcOptim::NlcOptim(X=matrix(start,K,1), objfun=objfun,Aeq=Aeq,Beq=Beq, lb=matrix(0,K,1), ub=matrix(1,K,1),confun=conf)$p)
     objfun<-function(beta){
       beta <- 1/(1+exp(-beta))
@@ -53,7 +51,8 @@ if(T == T){
     Amat<-rbind(cbind(I,X),cbind(I,-X),c(rep(0,M), rep(1,K)))
     bvec<-c(Y,-Y,1)
     cvec<-c(rep(1,M), rep(0,K))
-    l<- linprog::solveLP(cvec,bvec,Amat,const.dir=c(rep(">=",2*M),"=="),lpSolve=T)
+    library2(linprog)
+    l<-linprog::solveLP(cvec,bvec,Amat,const.dir=c(rep(">=",2*M),"=="),lpSolve=T)
     as.numeric(tail(l$solution[],K))
   }
   
