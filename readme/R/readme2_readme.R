@@ -219,12 +219,10 @@ IL_input = dfm_labeled[grab_samp(),]
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       
                       ### For each iteration of SGDs
-                      print("Training...")
                       t1=Sys.time()
                       for(j in 1:sgdIters){ S_$run(learning_group,eval(parse(text = eval_dict))) } 
-                      print(Sys.time()-t1)
                       
-                      print("Done with this round of training...!")
+                      print(sprintf("Done with this round of training in %s seconds!",round(Sys.time()-t1, 2)))
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
           try(S_$close(), T) 
