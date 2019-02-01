@@ -78,7 +78,7 @@
 #' readme_results <- readme(dfm = my_dfm,  
 #'                          labeledIndicator = my_labeledIndicator, 
 #'                          categoryVec = my_categoryVec, 
-#'                          nboot = 2)
+#'                          nBoot = 2)
 #'print(readme_results$point_readme)
 #'
 #' @docType package

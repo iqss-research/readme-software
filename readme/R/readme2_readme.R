@@ -169,7 +169,7 @@ readme <- function(dfm ,
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   
   require(tensorflow, quietly = T)
-  start_reading(nDim=ncol(dfm_labeled),nProj=numProjections)
+  start_reading(nDim=ncol(dfm_labeled),nProj=numProjections, regraph = (ncol(IL_n) != ncol(dfm_labeled)))
   
   FinalParams_LIST <- list(); tf_junk <- ls()
   
@@ -383,7 +383,7 @@ IL_input = dfm_labeled[grab_samp(),]
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
 }
 
-start_reading <- function(nDim,nProj=20){
+start_reading <- function(nDim,nProj=20,regraph = F){
   eval_text = sprintf('
   tf$reset_default_graph()
   readme_graph = tf$Graph()
@@ -486,7 +486,8 @@ start_reading <- function(nDim,nProj=20){
   readme_graph$finalize()
 
   ', nDim,nProj)
-  if(  !"readme_graph" %in% ls(env = globalenv())){ 
+  if(  !"readme_graph" %in% ls(env = globalenv()) | regraph == T){
+    if(regraph == T){rm(readme_graph, envir = globalenv()); tf$reset_default_graph()}
     eval(parse(text=eval_text), envir = globalenv())
     print("Readme is initialized!")
   } 
