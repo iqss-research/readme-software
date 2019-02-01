@@ -169,7 +169,7 @@ readme <- function(dfm ,
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   
   require(tensorflow, quietly = T)
-  start_reading(nDim=ncol(dfm_labeled),nProj=numProjections, regraph = (ncol(IL_n) != ncol(dfm_labeled)))
+  start_reading(nDim=ncol(dfm_labeled),nProj=numProjections, regraph = (ncol(IL_input) != ncol(dfm_labeled)))
   
   FinalParams_LIST <- list(); tf_junk <- ls()
   
