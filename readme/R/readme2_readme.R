@@ -39,8 +39,10 @@
 #' 
 #' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
 #' 
-#' @param winsorize Should columns of the raw \code{dfm} be Windorized? 
+#' @param nCores How many CPU cores are available? Default is 1. 
 #' 
+#' @param nCores_OnJob How many CPU cores should we make available to tensorflow? Default is 1.
+#'  
 #' @return A list consiting of \itemize{
 #'   \item estimated category proportions in the unlabeled set (\code{point_readme});
 #'   \item the transformed dfm optimized for quantification (\code{transformed_dfm}); 
@@ -200,7 +202,7 @@ IL_input = dfm_labeled[grab_samp(),]
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-                    inter_op_parallelism_threads = nCores_OnJob,intra_op_parallelism_threads = nCores_OnJob) )
+                    inter_op_parallelism_threads = as.integer(nCores_OnJob),intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
           for(iter_i in 1:nboot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
