@@ -170,7 +170,6 @@ readme <- function(dfm ,
   
   require(tensorflow, quietly = T)
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
-  print(regraph_)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   start_reading(nDim=ncol(dfm_labeled),nProj=numProjections, regraph = regraph_)
   
@@ -490,7 +489,10 @@ start_reading <- function(nDim,nProj=20,regraph = F){
 
   ', nDim,nProj)
   if(  !"readme_graph" %in% ls(env = globalenv()) | regraph == T){
-    if(regraph == T){rm(readme_graph, envir = globalenv()); tf$reset_default_graph()}
+    if(regraph == T){
+      print("Performance warning: Using variable number of continuous features requires rebuilding tensorflow graph...")
+      rm(readme_graph, envir = globalenv()); tf$reset_default_graph()
+    }
     eval(parse(text=eval_text), envir = globalenv())
     print("Readme is initialized!")
   } 
