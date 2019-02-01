@@ -487,7 +487,7 @@ start_reading <- function(nDim,nProj=20){
   })
   readme_graph$finalize()
 
-  ', nDim,nProj, nCores)
+  ', nDim,nProj)
   if(  !"readme_graph" %in% ls(env = globalenv())){ 
     eval(parse(text=eval_text), envir = globalenv())
     print("Readme is initialized!")
