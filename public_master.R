@@ -36,5 +36,5 @@ wordVecs_pointer <- "~/Downloads/glove.twitter.27B.200d.txt" #from <http://nlp.s
 source("./support/readme2_sim_internals.R")
 
 #Check out the results! 
-#global_results contains the error values for ~30 other algorithms, as well as various diagnostics. 
+#global_results contains the error values for ~30 other algorithms 
 head(global_results)

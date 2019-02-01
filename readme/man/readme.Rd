@@ -4,11 +4,11 @@
 \alias{readme}
 \title{readme}
 \usage{
-readme(dfm = NULL, labeledIndicator, categoryVec, nboot = 4,
-  sgd_iters = 1000, numProjections = 20, dropout_rate = 0.5,
-  batchSizePerCat = 10, kMatch = 3, batchSizePerCat_match = 20,
-  minMatch = 5, nboot_match = 50, justTransform = F, verbose = F,
-  diagnostics = F, nCores = 1L, nCores_OnJob = 1L)
+readme(dfm, labeledIndicator, categoryVec, nBoot = 4, sgdIters = 1000,
+  ndim = NULL, numProjections = 20, batchSizePerCat = 10,
+  kMatch = 3, batchSizePerCat_match = 20, minMatch = 8,
+  nbootMatch = 50, justTransform = F, verbose = F, diagnostics = F,
+  nCores = 1L, nCores_OnJob = 1L)
 }
 \arguments{
 \item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature.}
@@ -20,13 +20,11 @@ readme(dfm = NULL, labeledIndicator, categoryVec, nboot = 4,
 The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
 \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia.}
 
-\item{nboot}{A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).}
+\item{nBoot}{A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).}
 
-\item{sgd_iters}{How many stochastic gradient descent iterations should be used? Input should be a positive number.}
+\item{sgdIters}{How many stochastic gradient descent iterations should be used? Input should be a positive number.}
 
 \item{numProjections}{How many projections should be calculated? Input should be a positive number. Minimum number of projections = number of categories + 2.}
-
-\item{dropout_rate}{What should the dropout rate be in the sgd optimization? Input should be a positive number.}
 
 \item{batchSizePerCat}{What should the batch size per category be in the sgd optimization and knn matching?}
 
@@ -34,7 +32,7 @@ The entires of this vector should correspond with the rows of \code{dtm}. If \co
 
 \item{batchSizePerCat_match}{What should the batch size per category be in the bagged knn matching?}
 
-\item{nboot_match}{How many bootstrap samples should we aggregiate when doing the knn matching?}
+\item{nbootMatch}{How many bootstrap samples should we aggregiate when doing the knn matching?}
 
 \item{justTransform}{A Boolean indicating whether the user wants to extract the quanficiation-optimized 
 features only.}
@@ -43,7 +41,9 @@ features only.}
 
 \item{diagnostics}{Should diagnostics be returned? Input should be a Boolean.}
 
-\item{winsorize}{Should columns of the raw \code{dfm} be Windorized?}
+\item{nCores}{How many CPU cores are available? Default is 1.}
+
+\item{nCores_OnJob}{How many CPU cores should we make available to tensorflow? Default is 1.}
 }
 \value{
 A list consiting of \itemize{
@@ -105,7 +105,7 @@ my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
 readme_results <- readme(dfm = my_dfm,  
                          labeledIndicator = my_labeledIndicator, 
                          categoryVec = my_categoryVec, 
-                         nboot = 2, sgd_iters = 500)
+                         nBoot = 2, sgdIters = 500)
 print(readme_results$point_readme)
 
 }

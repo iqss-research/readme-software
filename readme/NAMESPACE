@@ -3,6 +3,5 @@
 export(cleanme)
 export(readme)
 export(readme0)
-export(start_reading)
 export(undergrad)
 import(tensorflow)
