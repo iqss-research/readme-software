@@ -16,13 +16,13 @@
 #' The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
 #' \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia. 
 #'
-#' @param nboot A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).
+#' @param nBoot A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).
 #'
 #' @param verbose Should progress updates be given? Input should be a Boolean. 
 #' 
 #' @param diagnostics Should diagnostics be returned? Input should be a Boolean. 
 #'  
-#' @param sgd_iters How many stochastic gradient descent iterations should be used? Input should be a positive number.   
+#' @param sgdIters How many stochastic gradient descent iterations should be used? Input should be a positive number.   
 #'  
 #' @param justTransform A Boolean indicating whether the user wants to extract the quanficiation-optimized 
 #' features only. 
@@ -31,11 +31,9 @@
 #' 
 #' @param batchSizePerCat What should the batch size per category be in the sgd optimization and knn matching? 
 #' 
-#' @param dropout_rate What should the dropout rate be in the sgd optimization? Input should be a positive number.   
-#' 
 #' @param batchSizePerCat_match What should the batch size per category be in the bagged knn matching? 
 #' 
-#' @param nboot_match How many bootstrap samples should we aggregiate when doing the knn matching? 
+#' @param nbootMatch How many bootstrap samples should we aggregiate when doing the knn matching? 
 #' 
 #' @param kMatch What should k be in the k-nearest neighbor matching? Input should be a positive number.   
 #' 
@@ -92,7 +90,7 @@
 #' readme_results <- readme(dfm = my_dfm,  
 #'                          labeledIndicator = my_labeledIndicator, 
 #'                          categoryVec = my_categoryVec, 
-#'                          nboot = 2, sgd_iters = 500)
+#'                          nBoot = 2, sgdIters = 500)
 #'print(readme_results$point_readme)
 #'
 #' @import tensorflow 
@@ -100,16 +98,15 @@
 readme <- function(dfm , 
                    labeledIndicator,
                    categoryVec, 
-                   nboot          = 4,  
-                   sgd_iters      = 1000,
+                   nBoot          = 4,  
+                   sgdIters      = 1000,
                    ndim = NULL, 
                    numProjections = 20,
-                   dropout_rate   = 0.50, 
                    batchSizePerCat = 10, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 8,
-                   nboot_match    = 50,
+                   nbootMatch    = 50,
                    justTransform  = F,
                    verbose        = F,  
                    diagnostics    = F, 
@@ -139,10 +136,10 @@ readme <- function(dfm ,
   rm(categoryVec);
   
   ## Holding containers for results
-  boot_readme          = matrix(nrow=nboot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
+  boot_readme          = matrix(nrow=nBoot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
   hold_coef[]          = 0
-  MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nboot) # Holding container for diagnostics
+  MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nBoot) # Holding container for diagnostics
   
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
@@ -198,12 +195,12 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),]
 )"
   
-          S_ = tf$Session(graph = G_,
+          S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
                     inter_op_parallelism_threads = as.integer(nCores_OnJob),intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
-          for(iter_i in 1:nboot){ 
+          for(iter_i in 1:nBoot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
@@ -224,7 +221,7 @@ IL_input = dfm_labeled[grab_samp(),]
                       ### For each iteration of SGDs
                       print("Training...")
                       t1=Sys.time()
-                      for(j in 1:sgd_iters){ S_$run(learning_group,eval(parse(text = eval_dict))) } 
+                      for(j in 1:sgdIters){ S_$run(learning_group,eval(parse(text = eval_dict))) } 
                       print(Sys.time()-t1)
                       
                       print("Done with this round of training...!")
@@ -237,7 +234,7 @@ IL_input = dfm_labeled[grab_samp(),]
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   
-  for(iter_i in 1:nboot){ 
+  for(iter_i in 1:nBoot){ 
     ### Given the learned parameters, output the feature transformations for the entire matrix
     out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
@@ -256,9 +253,9 @@ IL_input = dfm_labeled[grab_samp(),]
       ## Minimum number of observations to use in each category per bootstrap iteration
       MM1           = colMeans(out_dfm_unlabeled); 
       MM2_          = colSds(out_dfm_unlabeled,MM1);
-      indices_list  = replicate(nboot_match,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
+      indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-      BOOTSTRAP_EST = sapply(1:nboot_match, function(boot_iter){ 
+      BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
         Y_      = out_dfm_unlabeled
@@ -294,7 +291,7 @@ IL_input = dfm_labeled[grab_samp(),]
                                       categoryVec_LabMatch, function(x){c(x) })
         
         ### Carry out estimation on the matched samples
-        est_readme2_ = try((  sapply(1:nboot_match, function(eare){ 
+        est_readme2_ = try((  sapply(1:nbootMatch, function(eare){ 
           MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
                                                                                           batchSizePerCat_match, 
                                                                                           replace = length(sae) * 0.75 < batchSizePerCat_match ) })
@@ -391,8 +388,8 @@ IL_input = dfm_labeled[grab_samp(),]
 start_reading <- function(nDim,nProj=20){
   eval_text = sprintf('
   tf$reset_default_graph()
-  G_ = tf$Graph()
-  with(G_$as_default(), {
+  readme_graph = tf$Graph()
+  with(readme_graph$as_default(), {
     #Assumptions 
     nDim <- as.integer( %s ) 
     nProj = as.integer(  %s  )  
@@ -488,10 +485,10 @@ start_reading <- function(nDim,nProj=20){
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
-  G_$finalize()
+  readme_graph$finalize()
 
   ', nDim,nProj, nCores)
-  if(  !"G_" %in% ls(env = globalenv())){ 
+  if(  !"readme_graph" %in% ls(env = globalenv())){ 
     eval(parse(text=eval_text), envir = globalenv())
     print("Readme is initialized!")
   } 
