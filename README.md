@@ -53,19 +53,18 @@ This dataset is comprised of 1676 documents coded into 6 mutually exclusive cate
 The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries. We start by loading in the word vector summaries into a table that can be referenced by the `undergrad()` function.
 
 ```
-## Load in the word vectors
-wordvec = read.table("glove.6B.50d.txt", header=F, quote="", comment.char = "",stringsAsFactors=F)
-my_wordVecs = wordvec[,2:51] ## columns 2-51 are the vectors 
-rownames(my_wordVecs) <- wordvec[,1] ## first row is the name of the term
-my_wordVecs = as.matrix(my_wordVecs) ## Convert to a matrix
-rm(wordvec) ## Remove the original loaded table to save space
+## Load in the word vectors (we assume they are saved as a .txt file in your Downloads folder) in the format used at <https://nlp.stanford.edu/projects/glove/>
+wordVecs_corpus <- data.table::fread("./Downloads/glove.twitter.27B.200d.txt")
+wordVecs_keys <- wordVecs_corpus[[1]]## first row is the name of the term
+wordVecs_corpus <- as.matrix (  wordVecs_corpus[,-1] )  #
+row.names(wordVecs_corpus) <- wordVecs_keys
+rm(wordVecs_keys)## Remove the original loaded table to save space
 ```
 
-The `undergrad()` function will then take as input the raw document texts + the word vec dictionary and return a set of feature summaries for each document in the dataset:
-
+The `undergrad()` function will then take as input the raw document texts + the word vec dictionary and return a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text:
 ```
 ## Generate a word vector summary for each document
-word_vectors = undergrad(documentText = clinton$TEXT, wordVecs = my_wordVecs)
+wordVec_summaries = undergrad(documentText = cleanme(clinton$TEXT), wordVecs = wordVecs_corpus)
 ```
 
 ### Estimating topic proportions with `readme2`
@@ -75,7 +74,7 @@ With the topic, training set labels and features we can start estimating the mod
 ```
 # Estimate category proportions
 set.seed(2138) # Set a seed
-readme.estimates <- readme(dfm = as.matrix(word_vectors) , labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
+readme.estimates <- readme(dfm = wordVec_summaries , labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
 ```
 
 We can compare the output with the true category codings

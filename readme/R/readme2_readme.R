@@ -490,8 +490,8 @@ start_reading <- function(nDim,nProj=20,regraph = F){
   ', nDim,nProj)
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
-      print("Performance warning: Using variable number of continuous features requires rebuilding tensorflow graph...")
-      rm(readme_graph, envir = globalenv()); tf$reset_default_graph()
+      print("Performance warning: Changing the number of continuous features requires rebuilding tensorflow graph...")
+      suppressWarnings(rm(readme_graph, envir = globalenv())); tf$reset_default_graph()
     }
     print("Building master readme graph...")
     eval(parse(text=eval_text), envir = globalenv())
