@@ -41,14 +41,14 @@ There are many possible features $S$ that can be extracted from the text. The ma
 
 ### Processing the text documents 
 
-We will illustrate the method using the provided `clinton` dataset of handcoded blogposts from the original Hopkins and King (2010) paper. 
+We will illustrate the method using the provided `clinton` dataset of a subset of handcoded blogposts from the original Hopkins and King (2010) paper. 
 
 ```
 library(readme)
 data(clinton, package="readme")
 ```
 
-This dataset is comprised of 1681 documents coded into 7 mutually exclusive categories (`TRUTH`). We sort
+This dataset is comprised of 1676 documents coded into 6 mutually exclusive categories (`TRUTH`). 
 
 The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries. We start by loading in the word vector summaries into a table that can be referenced by the `undergrad()` function.
 
@@ -66,9 +66,6 @@ The `undergrad()` function will then take as input the raw document texts + the 
 ```
 ## Generate a word vector summary for each document
 word_vectors = undergrad(documentText = clinton$TEXT, wordVecs = my_wordVecs)
-
-# Combine word vectors and document labels
-clinton <- cbind(clinton[,c("TRUTH","TRAININGSET")], word_vectors)
 ```
 
 ### Estimating topic proportions with `readme2`
@@ -77,11 +74,20 @@ With the topic, training set labels and features we can start estimating the mod
 
 ```
 # Estimate category proportions
-readme.estimates <- readme(dfm = as.matrix(clinton[,-c(1,2)]) , labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
+set.seed(2138) # Set a seed
+readme.estimates <- readme(dfm = as.matrix(word_vectors) , labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
 ```
 
+We can compare the output with the true category codings
 
-## Versioning
+```
+# Output proportions estimate
+readme.estimates$point_readme
+# Compare to the truth
+table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(clinton$TRUTH[clinton$TRAININGSET == 0])
+```
+
+## Versions
 
 
 
