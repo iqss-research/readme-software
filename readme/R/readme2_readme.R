@@ -196,8 +196,6 @@ redund_indices2 = redund_indices2_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
-  browser() 
-  Spread_tf
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
