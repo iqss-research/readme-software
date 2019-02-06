@@ -196,7 +196,8 @@ redund_indices2 = redund_indices2_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
-  
+  browser() 
+  Spread_tf
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
@@ -401,9 +402,9 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
     redund_indices2            = tf$placeholder(tf$int32,list(NULL))
-    IL_input            = tf$placeholder(tf$float32,list(NULL, nDim))
-    MultMat_tf          = tf$placeholder(tf$float32,list(NULL, NULL))
-    L2_squared_initial      = tf$placeholder(tf$float32)
+    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
+    MultMat_tf           = tf$placeholder(tf$float32,list(NULL, NULL))
+    L2_squared_initial       = tf$placeholder(tf$float32)
     
     #Placeholder settings - to be filled when executing TF operations
     clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
@@ -440,7 +441,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Spread component of objective function 
     gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
     gathering_mat        = tf$transpose(tf$reshape(gathering_mat, shape = list(-1L, NObsPerCat) ))
-    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.30)
+    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.50)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -451,16 +452,16 @@ start_reading <- function(nDim,nProj=20,regraph = F){
                                                tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = 1L)), 1.50)
     
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
-    myLoss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
+    Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                  0.01 * tf$reduce_mean( tf$log(Spread_tf+0.01) ))
-                                #0.10 * tf$reduce_mean( Spread_tf )
+                                  0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
+                                #0.10 * tf$reduce_mean( Spread_tf ) #max Spread_tf is 0.30
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
-    my_optimizer             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+    Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
                                                           momentum      = 0.90, use_nesterov  = T)
     
     ### Calculates the gradients from myOpt_tf
-    Gradients_unclipped  = my_optimizer$compute_gradients( myLoss_tf ) 
+    Gradients_unclipped  = Optimizer_tf$compute_gradients( Loss_tf ) 
     Gradients_clipped    = Gradients_unclipped
     TEMP__               = tf$clip_by_global_norm(list(Gradients_unclipped[[1]][[1]],
                                                         Gradients_unclipped[[2]][[1]]),clip_tf)
@@ -470,15 +471,15 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
     
     ### applies the gradient updates
-    myOpt_tf_apply       = my_optimizer$apply_gradients( Gradients_clipped )
+    myOpt_tf_apply       = Optimizer_tf$apply_gradients( Gradients_clipped )
     
     #learning consists of gradient updates plus learning rate updates. 
     learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
     
     # Initialize variables in TensorFlow Graph
     init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
-                                         my_optimizer$get_slot(tf$trainable_variables()[[1]],my_optimizer$get_slot_names()),
-                                         my_optimizer$get_slot(tf$trainable_variables()[[2]],my_optimizer$get_slot_names())))
+                                         Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
+                                         Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
     
     #other actions 
     FinalParams_list        = list(WtsMat, BiasVec)
