@@ -9,13 +9,13 @@
   targetDir = NULL)
 }
 \arguments{
-\item{url}{URL of the word vector file. If file is a .zip archive, contents will be unzipped into target directory.}
+\item{url}{URL of word vector file. Defaults to the pre-trained GloVe Wikipedia 200-dimensional vectors.}
 
-\item{targetDir}{Path to target directory. If NULL, uses the install directory for the 'readme' package as a default.}
+\item{targetDir}{Target directory to download files. If NULL uses readme installation directory.}
 }
 \value{
-Local path to downloaded file.
+Path to downloaded word vector dictionary
 }
 \description{
-Downloads and stores word vector files in the readme local directory.
+Downloads default word vector dictionary to 'readme' install directory.
 }

@@ -54,9 +54,26 @@ undergrad <- function(documentText, wordVecs = NULL, word_quantiles = c(.1, .5, 
                                             c('s\\b', ''),c('ed\\b', ''),c('ies\\b', 'y')), 
                       unique_terms = T, verbose=T){ 
     if(is.null(wordVecs)){ 
-     stop("NOTE: No word vector matrix specified in 'wordVecs' -  Stoping undergrad.\n
-          In order to use the word vector summaries, please provide a data frame containing the word vectors.\n
-          We recommend using a GloVe corpus from https://nlp.stanford.edu/projects/glove/\n")
+      cat("NOTE: No word vector matrix specified in 'wordVecs' - Searching for default wordvecs in install directory\n
+Searching for: 'glove.6B.200d.txt'\n")
+      targetDir = find.package("readme")
+      if (file.exists(file.path(targetDir, "glove.6B.200d.txt"))){
+        wordVecs_corpus <- data.table::fread(file.path(targetDir, "glove.6B.200d.txt"))
+        wordVecs_keys <- wordVecs_corpus[[1]]## first row is the name of the term
+        wordVecs_corpus <- as.matrix (  wordVecs_corpus[,-1] )  #
+        row.names(wordVecs_corpus) <- wordVecs_keys
+        wordVecs <- wordVecs_corpus
+        rm(wordVecs_corpus)
+        rm(wordVecs_keys)## Remove the original loaded table to save space
+        
+      }else{
+        stop("Could not find default word vector summaries. Please run download_wordvecs() to obtain the default word vector dictionary\n
+          or manually provide a data frame containing the word vectors.\n
+             We recommend using a GloVe corpus from https://nlp.stanford.edu/projects/glove/\n")
+        
+      }
+          
+
     }
     ## Sanity check the wordVecs
     if (!is.matrix(wordVecs)){

@@ -120,6 +120,51 @@ cleanme <- function(my_text){
   return( my_text )  
 }
 
+#' download_wordvecs
+#' 
+#' Downloads default word vector dictionary to 'readme' install directory. 
+#' 
+#' @param url URL of word vector file. Defaults to the pre-trained GloVe Wikipedia 200-dimensional vectors.
+#' @param targetDir Target directory to download files. If NULL uses readme installation directory.
+#' 
+#' @return Path to downloaded word vector dictionary
+#' 
+#' @export 
+#' 
+#' 
+download_wordvecs <- function(url = "http://gking-projects.iq.harvard.edu/files/glove.6B.200d.zip", targetDir=NULL){
+  ## Get the target directory if NULL
+  if (is.null(targetDir)){
+    targetDir = find.package("readme")
+  }
+  
+  ## Get the filename of the url
+  filename = basename(url)
+  
+  ## Does the file exist already
+  if (file.exists(file.path(targetDir, filename))){
+    stop(paste(file.path(targetDir, filename), "already exists"))
+  }else{
+    ## Download the file
+    download.file(url, destfile=file.path(targetDir, filename))
+    cat("Download complete.\n")
+    ## If the file is a zip, unpack it
+    if (tools::file_ext(file.path(targetDir, filename)) == "zip"){
+      ## Unpack the file
+      cat("Unpacking zip archive.\n")
+      ## Unzipping
+      unzippedFiles = unzip(file.path(targetDir, filename), exdir = targetDir)
+      cat("Complete.\n")
+      return(unzippedFiles)
+    }else{
+      return(file.path(targetDir, filename))
+    }
+    
+  }
+  
+}
+
+
 Winsorize_values <- function(x){ 
   sum_x <- summary(x); qr_ <- 1.5*diff(sum_x[c(2,5)]);
   return( c( sum_x[2] - qr_,  sum_x[5]+qr_) )  
