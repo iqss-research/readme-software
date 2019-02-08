@@ -29,7 +29,7 @@ library(tensorflow)
 install_tensorflow()
 ```
 
-You will also need to obtain a set of word embeddings that map terms in the texts to a vector representation. We recommend the pre-trained GloVe vectors available at [https://nlp.stanford.edu/projects/glove/](https://nlp.stanford.edu/projects/glove/), although you will want different embeddings for other languages and unusual contexts. In the vignette below, we will use the 50-dimensional vectors trained on Wikpedia articles and Gigaword 5: "glove.6B.50d.txt"
+readme2 includes a default set of word embeddings (to the texts to a numeric vector representation), but be aware that it may be worthwhile to change these if you are using a different language than English or different types of text than social media posts.
 
 ## Walkthrough
 
@@ -50,7 +50,7 @@ data(clinton, package="readme")
 
 This dataset is comprised of 1,676 documents coded into 6 mutually exclusive categories (`TRUTH`).
 
-The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries; to load the word vector summaries into a table we use the `undergrad()` function. By default, the package will download a default dictionary of word vectors from the Stanford GloVe project into using the `download_wordvecs()` function.
+The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries; to load the word vector summaries into a table we use the `undergrad()` function (named in honor of those who have do so much coding by hand!). By default, the package will download a default dictionary of word vectors from the Stanford GloVe project into using the `download_wordvecs()` function.
 
 The `undergrad()` function then takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory. If this file is found, it will read it directly and use it as the word vector dictionary.
 
@@ -65,7 +65,7 @@ With the topic, training set labels and features we can start estimating the mod
 
 ```
 # Estimate category proportions
-set.seed(2138) # Set a seed
+set.seed(2138) # Set a seed if you choose
 readme.estimates <- readme(dfm = wordVec_summaries , labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
 ```
 
