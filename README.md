@@ -75,7 +75,7 @@ We can compare the output with the true category codings
 # Output proportions estimate
 readme.estimates$point_readme
 # Compare to the truth
-table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(clinton$TRUTH[clinton$TRAININGSET == 0])
+table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(table((clinton$TRUTH[clinton$TRAININGSET == 0])))
 ```
 
 ## License

@@ -23,4 +23,4 @@ readme.estimates <- readme(dfm = as.matrix(word_vectors) , labeledIndicator = cl
 readme.estimates$point_readme
 
 # Compare to the truth
-table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(clinton$TRUTH[clinton$TRAININGSET == 0])
+table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(table((clinton$TRUTH[clinton$TRAININGSET == 0])))
