@@ -33,11 +33,11 @@ You will also need to obtain a set of word embeddings that map terms in the text
 
 ## Walkthrough
 
-In this section, we provide a step-by-step vignette illustrating how to use `readme2` to estimate category proportions in an unlabeled set of documents. To begin, we assume that the user has a set of *labeled* documents, each of which has been as assigned a single, mutually exclusive category label,  Often this is done by manual coding. We observe an unlabeled set of documents and want to estimate the proportion of documents with each category label. The central intuition of the original `readme` is that for any individual feature _S_ in both the labeled and unlabeled set, we know that the average value of that feature _S_ is equal to the sum of the conditional expectation of _S_ in each category multiplied by the share of documents in that category.
+In this section, we provide a step-by-step vignette illustrating how to use `readme2` to estimate category proportions in an unlabeled set of documents. To begin, we assume that the user has a set of *labeled* documents, with every document assigned a single, mutually exclusive category label (such as via manual coding). We observe an unlabeled set of documents and seek to estimate the proportion of documents with each category label. 
 
-While we observe the average of _S_ in the unlabeled set, we do not observe the conditional expectations of _S_. We estimate these conditional expectations using the labeled set conditional frequency and solve for the unlabeled set proportions via standard linear programming methods.
+The central intuition of the original `readme` is that for any individual feature _S_ in both the labeled and unlabeled set, we know that the average value of that feature _S_ is equal to the sum of the conditional expectation of _S_ in each category multiplied by the share of documents in that category. While we observe the average of _S_ in the unlabeled set, we do not observe the conditional expectations of _S_. We estimate these conditional expectations using the labeled set conditional frequency and solve for the unlabeled set proportions via standard linear programming methods.
 
-There are many possible features _S_ that can be extracted from the text. The main contribution of `readme2` is to develop a way for selecting optimal sets of features from a large space of potential document summaries. We start by converting each document into a vector of summaries based on the word vector representations of each term in the document.
+There are many possible features _S_ that can be extracted from the text. The main contribution of `readme2` is to develop a way for selecting optimal sets of features from a large space of potential document summaries, morphing the space in which the readme regression is run to yield the best possible estimates of the category proportions. We begin by converting each document into a vector of summaries based on the word vector representations of each term in the document.
 
 ### Processing the text documents 
 
@@ -48,9 +48,9 @@ library(readme)
 data(clinton, package="readme")
 ```
 
-This dataset is comprised of 1676 documents coded into 6 mutually exclusive categories (`TRUTH`). 
+This dataset is comprised of 1,676 documents coded into 6 mutually exclusive categories (`TRUTH`).
 
-The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries. We start by loading in the word vector summaries into a table that can be referenced by the `undergrad()` function. By default, the package will download a default dictionary of word vectors from the Stanford GloVe project into using the `download_wordvecs()` function.
+The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries; to load the word vector summaries into a table we use the `undergrad()` function. By default, the package will download a default dictionary of word vectors from the Stanford GloVe project into using the `download_wordvecs()` function.
 
 The `undergrad()` function then takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory. If this file is found, it will read it directly and use it as the word vector dictionary.
 
