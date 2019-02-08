@@ -29,7 +29,7 @@ library(tensorflow)
 install_tensorflow()
 ```
 
-readme2 includes a default set of word embeddings (to the texts to a numeric vector representation), but be aware that it may be worthwhile to change these if you are using a different language than English or different types of text than social media posts.
+`readme` uses pre-trained dictionaries of word vectors as part of the process of translating the words in documents to a numerical representation. We suggest a default dictionary that can be downloaded and installed to the `readme` install directory using the `download_wordvecs()` function. Be aware that it may be worthwhile to change these if you are using a different language than English or texts with very unique forms of language use.
 
 ## Walkthrough
 
@@ -50,9 +50,11 @@ data(clinton, package="readme")
 
 This dataset is comprised of 1,676 documents coded into 6 mutually exclusive categories (`TRUTH`).
 
-The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries; to load the word vector summaries into a table we use the `undergrad()` function (named in honor of those who have do so much coding by hand!). By default, the package will download a default dictionary of word vectors from the Stanford GloVe project into using the `download_wordvecs()` function.
+The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries; to load the word vector summaries into a table we use the `undergrad()` function (named in honor of those who have do so much coding by hand!). 
 
-The `undergrad()` function then takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory. If this file is found, it will read it directly and use it as the word vector dictionary.
+Prior to using `undergrad()` it is necessary to obtain a word vector dictionary that maps text tokens to a vector representation. We recommend using an off-the-shelf pre-trained word vector set based on a well-known language corpus. We include a function, `download_wordvecs()`, which when run will download our suggested default - a Stanford GloVe: 'Global Vectors for Word Representation' pre-trained dataset - to the directory in which `readme` is installed.
+
+The `undergrad()` function takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory (which is the default file downloaded by `download_wordvecs()`. If this file is found, it will read it directly and use it as the word vector dictionary.
 
 ```
 ## Generate a word vector summary for each document
