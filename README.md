@@ -12,7 +12,7 @@ The most recent version of `readme2` can be installed directly from the reposito
 devtools::install_github("iqss-research/readme-software/readme")
 ```
 
-`readme2` depends on the `limSolve` and `FNN` packages which can be installed directly from CRAN
+`readme2` depends on the `tools`, `data.table`, `limSolve` and `FNN` packages which can be installed directly from CRAN
 
 It also utilizes `tensorflow`, the R interface to the TensorFlow API -- an open source machine learning library. To install `tensorflow` follow the instructions available at the [RStudio page on R and TensorFlow](https://tensorflow.rstudio.com/tensorflow/).
 
@@ -33,13 +33,11 @@ You will also need to obtain a set of word embeddings that map terms in the text
 
 ## Walkthrough
 
-In this section, we provide a step-by-step vignette illustrating how to use `readme2` to estimate category proportions in an unlabeled set of documents. To begin, we assume that the user has a set of *labeled* documents, each of which has been as assigned a single, mutually exclusive category label, $D_i$ (for observation $i$). Often this is done by manual coding. We observe an unlabeled set of documents and want to estimate the proportion of documents with the category label $d$ -- denoted $Pr(D_i = d)$ -- for all categories, $\{1, 2, \dotsc, |D|\}$. The central intuition of the original `readme` is that for any individual feature $S$ in both the labeled and unlabeled set, we know from the Law of Total Probability that the following relationship holds.
+In this section, we provide a step-by-step vignette illustrating how to use `readme2` to estimate category proportions in an unlabeled set of documents. To begin, we assume that the user has a set of *labeled* documents, each of which has been as assigned a single, mutually exclusive category label,  Often this is done by manual coding. We observe an unlabeled set of documents and want to estimate the proportion of documents with each category label. The central intuition of the original `readme` is that for any individual feature _S_ in both the labeled and unlabeled set, we know that the average value of that feature _S_ is equal to the sum of the conditional expectation of _S_ in each category multiplied by the share of documents in that category.
 
-$$ E[S] = \sum_{d=1}^{|D|} E[S|D = d] Pr(D_i = d) $$
+While we observe the average of _S_ in the unlabeled set, we do not observe the conditional expectations of _S_. We estimate these conditional expectations using the labeled set conditional frequency and solve for the unlabeled set proportions via standard linear programming methods.
 
-While we observe $S$ in the unlabeled set, we do not observe the conditional frequency of $S$ in each category $d$ (denoted $E[S|D=d]$). We estimate the unlabeled set conditional frequency using the labeled set conditional frequency and solve for the vector $Pr(D) = \{Pr(D_i = 1), Pr(D_i = 2), \dotsc, Pr(D_i = |D|)\}$ via standard linear programming methods.
-
-There are many possible features $S$ that can be extracted from the text. The main contribution of `readme2` is to develop a way for selecting optimal sets of features from a large space of potential document summaries. We start by converting each document into a vector of summaries based on the word vector representations of each term in the document.
+There are many possible features _S_ that can be extracted from the text. The main contribution of `readme2` is to develop a way for selecting optimal sets of features from a large space of potential document summaries. We start by converting each document into a vector of summaries based on the word vector representations of each term in the document.
 
 ### Processing the text documents 
 
@@ -52,21 +50,13 @@ data(clinton, package="readme")
 
 This dataset is comprised of 1676 documents coded into 6 mutually exclusive categories (`TRUTH`). 
 
-The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries. We start by loading in the word vector summaries into a table that can be referenced by the `undergrad()` function.
+The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries. We start by loading in the word vector summaries into a table that can be referenced by the `undergrad()` function. By default, the package will download a default dictionary of word vectors from the Stanford GloVe project into using the `download_wordvecs()` function.
 
-```
-## Load in the word vectors (we assume they are saved as a .txt file in your Downloads folder) in the format used at <https://nlp.stanford.edu/projects/glove/>
-wordVecs_corpus <- data.table::fread("./Downloads/glove.twitter.27B.200d.txt")
-wordVecs_keys <- wordVecs_corpus[[1]]## first row is the name of the term
-wordVecs_corpus <- as.matrix (  wordVecs_corpus[,-1] )  #
-row.names(wordVecs_corpus) <- wordVecs_keys
-rm(wordVecs_keys)## Remove the original loaded table to save space
-```
+The `undergrad()` function then takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory. If this file is found, it will read it directly and use it as the word vector dictionary.
 
-The `undergrad()` function then takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text:
 ```
 ## Generate a word vector summary for each document
-wordVec_summaries = undergrad(documentText = cleanme(clinton$TEXT), wordVecs = wordVecs_corpus)
+wordVec_summaries = undergrad(documentText = cleanme(clinton$TEXT), wordVecs = NULL)
 ```
 
 ### Estimating topic proportions with `readme2`
@@ -88,12 +78,11 @@ readme.estimates$point_readme
 table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(clinton$TRUTH[clinton$TRAININGSET == 0])
 ```
 
-## Versions
-
-
-
 ## License
 
+Creative Commons Attribution-Noncommercial-No Derivative Works 4.0, for academic use only.
 
 ## Acknowledgments
+
+Our thanks to Neal Beck, Aykut Firat, and Ying Lu for data and helpful comments.
 
