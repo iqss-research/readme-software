@@ -54,7 +54,7 @@ The first task is to convert the raw text for each document (`TEXT`) into a docu
 
 Prior to using `undergrad()` it is necessary to obtain a word vector dictionary that maps text tokens to a vector representation. We recommend using an off-the-shelf pre-trained word vector set based on a well-known language corpus. We include a function, `download_wordvecs()`, which when run will download our suggested default - a Stanford GloVe: 'Global Vectors for Word Representation' pre-trained dataset - to the directory in which `readme` is installed.
 
-The `undergrad()` function takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory (which is the default file downloaded by `download_wordvecs()`. If this file is found, it will read it directly and use it as the word vector dictionary.
+The `undergrad()` function takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory (which is the default file downloaded by `download_wordvecs()`). If this file is found, it will read it directly and use it as the word vector dictionary.
 
 ```
 ## Generate a word vector summary for each document
