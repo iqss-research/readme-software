@@ -41,14 +41,12 @@ There are many possible features _S_ that can be extracted from the text. The ma
 
 ### Processing the text documents 
 
-We illustrate the method using the provided `clinton` dataset of a subset of handcoded blogposts from the original Hopkins and King (2010) paper. 
+We illustrate the method using the provided `clinton` dataset of a subset of handcoded blogposts from the original Hopkins and King (2010) paper. This dataset is comprised of 1,676 documents coded into 6 mutually exclusive categories (`TRUTH`).
 
 ```
 library(readme)
 data(clinton, package="readme")
 ```
-
-This dataset is comprised of 1,676 documents coded into 6 mutually exclusive categories (`TRUTH`).
 
 The first task is to convert the raw text for each document (`TEXT`) into a document-feature matrix using the word vector summaries; to load the word vector summaries into a table we use the `undergrad()` function (named in honor of those who have do so much coding by hand!). 
 
