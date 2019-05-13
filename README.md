@@ -84,5 +84,5 @@ Creative Commons Attribution-Noncommercial-No Derivative Works 4.0, for academic
 
 ## Acknowledgments
 
-Our thanks to Neal Beck, Aykut Firat, and Ying Lu for data and helpful comments.
+Our thanks to Neal Beck, Aykut Firat, Ying Lu, and Jonathan Chiang for data and helpful comments.
 
