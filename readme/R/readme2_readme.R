@@ -188,14 +188,15 @@ readme <- function(dfm ,
   MultMat_tf_v          = t(do.call(rbind,sapply(1:nCat,function(x){
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
-
+ 
   eval_dict = "dict( contrast_indices1 = contrast_indices1_v, 
 contrast_indices2 = contrast_indices2_v, 
 redund_indices1 = redund_indices1_v, 
 redund_indices2 = redund_indices2_v, 
 MultMat_tf = MultMat_tf_v, 
-IL_input = dfm_labeled[grab_samp(),]
+IL_input = dfm_labeled[grab_samp(),bag_cols]
 )"
+          bag_cols_list <- matrix(NA,ncol=nBoot,nrow=nDim)
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
@@ -207,8 +208,11 @@ IL_input = dfm_labeled[grab_samp(),]
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       
+                      bag_cols               = sample(1:ncol(dfm),nDim)
+                      bag_cols_list[[iter_i]] <- bag_cols
                       S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
+                        print( bag_cols )  
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
                         IL_sigma_last_v       = replicate(300, S_$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
                       
@@ -235,14 +239,14 @@ IL_input = dfm_labeled[grab_samp(),]
   
   for(iter_i in 1:nBoot){ 
     ### Given the learned parameters, output the feature transformations for the entire matrix
-    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled[,bag_cols_list[[iter_i]]]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
     
     if(dfm_class == "list"){ 
-      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)[,bag_cols_list[[iter_i]]]) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     } 
     if(dfm_class != "list"){ 
-      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_labeled, WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+      out_dfm_unlabeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_labeled[,bag_cols_list[[iter_i]]], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     } 
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
     
@@ -390,7 +394,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Assumptions 
-    nDim <- as.integer( %s ) 
+    nDim <- as.integer(round( %s * 0.80 ) )
     nProj = as.integer(  %s  )  
     NObsPerCat = as.integer(  10 )  
     dropout_rate <- 0.50 
