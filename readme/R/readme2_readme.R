@@ -100,9 +100,9 @@ readme <- function(dfm ,
                    categoryVec, 
                    nBoot          = 4,  
                    sgdIters      = 1000,
-                   ndim = NULL, 
                    numProjections = 20,
                    batchSizePerCat = 10, 
+                   bagFrac = 1, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 8,
@@ -157,6 +157,7 @@ readme <- function(dfm ,
   if(dfm_class == "list"){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]} 
   if(dfm_class != "list"){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)} 
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
+  browser()
   WinsMat = function(dfm_, values_){ 
       sapply(1:ncol(dfm_), 
              function(sa){ 
@@ -171,7 +172,7 @@ readme <- function(dfm ,
   require(tensorflow, quietly = T)
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  start_reading(nDim=ncol(dfm_labeled),nProj=numProjections, regraph = regraph_)
+  start_reading(nDim=ncol(dfm_labeled),bagFrac = bagFrac, nProj=numProjections, regraph = regraph_)
   
   FinalParams_LIST <- list(); tf_junk <- ls()
   
@@ -388,13 +389,13 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
 }
 
-start_reading <- function(nDim,nProj=20,regraph = F){
+start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
   eval_text = sprintf('
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Assumptions 
-    nDim <- as.integer(round( %s * 0.80 ) )
+    nDim_bag <- as.integer(round( %s * %s ) )
     nProj = as.integer(  %s  )  
     NObsPerCat = as.integer(  10 )  
     dropout_rate <- 0.50 
@@ -490,7 +491,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
   })
   readme_graph$finalize()
 
-  ', nDim,nProj)
+  ', nDim,bagFrac, nProj)
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
       print("Performance warning: Changing the number of continuous features requires rebuilding tensorflow graph...")
