@@ -156,6 +156,7 @@ readme <- function(dfm ,
   dfm_class = class(dfm)
   if(dfm_class == "list"){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]} 
   if(dfm_class != "list"){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)} 
+  nDim_full             = ncol(dfm_labeled)
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
   WinsMat = function(dfm_, values_){ 
       sapply(1:ncol(dfm_), 
@@ -171,7 +172,7 @@ readme <- function(dfm ,
   require(tensorflow, quietly = T)
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  start_reading(nDim=ncol(dfm_labeled),bagFrac = bagFrac, nProj=numProjections, regraph = regraph_)
+  start_reading(nDim=nDim_full,bagFrac = bagFrac, nProj=numProjections, regraph = regraph_)
   
   FinalParams_LIST <- list(); tf_junk <- ls()
   
@@ -196,7 +197,7 @@ redund_indices2 = redund_indices2_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),bag_cols]
 )"
-          nDim_bag      = round(ncol(dfm_labeled)* bagFrac)
+          nDim_bag      = round(nDim_full * bagFrac)
           bag_cols_list = matrix(NA,ncol=nBoot,nrow=nDim_bag)
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
@@ -208,8 +209,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
-                      
-                      bag_cols               = sample(1:ncol(dfm),nDim_bag)
+
+                      bag_cols               = sample(1:nDim_full,nDim_bag)
                       bag_cols_mat[iter_i,] <- bag_cols
                       S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
