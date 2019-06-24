@@ -198,7 +198,7 @@ MultMat_tf = MultMat_tf_v,
 IL_input = dfm_labeled[grab_samp(),bag_cols]
 )"
           nDim_bag      = round(nDim_full * bagFrac)
-          bag_cols_mat = matrix(NA,ncol=nBoot,nrow=nDim_bag)
+          bag_cols_mat = matrix(NA,nrow=nBoot,ncol=nDim_bag)
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
