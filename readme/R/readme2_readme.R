@@ -214,7 +214,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                       bag_cols_mat[iter_i,] <- bag_cols
                       S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
-                        print( bag_cols )  
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
                         IL_sigma_last_v       = replicate(300, S_$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
                       
