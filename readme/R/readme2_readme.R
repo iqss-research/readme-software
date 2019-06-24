@@ -405,7 +405,7 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
     redund_indices2            = tf$placeholder(tf$int32,list(NULL))
-    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
+    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim_bag))
     MultMat_tf           = tf$placeholder(tf$float32,list(NULL, NULL))
     L2_squared_initial       = tf$placeholder(tf$float32)
     
@@ -421,17 +421,17 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     
     #SET UP WEIGHTS to be optimized
     initializer_reweighting =  1/sd(replicate(500, {
-      beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
-      dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
+      beta__                =   runif(nDim_bag,  -1/sqrt(nDim_bag), 1/sqrt(nDim_bag)  )
+      dropout__             =   rbinom(nDim_bag, size = 1, prob = dropout_rate)
       beta__[dropout__==1]  <- 0
       beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
       sum(beta__) }))
-    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = T)
+    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim_bag,nProj),-1/sqrt(nDim_bag), 1/sqrt(nDim_bag), dtype = tf$float32),dtype = tf$float32, trainable = T)
     BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
     
     ### Drop-out transformation
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
+    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim_bag,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
     WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
     ### Apply non-linearity + batch normalization 
     LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
