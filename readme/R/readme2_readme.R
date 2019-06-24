@@ -196,7 +196,8 @@ redund_indices2 = redund_indices2_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),bag_cols]
 )"
-          bag_cols_list <- matrix(NA,ncol=nBoot,nrow=nDim)
+          nDim_bag      = round(ncol(dfm_labeled)* bagFrac)
+          bag_cols_list = matrix(NA,ncol=nBoot,nrow=nDim_bag)
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
@@ -208,8 +209,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       
-                      bag_cols               = sample(1:ncol(dfm),nDim)
-                      bag_cols_list[[iter_i]] <- bag_cols
+                      bag_cols               = sample(1:ncol(dfm),nDim_bag)
+                      bag_cols_mat[iter_i,] <- bag_cols
                       S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
                         print( bag_cols )  
