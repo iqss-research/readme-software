@@ -236,7 +236,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           try(tf$keras$backend$clear_session(), T) 
           try(tf$keras$backend$reset_uids(), T)
   
-  tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
+  tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v","bag_cols_mat" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   
   for(iter_i in 1:nBoot){ 
