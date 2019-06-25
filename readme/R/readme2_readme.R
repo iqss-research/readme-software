@@ -260,6 +260,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       MM2_          = colSds(out_dfm_unlabeled,MM1);
       indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+      
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -270,12 +271,48 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         X_      = FastScale(X_, MM1, MM2);
         Y_      = FastScale(Y_, MM1, MM2)
         
+        browser() 
         ## If we're using matching
         if (kMatch != 0){
+          { 
+            Y_mean = rep(0,times=ncol(Y_))
+            ObjectiveFxn_toMininimize = function(WTS){ 
+              #weight each dataset subset by its entry in WTS
+              #X_times_w = sapply( 1:nrow(X_), function(iter_){ return( list(WTS[iter_] * X_ )  )})
+              #X_times_w_sum = Reduce("+", X_times_w)
+              X_times_w_sum = rowSums( t(X_ * WTS) )  
+              
+              #Comp is the mean abs. diff. between pre-treatment treatment covariates + weighted pre-treatment synthetic covariates
+              Comp1 = mean(abs(Y_mean - X_times_w_sum)) 
+              
+              #RegularizationTerm penalizes large weights 
+              RegularizationTerm = sum(WTS^2)
+              
+              #lambda controls the strength of the regularization 
+              lambda = 3
+              
+              FinalLoss = Comp1 + lambda*RegularizationTerm
+              return( FinalLoss )
+            }  
+            WtsVec_initial = runif(nrow(X_), 0.4, 0.50)
+            WtsVec_initial = WtsVec_initial/sum(WtsVec_initial)
+            WtsVec_final = Rsolnp::solnp(pars = WtsVec_initial, #initial parameter guess 
+                                         fun = ObjectiveFxn_toMininimize,
+                                         eqfun = function(WTS){sum(WTS)},#weights must sum...
+                                         eqB = 1,  #...to 1
+                                         LB = rep(0,times = nrow(X_)), #weights must be non-negative 
+                                         UB = rep(1,times = nrow(X_)))$pars# weights must be 
+            WtsVec_final = round(WtsVec_final * 2000  )
+            MatchIndices_i = unlist(  sapply(1:length(WtsVec_final),
+                                    function(indi){
+                                      rep(indi,times=WtsVec_final[indi])}) )  
+          }
+          if(T == F){ 
           ### KNN matching - find kMatch matches in X_ to Y_
           MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                 query = Y_, 
                                                 k     = kMatch)$nn.index) , T) 
+          } 
           
           ## Any category with less than minMatch matches includes all of that category
           t_              = table( Cat_[unique(MatchIndices_i)] ); 
@@ -307,6 +344,15 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           colnames(ESGivenD_sampled)   = names(labeled_pd)
           print( summary( rowMeans(ESGivenD_sampled>0)) ) 
           browser()
+          ESGivenD_sampled
+          Y_ = rep(0, times = nrow(ESGivenD_sampled))
+          in.chull(x0=Y_,y0=Y_,x=ESGivenD_sampled,y=ESGivenD_sampled)
+          in.chull(c(0,1),
+                   c(0,1),
+                   c(0,1,0,-1),
+                   c(-1,0,1,0))
+          
+          sum(abs(ED_sampled-unlabeled_pd))
           ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
           ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                             Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
