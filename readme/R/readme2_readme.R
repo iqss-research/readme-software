@@ -273,7 +273,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         
         ## If we're using matching
         if (kMatch != 0){
-          browser()
           { 
             Y_mean = rep(0,times=ncol(Y_))
             ObjectiveFxn_toMininimize = function(WTS){ 
@@ -302,8 +301,9 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                          eqB = 1,  #...to 1
                                          LB = rep(0,times = nrow(X_)), #weights must be non-negative 
                                          UB = rep(1,times = nrow(X_)), #weights must be less than 1 
-                                         control = list(trace = 1))$pars
+                                         control = list(trace = 0))$pars
             WtsVec_final = round(WtsVec_final * 2000  )
+            WtsVec_final[WtsVec_final==0] <- 1 
             MatchIndices_i = unlist(  sapply(1:length(WtsVec_final),
                                     function(indi){
                                       rep(indi,times=WtsVec_final[indi])}) )  
@@ -343,17 +343,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           
           ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
           colnames(ESGivenD_sampled)   = names(labeled_pd)
-          print( summary( rowMeans(ESGivenD_sampled>0)) ) 
-          browser()
-          ESGivenD_sampled
-          Y_ = rep(0, times = nrow(ESGivenD_sampled))
-          in.chull(x0=Y_,y0=Y_,x=ESGivenD_sampled,y=ESGivenD_sampled)
-          in.chull(c(0,1),
-                   c(0,1),
-                   c(0,1,0,-1),
-                   c(-1,0,1,0))
-          
-          sum(abs(ED_sampled-unlabeled_pd))
           ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
           ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                             Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
