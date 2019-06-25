@@ -271,9 +271,9 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         X_      = FastScale(X_, MM1, MM2);
         Y_      = FastScale(Y_, MM1, MM2)
         
-        browser() 
         ## If we're using matching
         if (kMatch != 0){
+          browser()
           { 
             Y_mean = rep(0,times=ncol(Y_))
             ObjectiveFxn_toMininimize = function(WTS){ 
@@ -294,14 +294,15 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
               FinalLoss = Comp1 + lambda*RegularizationTerm
               return( FinalLoss )
             }  
-            WtsVec_initial = runif(nrow(X_), 0.4, 0.50)
+            WtsVec_initial = runif(nrow(X_), 0.49, 0.51)
             WtsVec_initial = WtsVec_initial/sum(WtsVec_initial)
             WtsVec_final = Rsolnp::solnp(pars = WtsVec_initial, #initial parameter guess 
                                          fun = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
                                          eqB = 1,  #...to 1
                                          LB = rep(0,times = nrow(X_)), #weights must be non-negative 
-                                         UB = rep(1,times = nrow(X_)))$pars# weights must be 
+                                         UB = rep(1,times = nrow(X_)), #weights must be less than 1 
+                                         control = list(trace = 1))$pars
             WtsVec_final = round(WtsVec_final * 2000  )
             MatchIndices_i = unlist(  sapply(1:length(WtsVec_final),
                                     function(indi){
