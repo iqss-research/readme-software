@@ -303,9 +303,10 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           X__                          = X_m[unlist(MatchIndices_byCat_),]; 
           categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
           
-          browser() 
           ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
           colnames(ESGivenD_sampled)   = names(labeled_pd)
+          print( summary( rowMeans(ESGivenD_sampled>0)) ) 
+          ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
           ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                             Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
           return( ED_sampled )  
