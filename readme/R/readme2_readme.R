@@ -306,6 +306,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
           colnames(ESGivenD_sampled)   = names(labeled_pd)
           print( summary( rowMeans(ESGivenD_sampled>0)) ) 
+          browser()
           ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
           ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                             Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
@@ -497,7 +498,7 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
   ', nDim,bagFrac, nProj)
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
-      print("Performance warning: Changing the number of continuous features requires rebuilding tensorflow graph...")
+      print("Performance warning: Rebuilding tensorflow graph...")
       suppressWarnings(rm(readme_graph, envir = globalenv())); tf$reset_default_graph()
     }
     print("Building master readme graph...")
