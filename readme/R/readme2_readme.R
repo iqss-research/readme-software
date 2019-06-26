@@ -295,7 +295,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             }  
             WtsVec_initial = runif(nrow(X_), 0.49, 0.51)
             WtsVec_initial = WtsVec_initial/sum(WtsVec_initial)
-            WtsVec_final = Rsolnp::solnp(pars = WtsVec_initial, #initial parameter guess 
+            require(Rsolnp)
+            WtsVec_final = solnp(pars = WtsVec_initial, #initial parameter guess 
                                          fun = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
                                          eqB = 1,  #...to 1
