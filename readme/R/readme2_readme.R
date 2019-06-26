@@ -274,7 +274,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         
         ## If we're using matching
         if (kMatch != 0){
-          { 
+          if(class(kMatch) == "character"){ 
             Y_mean = rep(0,times=ncol(Y_))
             ObjectiveFxn_toMininimize = function(WTS){ 
               #weight each dataset subset by its entry in WTS
@@ -310,7 +310,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                     function(indi){
                                       rep(indi,times=WtsVec_final[indi])}) )  
           }
-          if(T == F){ 
+          if(class(kMatch) != "character"){ 
           ### KNN matching - find kMatch matches in X_ to Y_
           MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                 query = Y_, 
