@@ -260,7 +260,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       MM2_          = colSds(out_dfm_unlabeled,MM1);
       indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-      browser()
+      
+      if(!is.na(kMatch)){ 
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -356,8 +357,17 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       
       ### Average the bootstrapped estimates
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
+      } 
+      if(is.na(kMatch)){
+        ESGivenD                      =  do.call(cbind,lapply(l_indices_by_cat,function(xa){colMeans(out_dfm_labeled[xa,])}))
+        ES                            = colMeans(out_dfm_unlabeled)
+        est_readme2                   = try(readme_est_fxn(X         = ESGivenD,
+                                                           Y         = ES),T) 
+      
+      }
+      
       #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
-      rm(BOOTSTRAP_EST,indices_list) ; 
+      try(rm(BOOTSTRAP_EST,indices_list), T)  
       if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
     }
     ## If we're just doing the transformation
