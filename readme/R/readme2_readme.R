@@ -297,6 +297,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             WtsVec_initial = runif(nrow(X_), 0.49, 0.51)
             WtsVec_initial = WtsVec_initial/sum(WtsVec_initial)
             require(Rsolnp, quietly = T)
+            browser()
             WtsVec_final = solnp(pars = WtsVec_initial, #initial parameter guess 
                                          fun = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
