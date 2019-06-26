@@ -260,7 +260,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       MM2_          = colSds(out_dfm_unlabeled,MM1);
       indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-      
+      browser()
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -295,7 +295,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             }  
             WtsVec_initial = runif(nrow(X_), 0.49, 0.51)
             WtsVec_initial = WtsVec_initial/sum(WtsVec_initial)
-            require(Rsolnp)
+            require(Rsolnp, quietly = T)
             WtsVec_final = solnp(pars = WtsVec_initial, #initial parameter guess 
                                          fun = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
