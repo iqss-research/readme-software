@@ -276,11 +276,10 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         if (kMatch != 0){
           if(class(kMatch) == "character"){ 
             Y_mean = rep(0,times=ncol(Y_))
+            chunk_n = nrow(X_)
             ObjectiveFxn_toMininimize = function(WTS){ 
               #weight each dataset subset by its entry in WTS
-              #X_times_w = sapply( 1:nrow(X_), function(iter_){ return( list(WTS[iter_] * X_ )  )})
-              #X_times_w_sum = Reduce("+", X_times_w)
-              X_times_w_sum = rowSums( t(X_ * WTS) )  
+              X_times_w_sum = colSums( X_ * WTS)   / chunk_n
               
               #Comp is the mean abs. diff. between pre-treatment treatment covariates + weighted pre-treatment synthetic covariates
               Comp1 = mean(abs(Y_mean - X_times_w_sum)) 
@@ -289,27 +288,25 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
               RegularizationTerm = sum(WTS^2)
               
               #lambda controls the strength of the regularization 
-              lambda = 3
+              lambda = 1
               
               FinalLoss = Comp1 + lambda*RegularizationTerm
               return( FinalLoss )
             }  
-            WtsVec_initial = runif(nrow(X_), 0.49, 0.51)
-            WtsVec_initial = WtsVec_initial/sum(WtsVec_initial)
+            WtsVec = runif(nrow(X_), 0.49, 0.51)
+            WtsVec = WtsVec/sum(WtsVec)
             require(Rsolnp, quietly = T)
-            browser()
-            WtsVec_final = solnp(pars = WtsVec_initial, #initial parameter guess 
+            WtsVec = solnp(pars = WtsVec, #initial parameter guess 
                                          fun = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
                                          eqB = 1,  #...to 1
                                          LB = rep(0,times = nrow(X_)), #weights must be non-negative 
                                          UB = rep(1,times = nrow(X_)), #weights must be less than 1 
                                          control = list(trace = 0))$pars
-            WtsVec_final = round(WtsVec_final * 2000  )
-            WtsVec_final[WtsVec_final==0] <- 1 
-            MatchIndices_i = unlist(  sapply(1:length(WtsVec_final),
+            WtsVec = round(WtsVec * 2000  )
+            MatchIndices_i = unlist(  sapply(1:length(WtsVec),
                                     function(indi){
-                                      rep(indi,times=WtsVec_final[indi])}) )  
+                                      rep(indi,times=WtsVec[indi])}) )  
           }
           if(class(kMatch) != "character"){ 
           ### KNN matching - find kMatch matches in X_ to Y_
