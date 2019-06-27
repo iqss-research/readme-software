@@ -278,30 +278,24 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             Y_mean = rep(0,times=ncol(Y_))
             chunk_n = nrow(X_)
             ObjectiveFxn_toMininimize = function(WTS){ 
-              #weight each dataset subset by its entry in WTS
-              X_times_w_sum = colSums( X_ * WTS)   / chunk_n
-              
               #Comp is the mean abs. diff. between pre-treatment treatment covariates + weighted pre-treatment synthetic covariates
-              Comp1 = mean(abs(Y_mean - X_times_w_sum)) 
+              Comp1 = mean(abs(Y_mean - colSums( X_ * WTS)   / chunk_n  )) 
               
               #RegularizationTerm penalizes large weights 
               RegularizationTerm = sum(WTS^2)
               
-              #lambda controls the strength of the regularization 
-              lambda = 1
-              
-              FinalLoss = Comp1 + lambda*RegularizationTerm
+              FinalLoss = Comp1 + 2*RegularizationTerm
               return( FinalLoss )
             }  
             WtsVec = runif(nrow(X_), 0.49, 0.51)
             WtsVec = WtsVec/sum(WtsVec)
             require(Rsolnp, quietly = T)
-            WtsVec = solnp(pars = WtsVec, #initial parameter guess 
-                                         fun = ObjectiveFxn_toMininimize,
+            WtsVec = solnp(              pars  = WtsVec, #initial parameter guess 
+                                         fun   = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
-                                         eqB = 1,  #...to 1
-                                         LB = rep(0,times = nrow(X_)), #weights must be non-negative 
-                                         UB = rep(1,times = nrow(X_)), #weights must be less than 1 
+                                         eqB   = 1,  #...to 1
+                                         LB    = rep(0,times = nrow(X_)), #weights must be non-negative 
+                                         UB    = rep(1,times = nrow(X_)), #weights must be less than 1 
                                          control = list(trace = 0))$pars
             WtsVec = round(WtsVec * 2000  )
             MatchIndices_i = unlist(  sapply(1:length(WtsVec),
