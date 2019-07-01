@@ -261,8 +261,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
       
-      browser() 
-      if(!is.na(kMatch) & !is.infinite(kMatch)){ 
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -273,9 +271,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         X_      = FastScale(X_, MM1, MM2);
         Y_      = FastScale(Y_, MM1, MM2)
         
-        ## If we're using matching
-        if (kMatch != 0 & !is.infinite(kMatch)){
-          if(class(kMatch) == "character"){ 
+        ### Weights using the synthetic controls objective 
+        { 
             Y_mean = rep(0,times=ncol(Y_))
             chunk_n = nrow(X_)
             ObjectiveFxn_toMininimize = function(WTS){ 
@@ -299,70 +296,106 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                          UB    = rep(1,times = nrow(X_)), #weights must be less than 1 
                                          control = list(trace = 0))$pars
             WtsVec = round(WtsVec * 2000  )
-            MatchIndices_i = unlist(  sapply(1:length(WtsVec),
+            reweightIndices_i = unlist(  sapply(1:length(WtsVec),
                                     function(indi){
                                       rep(indi,times=WtsVec[indi])}) )  
-          }
-          if(class(kMatch) != "character"){ 
-          ### KNN matching - find kMatch matches in X_ to Y_
-          MatchIndices_i  = try(c(FNN::get.knnx(data  = X_, 
+            ## Any category with less than minMatch matches includes all of that category
+            t_              = table( Cat_[unique(reweightIndices_i)] ); 
+            t_              = t_[t_<minMatch]
+            if(length(t_) > 0){ for(t__ in names(t_)){
+              reweightIndices_i = reweightIndices_i[!Cat_[reweightIndices_i] %in%  t__] ; 
+              reweightIndices_i = c(reweightIndices_i,
+                               sample(which(Cat_ == t__ ), 
+                                      minMatch, 
+                                      replace = T))
+            }
+            }
+        } 
+          
+        ### Weights from KNN matching - find kMatch matches in X_ to Y_
+        {            
+          knnIndices_i  = try(c(FNN::get.knnx(data  = X_, 
                                                 query = Y_, 
                                                 k     = kMatch)$nn.index) , T) 
-          } 
           
           ## Any category with less than minMatch matches includes all of that category
-          t_              = table( Cat_[unique(MatchIndices_i)] ); 
+          t_              = table( Cat_[unique(knnIndices_i)] ); 
           t_              = t_[t_<minMatch]
           if(length(t_) > 0){ for(t__ in names(t_)){
-            MatchIndices_i = MatchIndices_i[!Cat_[MatchIndices_i] %in%  t__] ; 
-            MatchIndices_i = c(MatchIndices_i,
+            knnIndices_i = knnIndices_i[!Cat_[knnIndices_i] %in%  t__] ; 
+            knnIndices_i = c(knnIndices_i,
                                sample(which(Cat_ == t__ ), 
                                       minMatch, 
                                       replace = T))
           }
           }
-        }else{ ## Otherwise use all the indices
-          MatchIndices_i  = 1:nrow(X_)
         }
-        categoryVec_LabMatch = Cat_[MatchIndices_i]; X_m = X_[MatchIndices_i,]
-        MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch),
-                                      categoryVec_LabMatch, function(x){c(x) })
         
-        ### Carry out estimation on the matched samples
-        est_readme2_ = try((  sapply(1:nbootMatch, function(eare){ 
-          MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
-                                                                                          batchSizePerCat_match, 
-                                                                                          replace = length(sae) * 0.75 < batchSizePerCat_match ) })
-          X__                          = X_m[unlist(MatchIndices_byCat_),]; 
-          categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
+        { ## All indices
+          AllIndices_i  = 1:nrow(X_)
+        }
+        est_obsMatch = function(knnIndices_i){ 
+          categoryVec_LabMatch = Cat_[knnIndices_i]; X_m = X_[knnIndices_i,]
+          MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch),
+                                        categoryVec_LabMatch, function(x){c(x) })
           
-          ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-          colnames(ESGivenD_sampled)   = names(labeled_pd)
-          ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
-          ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
-                                                            Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
-          return( ED_sampled )  
-        } )), T)
-        ED_sampled_averaged = try(rowMeans(est_readme2_), T)  
+          ### Carry out estimation on the matched samples
+          est_readme2_ = try((  sapply(1:nbootMatch, function(eare){ 
+            MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
+                                                                                            batchSizePerCat_match, 
+                                                                                            replace = length(sae) * 0.75 < batchSizePerCat_match ) })
+            X__                          = X_m[unlist(MatchIndices_byCat_),]; 
+            categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
+            
+            ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
+            colnames(ESGivenD_sampled)   = names(labeled_pd)
+            ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
+            ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
+                                                              Y         = rep(0, times = nrow(ESGivenD_sampled)))[names(labeled_pd)],T)
+            return( ED_sampled )  
+          } )), T)
+          ED_sampled_averaged = try(rowMeans(est_readme2_), T)
+        } 
         
-        return( list(ED_sampled_averaged) )
+        est_readme2 = est_obsMatch(knnIndices_i)
+        est_readme2_1 =  est_distMatch(out_dfm_labeled_   = X_[knnIndices_i,],
+                                     out_dfm_unlabeled_ = Y_,
+                                     l_indices_by_cat_  = Cat_[knnIndices_i,])
+        est_readme2_2 = est_obsMatch(AllIndices_i)
+        est_readme2_3 =  est_distMatch(out_dfm_labeled_   = X_[AllIndices_i,],
+                                     out_dfm_unlabeled_ = Y_,
+                                     l_indices_by_cat_  = Cat_[AllIndices_i,])
+        est_readme2_4 = est_obsMatch(reweightIndices_i)
+        est_readme2_5 =   est_distMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
+                                      out_dfm_unlabeled_ = Y_,
+                                      l_indices_by_cat_  = Cat_[reweightIndices_i,])
+        
+        return( list(est_readme2=est_readme2,
+                     est_readme2_1=est_readme2_1,
+                     est_readme2_2=est_readme2_2,
+                     est_readme2_3=est_readme2_3,
+                     est_readme2_3=est_readme2_4,
+                     est_readme2_3=est_readme2_5) ) 
       })
       
+      browser()
       ### Average the bootstrapped estimates
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST), na.rm = T)
       } 
-      if(!is.na(kMatch) & is.infinite(kMatch)){ 
+      { 
           ### Normalize X and Y
-          MM1 = colMeans(out_dfm_labeled)
-          MM2     = apply(cbind(colSds(out_dfm_labeled,  colMeans(out_dfm_labeled)),
-                                colSds(out_dfm_unlabeled,  colMeans(out_dfm_unlabeled))), 1, function(xa){max(xa)})#robust approx of x*y
-          out_dfm_labeled_n      = FastScale(out_dfm_labeled, MM1, MM2);
-          out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled, MM1, MM2)
+        est_distMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
+          if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
+          MM1 = colMeans(out_dfm_labeled_)
+          MM2     = apply(cbind(colSds(out_dfm_labeled_,  colMeans(out_dfm_labeled_)),
+                                colSds(out_dfm_unlabeled_,  colMeans(out_dfm_unlabeled_))), 1, function(xa){max(xa)})#robust approx of x*y
+          out_dfm_labeled_n      = FastScale(out_dfm_labeled_, MM1, MM2);
+          out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled_, MM1, MM2)
           RegData = sapply(1:nProj,function(proj_i){ 
             X_l      = out_dfm_labeled_n[,proj_i]
             X_u      = out_dfm_unlabeled_n[,proj_i]
             
-            distParams = lapply(l_indices_by_cat,function(sa){ 
+            distParams = lapply(l_indices_by_cat_,function(sa){ 
               c(mean(X_l[sa]),sd(X_l[sa]))
             })
             dist_u = lapply(distParams,function(dist_k){ 
@@ -381,7 +414,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             p_l = lapply(dist_l,function(dist_i){ 
               dist_i / denominator_l}) 
             p_l_cond = lapply(p_l,function(p_l_k){ 
-              do.call(cbind,lapply(l_indices_by_cat,function(cat_k_indices){ 
+              do.call(cbind,lapply(l_indices_by_cat_,function(cat_k_indices){ 
                 prop.table(hist(p_l_k[cat_k_indices],plot=F, breaks=seq(0,1,0.1))$counts)
               } ) )
             })
@@ -395,12 +428,18 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           X = do.call(rbind,RegData[2,])
           est_readme2 = readme_est_fxn(Y=Y,X=X)
           names(est_readme2) = colnames(X)
+          return( est_readme2 ) 
+        }
+        est_readme2_3   = est_distMatch(out_dfm_labeled_   = out_dfm_labeled,
+                                                out_dfm_unlabeled_ = out_dfm_unlabeled,
+                                                l_indices_by_cat_  = l_indices_by_cat)
+                
       }
-      if(is.na(kMatch)){
+      {
         ESGivenD                      =  do.call(cbind,lapply(l_indices_by_cat,function(xa){colMeans(out_dfm_labeled[xa,])}))
         ES                            = colMeans(out_dfm_unlabeled)
-        est_readme2                   = try(readme_est_fxn(X         = ESGivenD,
-                                                           Y         = ES),T) 
+        est_readme2_4                   = try(readme_est_fxn(X         = ESGivenD,
+                                                           Y           = ES),T) 
       
       }
       
