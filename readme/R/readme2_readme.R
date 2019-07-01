@@ -444,7 +444,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
                                                 l_indices_by_cat_  = l_indices_by_cat)
                 
-      }
+    }
     
     #use all data and means 
       {
@@ -517,9 +517,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
     ## Save results 
     boot_readme[iter_i,names(est_readme2)] = est_readme2
     for(aje in 1:7){ 
-        eval(parse(text=sprintf("boot_readme_%s[iter_i,names(est_readme2)] = est_readme2_%s")))  
+        eval(parse(text=sprintf("boot_readme_%s[iter_i,names(est_readme2)] = est_readme2_%s",aje,aje)))  
     }
-  }
   
   ### Close the TensorFlow session
   if(verbose==T){ cat("Finished!") }
