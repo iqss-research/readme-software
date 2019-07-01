@@ -274,6 +274,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         
         ## If we're using matching
         if (kMatch != 0){
+          if(is.infinite(kMatch)){ browser()} 
           if(class(kMatch) == "character"){ 
             Y_mean = rep(0,times=ncol(Y_))
             chunk_n = nrow(X_)
