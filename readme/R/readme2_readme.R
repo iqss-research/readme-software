@@ -313,7 +313,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           } ) 
             Y = do.call(c, RegData[1,] )
             X = do.call(rbind,RegData[2,])
-            unlabeled_pd_est = quad.constrain(Y,X)
+            unlabeled_pd_est = readme_est_fxn(Y=Y,X=X)
             names(unlabeled_pd_est) = colnames(X)
             ED_sampled_averaged  = unlabeled_pd_est
           } 
