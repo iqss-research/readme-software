@@ -362,7 +362,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             X_u      = out_dfm_unlabeled_n[,proj_i]
             
             distParams = lapply(l_indices_by_cat,function(sa){ 
-              c(mean(X_[sa]),sd(X_[sa]))
+              c(mean(X_l[sa]),sd(X_l[sa]))
             })
             dist_u = lapply(distParams,function(dist_k){ 
               dnorm(X_u,mean=dist_k[1], sd = dist_k[2])
