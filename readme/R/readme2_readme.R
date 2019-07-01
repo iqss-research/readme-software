@@ -526,7 +526,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
   ## If no diagnostics wanted
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
   if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T),
-                                    point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
                                     point_readme_2    = colMeans(boot_readme_2, na.rm = T) ,
                                     point_readme_3    = colMeans(boot_readme_3, na.rm = T) ,
