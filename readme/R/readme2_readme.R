@@ -264,7 +264,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
       
-      est_distMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
+      est_distribMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
           if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
           MM1 = colMeans(out_dfm_unlabeled_)
           MM2     = apply(cbind(colSds(out_dfm_labeled_,  colMeans(out_dfm_labeled_)),
@@ -409,15 +409,15 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         } 
         
         est_readme2 = est_obsMatch(knnIndices_i)
-        est_readme2_1 =  est_distMatch(out_dfm_labeled_   = X_[knnIndices_i,],
+        est_readme2_1 =  est_distribMatch(out_dfm_labeled_   = X_[knnIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[knnIndices_i])
         est_readme2_2 = est_obsMatch(AllIndices_i)
-        est_readme2_3 =  est_distMatch(out_dfm_labeled_   = X_[AllIndices_i,],
+        est_readme2_3 =  est_distribMatch(out_dfm_labeled_   = X_[AllIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[AllIndices_i])
         est_readme2_4 = est_obsMatch(reweightIndices_i)
-        est_readme2_5 =   est_distMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
+        est_readme2_5 =   est_distribMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
                                       out_dfm_unlabeled_ = Y_,
                                       l_indices_by_cat_  = Cat_[reweightIndices_i])
         
@@ -439,7 +439,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
   
     #use all data and distributions 
     {
-      est_readme2_6   = est_distMatch(out_dfm_labeled_   = out_dfm_labeled,
+      est_readme2_6   = est_distribMatch(out_dfm_labeled_   = out_dfm_labeled,
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
                                                 l_indices_by_cat_  = l_indices_by_cat)
                 
