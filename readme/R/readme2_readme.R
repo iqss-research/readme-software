@@ -436,8 +436,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       est_readme2_3 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[4,]), na.rm = T)
       est_readme2_4 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[5,]), na.rm = T)
       est_readme2_5 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[6,]), na.rm = T)
-    } 
-    
+  
     #use all data and distributions 
     {
       est_readme2_6   = est_distMatch(out_dfm_labeled_   = out_dfm_labeled,
@@ -463,7 +462,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
       try(rm(BOOTSTRAP_EST,indices_list), T)  
       if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
-    }
+    } 
+    
     ## If we're just doing the transformation
     if(justTransform == T){ 
       ### Calculate the transformed DFM
@@ -519,6 +519,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
     for(aje in 1:7){ 
         eval(parse(text=sprintf("boot_readme_%s[iter_i,names(est_readme2)] = est_readme2_%s",aje,aje)))  
     }
+  } 
   
   ### Close the TensorFlow session
   if(verbose==T){ cat("Finished!") }
