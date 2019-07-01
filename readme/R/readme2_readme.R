@@ -272,6 +272,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         X_      = FastScale(X_, MM1, MM2);
         Y_      = FastScale(Y_, MM1, MM2)
         
+        browser()
         ## If we're using matching
         if (kMatch != 0){
           if(is.infinite(kMatch)){
