@@ -386,17 +386,14 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             })
             p_l_cond = do.call(rbind,p_l_cond)
             
-            
-            #[p(P(x_train_C1)),p(P(x_train_C2))] beta =  p(P(x_test))
             Y = c(p_u)
             X =  p_l_cond
             list(Y=Y,X=X)
           } ) 
           Y = do.call(c, RegData[1,] )
           X = do.call(rbind,RegData[2,])
-          unlabeled_pd_est = readme_est_fxn(Y=Y,X=X)
-          names(unlabeled_pd_est) = colnames(X)
-          ED_sampled_averaged  = unlabeled_pd_est
+          est_readme2 = readme_est_fxn(Y=Y,X=X)
+          names(est_readme2) = colnames(X)
       }
       if(is.na(kMatch)){
         ESGivenD                      =  do.call(cbind,lapply(l_indices_by_cat,function(xa){colMeans(out_dfm_labeled[xa,])}))
