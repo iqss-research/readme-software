@@ -363,7 +363,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           
         ### Weights from KNN matching - find kMatch matches in X_ to Y_
         {            
-          knnIndices_i  = try(c(FNN::get.knnx(data  = X_, 
+          knnIndices_i  = try(c(FNN::get.knnx(data    = X_, 
                                                 query = Y_, 
                                                 k     = kMatch)$nn.index) , T) 
           
@@ -439,6 +439,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
   
     #use all data and distributions 
     {
+      browser()
       est_readme2_6   = est_distribMatch(out_dfm_labeled_   = out_dfm_labeled,
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
                                                 l_indices_by_cat_  = l_indices_by_cat)
