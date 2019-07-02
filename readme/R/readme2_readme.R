@@ -137,7 +137,7 @@ readme <- function(dfm ,
   
   ## Holding containers for results
   boot_readme          = matrix(0,nrow=nBoot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
-  for(aje in 1:7){ 
+  for(aje in 1:9){ 
     eval(parse(text=sprintf("boot_readme_%s = boot_readme",aje)))  
   }
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
@@ -264,7 +264,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
       
-      est_distribMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
+      est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
           if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
           MM1 = colMeans(out_dfm_unlabeled_)
           MM2     = apply(cbind(colSds(out_dfm_labeled_,  colMeans(out_dfm_labeled_)),
@@ -309,7 +309,35 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           est_readme2 = readme_est_fxn(Y=Y,X=X)
           names(est_readme2) = colnames(X)
           return( est_readme2 ) 
-        }
+      }
+      est_DistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
+        if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
+        MM1 = colMeans(out_dfm_unlabeled_)
+        MM2     = apply(cbind(colSds(out_dfm_labeled_,  colMeans(out_dfm_labeled_)),
+                              colSds(out_dfm_unlabeled_,  colMeans(out_dfm_unlabeled_))), 1, function(xa){max(xa)})#robust approx of x*y
+        out_dfm_labeled_n      = FastScale(out_dfm_labeled_, MM1, MM2);
+        out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled_, MM1, MM2)
+        RegData = sapply(1:nProj,function(proj_i){
+          X_l      = out_dfm_labeled_n[,proj_i]
+          X_u      = out_dfm_unlabeled_n[,proj_i]
+          
+          myBreaks = c(-Inf,seq(-1.5,1.5,0.5),Inf)
+          p_u = prop.table(hist(X_u,plot = F,breaks=myBreaks)$counts)
+          
+          p_l_cond = do.call(cbind,lapply(l_indices_by_cat_,function(cat_k_indices){ 
+              prop.table(hist(X_l[cat_k_indices],plot=F, breaks=myBreaks)$counts)
+            } ) )
+      
+          Y = c(p_u)
+          X =  p_l_cond
+          list(Y=Y,X=X)
+        } ) 
+        Y = do.call(c, RegData[1,] )
+        X = do.call(rbind,RegData[2,])
+        est_readme2 = readme_est_fxn(Y=Y,X=X)
+        names(est_readme2) = colnames(X)
+        return( est_readme2 ) 
+      }
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -409,24 +437,28 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         } 
         
         est_readme2 = est_obsMatch(knnIndices_i)
-        est_readme2_1 =  est_distribMatch(out_dfm_labeled_   = X_[knnIndices_i,],
+        est_readme2_1 =  est_PropbDistMatch(out_dfm_labeled_   = X_[knnIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[knnIndices_i])
         est_readme2_2 = est_obsMatch(AllIndices_i)
-        est_readme2_3 =  est_distribMatch(out_dfm_labeled_   = X_[AllIndices_i,],
+        est_readme2_3 =  est_PropbDistMatch(out_dfm_labeled_   = X_[AllIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[AllIndices_i])
         est_readme2_4 = est_obsMatch(reweightIndices_i)
-        est_readme2_5 =   est_distribMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
+        est_readme2_5 =   est_PropbDistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
                                       out_dfm_unlabeled_ = Y_,
                                       l_indices_by_cat_  = Cat_[reweightIndices_i])
+        est_readme2_9   = est_DistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
+                                        out_dfm_unlabeled_ = Y_,
+                                        l_indices_by_cat_  = Cat_[reweightIndices_i])
         
         return( list(est_readme2=est_readme2,
                      est_readme2_1=est_readme2_1,
                      est_readme2_2=est_readme2_2,
                      est_readme2_3=est_readme2_3,
                      est_readme2_4=est_readme2_4,
-                     est_readme2_5=est_readme2_5) ) 
+                     est_readme2_5=est_readme2_5,
+                     est_readme2_9=est_readme2_9) ) 
       })
       
       ### Average the bootstrapped estimates
@@ -436,14 +468,16 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       est_readme2_3 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[4,]), na.rm = T)
       est_readme2_4 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[5,]), na.rm = T)
       est_readme2_5 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[6,]), na.rm = T)
+      est_readme2_9 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[7,]), na.rm = T)
   
     #use all data and distributions 
     {
-      browser()
-      est_readme2_6   = est_distribMatch(out_dfm_labeled_   = out_dfm_labeled,
+      est_readme2_6   = est_PropbDistMatch(out_dfm_labeled_   = out_dfm_labeled,
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
                                                 l_indices_by_cat_  = l_indices_by_cat)
-                
+      est_readme2_8   = est_DistMatch(out_dfm_labeled_   = out_dfm_labeled,
+                                         out_dfm_unlabeled_ = out_dfm_unlabeled,
+                                         l_indices_by_cat_  = l_indices_by_cat)
     }
     
     #use all data and means 
@@ -517,7 +551,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
     
     ## Save results 
     boot_readme[iter_i,names(est_readme2)] = est_readme2
-    for(aje in 1:7){ 
+    for(aje in 1:9){ 
         eval(parse(text=sprintf("boot_readme_%s[iter_i,names(est_readme2)] = est_readme2_%s",aje,aje)))  
     }
   } 
@@ -534,7 +568,9 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                     point_readme_4    = colMeans(boot_readme_4, na.rm = T) ,
                                     point_readme_5    = colMeans(boot_readme_5, na.rm = T) ,
                                     point_readme_6    = colMeans(boot_readme_6, na.rm = T) ,
-                                    point_readme_7    = colMeans(boot_readme_7, na.rm = T) ) )  }
+                                    point_readme_7    = colMeans(boot_readme_7, na.rm = T),
+                                    point_readme_8    = colMeans(boot_readme_8, na.rm = T),
+                                    point_readme_9    = colMeans(boot_readme_9, na.rm = T)) )  }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
@@ -544,6 +580,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                     point_readme_5    = colMeans(boot_readme_5, na.rm = T) ,
                                     point_readme_6    = colMeans(boot_readme_6, na.rm = T) ,
                                     point_readme_7    = colMeans(boot_readme_7, na.rm = T) ,
+                                    point_readme_8    = colMeans(boot_readme_8, na.rm = T) ,
+                                    point_readme_9    = colMeans(boot_readme_9, na.rm = T) ,
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
