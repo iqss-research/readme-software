@@ -376,7 +376,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             chunk_n = nrow(X_)
             
             if(otherOption==1){ ObjectiveFxn_toMininimize = function(WTS){ return( sum( abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ) ) /chunk_k   + 2 * sum( WTS^2 )  )  }  } 
-            if(otherOption == 2){ ObjectiveFxn_toMininimize = function(WTS){ return( sum( (Y_mean - colSums( X_ * WTS)   / chunk_n  )^2 ) /chunk_k   + 2 * sum( WTS^2 )  )  }  } 
+            if(otherOption == 2){ ObjectiveFxn_toMininimize = function(WTS){ return( sum( abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ) ) /chunk_k   + 20 * sum( WTS^2 )  )  }  } 
             WtsVec = prop.table(runif(nrow(X_), 0.49, 0.51))
             WtsVec = solnp(              pars  = WtsVec, #initial parameter guess 
                                          fun   = ObjectiveFxn_toMininimize,
