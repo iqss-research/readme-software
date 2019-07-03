@@ -252,7 +252,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
     if(dfm_class != "list"){ 
       out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_labeled[,bag_cols_mat[iter_i,]], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T) 
     } 
-    if(class(out_dfm_unlabeled) == "try-error"){browser()}
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
     
     ### Here ends the SGD for generating optimal document-feature matrix.
@@ -352,14 +351,14 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         { 
             Y_mean = rep(0,times=ncol(Y_))
             chunk_n = nrow(X_)
+            browser()
             ObjectiveFxn_toMininimize = function(WTS){ 
               #Comp is the mean abs. diff. between pre-treatment treatment covariates + weighted pre-treatment synthetic covariates
-              Comp1 = mean(abs(Y_mean - colSums( X_ * WTS)   / chunk_n  )) 
               
               #RegularizationTerm penalizes large weights 
               RegularizationTerm = sum(WTS^2)
               
-              FinalLoss = Comp1 + 2*RegularizationTerm
+              FinalLoss = mean(abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ))  + 2*RegularizationTerm
               return( FinalLoss )
             }  
             WtsVec = runif(nrow(X_), 0.49, 0.51)
