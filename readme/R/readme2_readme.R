@@ -337,6 +337,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         names(est_readme2) = colnames(X)
         return( est_readme2 ) 
       }
+      require(Rsolnp, quietly = T)
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -347,23 +348,36 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         X_      = FastScale(X_, MM1, MM2);
         Y_      = FastScale(Y_, MM1, MM2)
         
+        ### Weights from KNN matching - find kMatch matches in X_ to Y_
+        {            
+          knnIndices_i  = try(c(FNN::get.knnx(data    = X_, 
+                                                query = Y_, 
+                                                k     = kMatch)$nn.index) , T) 
+          
+          ## Any category with less than minMatch matches includes all of that category
+          t_              = table( Cat_[unique(knnIndices_i)] ); 
+          t_              = t_[t_<minMatch]
+          if(length(t_) > 0){ for(t__ in names(t_)){
+            knnIndices_i = knnIndices_i[!Cat_[knnIndices_i] %in%  t__] ; 
+            knnIndices_i = c(knnIndices_i,
+                               sample(which(Cat_ == t__ ), 
+                                      minMatch, 
+                                      replace = T))
+          }
+          }
+        }
+        
         ### Weights using the synthetic controls objective 
         { 
-            Y_mean = rep(0,times=ncol(Y_))
+          
+            chunk_k <-  ncol(Y_)
+            Y_mean = rep(0,times=chunk_k)
             chunk_n = nrow(X_)
-            browser()
             ObjectiveFxn_toMininimize = function(WTS){ 
-              #Comp is the mean abs. diff. between pre-treatment treatment covariates + weighted pre-treatment synthetic covariates
-              
-              #RegularizationTerm penalizes large weights 
-              RegularizationTerm = sum(WTS^2)
-              
-              FinalLoss = mean(abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ))  + 2*RegularizationTerm
+              FinalLoss = sum( (Y_mean - colSums( X_ * WTS)   / chunk_n  )^2 ) /chunk_k   + 0.01 * sum( (WTS )^2 ) / chunk_n
               return( FinalLoss )
             }  
-            WtsVec = runif(nrow(X_), 0.49, 0.51)
-            WtsVec = WtsVec/sum(WtsVec)
-            require(Rsolnp, quietly = T)
+            WtsVec = prop.table(runif(nrow(X_), 0.49, 0.51))
             WtsVec = solnp(              pars  = WtsVec, #initial parameter guess 
                                          fun   = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
@@ -388,25 +402,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             }
         } 
           
-        ### Weights from KNN matching - find kMatch matches in X_ to Y_
-        {            
-          knnIndices_i  = try(c(FNN::get.knnx(data    = X_, 
-                                                query = Y_, 
-                                                k     = kMatch)$nn.index) , T) 
-          
-          ## Any category with less than minMatch matches includes all of that category
-          t_              = table( Cat_[unique(knnIndices_i)] ); 
-          t_              = t_[t_<minMatch]
-          if(length(t_) > 0){ for(t__ in names(t_)){
-            knnIndices_i = knnIndices_i[!Cat_[knnIndices_i] %in%  t__] ; 
-            knnIndices_i = c(knnIndices_i,
-                               sample(which(Cat_ == t__ ), 
-                                      minMatch, 
-                                      replace = T))
-          }
-          }
-        }
-        
         ### All indices
         { 
           AllIndices_i  = 1:nrow(X_)
