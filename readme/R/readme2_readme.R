@@ -442,9 +442,16 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             } 
         }
         
-        plot(  unlist(lapply(cv_results,function(x){x$error})) ) 
-        browser() 
-          
+        error_cv = unlist(lapply(cv_results,function(x){x$error}))
+        errorSE_cv = unlist(lapply(cv_results,function(x){x$errorSE}))
+        estimate_cv = do.call(rbind,lapply(cv_results,function(x){x$estimate}))
+        error_cv1SE = unlist(lapply(cv_results,function(x){x$errorSE}))
+        trueError_cv = apply(estimate_cv,1,function(x){sum(abs(x-unlabeled_pd))})
+        print( cor(trueError_cv,error_cv) )
+        which_lambda_1se = max(which(error_cv <= min(error_cv)+error_cv1SE[which.min(error_cv)]))
+        est_readme2_9 = cv_results[[which_lambda_1se]]$estimate
+        est_readme2_4 = cv_results[[which(lambda_seq == 2)]]$estimate
+
         ### All indices
         { 
           AllIndices_i  = 1:nrow(X_)
@@ -458,14 +465,11 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         est_readme2_3 =  est_PropbDistMatch(out_dfm_labeled_   = X_[AllIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[AllIndices_i])
-        est_readme2_4 = est_obsMatch(reweightIndices_i)
+        #est_readme2_4 = est_obsMatch(reweightIndices_i)
         est_readme2_5 =   est_PropbDistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
                                       out_dfm_unlabeled_ = Y_,
                                       l_indices_by_cat_  = Cat_[reweightIndices_i])
-        est_readme2_9   = est_DistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
-                                        out_dfm_unlabeled_ = Y_,
-                                        l_indices_by_cat_  = Cat_[reweightIndices_i])
-        
+
         return( list(est_readme2=est_readme2,
                      est_readme2_1=est_readme2_1,
                      est_readme2_2=est_readme2_2,
