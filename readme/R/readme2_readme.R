@@ -447,7 +447,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         estimate_cv = do.call(rbind,lapply(cv_results,function(x){x$estimate}))
         error_cv1SE = unlist(lapply(cv_results,function(x){x$errorSE}))
         trueError_cv = apply(estimate_cv,1,function(x){sum(abs(x-unlabeled_pd))})
-        print( cor(trueError_cv,error_cv) )
         which_lambda_1se = max(which(error_cv <= min(error_cv)+error_cv1SE[which.min(error_cv)]))
         est_readme2_9 = cv_results[[which_lambda_1se]]$estimate
         est_readme2_4 = cv_results[[which(lambda_seq == 2)]]$estimate
