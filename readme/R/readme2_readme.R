@@ -375,7 +375,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           ED_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
           if(return_error == FALSE){return( ED_sampled_averaged )  }
           if(return_error == TRUE){return( list(ED_sampled_averaged=ED_sampled_averaged,
-                                                error=mean(unlist(est_readme2_[2,]) )))  }
+                                                error=mean(unlist(est_readme2_[2,]) ),
+                                                errorSE=sd(unlist(est_readme2_[2,]) ) / sqrt(length(unlist(est_readme2_[2,])))  ))  }
         } 
         
         ### Weights from KNN matching - find kMatch matches in X_ to Y_
@@ -403,7 +404,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             Y_mean = rep(0,times=chunk_k)
             chunk_n = nrow(X_)
             
-            lambda_seq = c(0.20,2,20,200)
+            lambda_seq = c(0.20,2,20,200,2000,20000)
             count_ = 0 
             cv_results = list() 
             for(lambda_ in lambda_seq){ 
@@ -436,9 +437,12 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             cv_results[[count_]] = list(
                             estimate = results_lambda_$ED_sampled_averaged,
                                 error = results_lambda_$error,
+                                errorSE = results_lambda_$errorSE,
                                  lambda = lambda_)
             } 
         }
+        
+        plot(  unlist(lapply(cv_results,function(x){x$error})) ) 
         browser() 
           
         ### All indices
