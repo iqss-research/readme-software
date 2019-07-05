@@ -405,7 +405,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             chunk_n = nrow(X_)
             
             WtsVec = solnp(              pars  = prop.table(runif(nrow(X_), 0.49, 0.51)), #initial parameter guess 
-                                         fun   = function(WTS){  sum( abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ) ) /chunk_k   + 2 * sum( WTS^2 )   },
+                                         fun   = function(WTS){  sum( abs(Y_mean - .colSums( X_ * WTS,chunk_n,chunk_k)   / chunk_n  ) ) /chunk_k   + 2 * sum( WTS^2 )   },
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
                                          eqB   = 1,  #...to 1
                                          LB    = rep(0,times = nrow(X_)), #weights must be non-negative 
