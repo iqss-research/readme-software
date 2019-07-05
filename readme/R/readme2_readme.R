@@ -574,6 +574,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
   } 
   
   ### Close the TensorFlow session
+  browser()
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
