@@ -411,6 +411,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             count_ <- count_ + 1 
             ObjectiveFxn_toMininimize = function(WTS){ return( sum( abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ) ) /chunk_k   + lambda_ * sum( WTS^2 )  )  }
             if(count_ == 1){  WtsVec = prop.table(runif(nrow(X_), 0.49, 0.51)) }  
+            browser() 
             WtsVec = solnp(              pars  = WtsVec, #initial parameter guess 
                                          fun   = ObjectiveFxn_toMininimize,
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
