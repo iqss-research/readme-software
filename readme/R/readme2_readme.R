@@ -574,7 +574,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
   } 
   
   ### Close the TensorFlow session
-  browser()
   if(verbose==T){ cat("Finished!") }
   ## Parse output
   ## If no diagnostics wanted
@@ -676,6 +675,7 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
                                 tf$reduce_mean(FeatDiscrim_tf) + 
                                   0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
                                 #0.10 * tf$reduce_mean( Spread_tf ) #max Spread_tf is 0.30
+
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
                                                           momentum      = 0.90, use_nesterov  = T)
