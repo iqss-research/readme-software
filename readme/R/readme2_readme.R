@@ -404,7 +404,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             Y_mean = rep(0,times=chunk_k)
             chunk_n = nrow(X_)
             
-            lambda_seq = c(0.20,2)
+            lambda_seq = c(2)
             count_ = 0 
             cv_results = list() 
             for(lambda_ in lambda_seq){ 
