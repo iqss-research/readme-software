@@ -423,8 +423,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                       minMatch, 
                                       replace = T))
             }
-              est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
             } 
+          est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
         }
         
         ### All indices
