@@ -404,25 +404,15 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             Y_mean = rep(0,times=chunk_k)
             chunk_n = nrow(X_)
             
-            lambda_seq = c(2)
-            count_ = 0 
-            cv_results = list() 
-            for(lambda_ in lambda_seq){ 
-            count_ <- count_ + 1 
-            ObjectiveFxn_toMininimize = function(WTS){ return( sum( abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ) ) /chunk_k   + lambda_ * sum( WTS^2 )  )  }
-            if(count_ == 1){  WtsVec = prop.table(runif(nrow(X_), 0.49, 0.51)) }  
-            browser() 
-            WtsVec = solnp(              pars  = WtsVec, #initial parameter guess 
-                                         fun   = ObjectiveFxn_toMininimize,
+            WtsVec = solnp(              pars  = prop.table(runif(nrow(X_), 0.49, 0.51)), #initial parameter guess 
+                                         fun   = function(WTS){  sum( abs(Y_mean - colSums( X_ * WTS)   / chunk_n  ) ) /chunk_k   + 2 * sum( WTS^2 )   },
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
                                          eqB   = 1,  #...to 1
                                          LB    = rep(0,times = nrow(X_)), #weights must be non-negative 
                                          UB    = rep(1,times = nrow(X_)), #weights must be less than 1 
                                          control = list(trace = 0))$pars
             WtsVec_ = round(WtsVec * 2000  )
-            reweightIndices_i = unlist(  sapply(1:length(WtsVec_),
-                                    function(indi){
-                                      rep(indi,times=WtsVec_[indi])}) )  
+            reweightIndices_i = unlist(  sapply(1:length(WtsVec_),function(indi){rep(indi,times=WtsVec_[indi])}) )  
             ## Any category with less than minMatch matches includes all of that category
             t_              = table( Cat_[unique(reweightIndices_i)] ); 
             t_              = t_[t_<minMatch]
@@ -433,25 +423,10 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                       minMatch, 
                                       replace = T))
             }
-            } 
-            results_lambda_  = est_obsMatch(reweightIndices_i,return_error = T)
-            cv_results[[count_]] = list(
-                            estimate = results_lambda_$ED_sampled_averaged,
-                                error = results_lambda_$error,
-                                errorSE = results_lambda_$errorSE,
-                                 lambda = lambda_)
+              est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
             } 
         }
         
-        error_cv = unlist(lapply(cv_results,function(x){x$error}))
-        errorSE_cv = unlist(lapply(cv_results,function(x){x$errorSE}))
-        estimate_cv = do.call(rbind,lapply(cv_results,function(x){x$estimate}))
-        error_cv1SE = unlist(lapply(cv_results,function(x){x$errorSE}))
-        trueError_cv = apply(estimate_cv,1,function(x){sum(abs(x-unlabeled_pd))})
-        which_lambda_1se = max(which(error_cv <= min(error_cv)+error_cv1SE[which.min(error_cv)]))
-        est_readme2_9 = cv_results[[which_lambda_1se]]$estimate
-        est_readme2_4 = cv_results[[which(lambda_seq == 2)]]$estimate
-
         ### All indices
         { 
           AllIndices_i  = 1:nrow(X_)
