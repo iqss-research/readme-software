@@ -214,7 +214,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
 
-                      bag_cols               = sample(1:nDim_full,nDim_bag)
+                      bag_cols               = sort(sample(1:nDim_full,nDim_bag) ) 
                       bag_cols_mat[iter_i,] <- bag_cols
                       S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
@@ -457,7 +457,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       })
       
       ### Average the bootstrapped estimates
-      browser()
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]), na.rm = T)
       est_readme2_1 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]), na.rm = T)
       est_readme2_2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[3,]), na.rm = T)
