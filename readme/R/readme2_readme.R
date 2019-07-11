@@ -338,6 +338,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         names(est_readme2) = colnames(X)
         return( est_readme2 ) 
       }
+      
+      
       require(Rsolnp, quietly = T)
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
@@ -455,6 +457,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       })
       
       ### Average the bootstrapped estimates
+      browser()
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]), na.rm = T)
       est_readme2_1 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]), na.rm = T)
       est_readme2_2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[3,]), na.rm = T)
