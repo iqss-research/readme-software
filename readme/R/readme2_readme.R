@@ -405,8 +405,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         }
         
         ### Weights using the synthetic controls objective 
-        { 
-            if(T == F){ 
+        if(T == F){
             chunk_k <-  ncol(X_)
             Y_mean = rep(0,times=chunk_k)
             chunk_n = nrow(X_)
@@ -420,8 +419,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                          control = list(trace = 0))$pars
             WtsVec_ = round(WtsVec * 2000  )
             reweightIndices_i = unlist(  sapply(1:length(WtsVec_),function(indi){rep(indi,times=WtsVec_[indi])}) )  
-            }
-            reweightIndices_i = knnIndices_i
+            
             ## Any category with less than minMatch matches includes all of that category
             t_              = table( Cat_[unique(reweightIndices_i)] ); 
             t_              = t_[t_<minMatch]
@@ -433,15 +431,18 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                                       replace = T))
             }
             } 
-          est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
-        }
+            est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
+            est_readme2_5 =   est_PropbDistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
+                                                 out_dfm_unlabeled_ = Y_,
+                                                 l_indices_by_cat_  = Cat_[reweightIndices_i])
+            }
         
         ### All indices
         { 
           AllIndices_i  = 1:nrow(X_)
         }
         
-        est_readme2 = est_obsMatch(knnIndices_i)
+        est_readme2_5 <- est_readme2_4 <- est_readme2_9 <- est_readme2 <- est_obsMatch(knnIndices_i)
         est_readme2_1 =  est_PropbDistMatch(out_dfm_labeled_   = X_[knnIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[knnIndices_i])
@@ -449,10 +450,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         est_readme2_3 =  est_PropbDistMatch(out_dfm_labeled_   = X_[AllIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[AllIndices_i])
-        #est_readme2_4 = est_obsMatch(reweightIndices_i)
-        est_readme2_5 =   est_PropbDistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
-                                      out_dfm_unlabeled_ = Y_,
-                                      l_indices_by_cat_  = Cat_[reweightIndices_i])
 
         return( list(est_readme2=est_readme2,
                      est_readme2_1=est_readme2_1,
@@ -700,7 +697,7 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     #other actions 
     FinalParams_list        = list(WtsMat, BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+    restart_action          = list(WtsMat, BiasVec,inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
   })
   readme_graph$finalize()
 
