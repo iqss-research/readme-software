@@ -130,7 +130,7 @@ readme <- function(dfm ,
   #Setup information for SGD
   categoryVec_unlabeled = as.factor( categoryVec )[labeledIndicator == 0]
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
-  l_indices_by_cat    = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
+  l_indices_by_cat      = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
   labeled_pd            = vec2prob( categoryVec_labeled )
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   nCat                  = as.integer( length(labeled_pd) ); 
@@ -340,7 +340,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       }
       
       
-      require(Rsolnp, quietly = T)
+      #require(Rsolnp, quietly = T)
       BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
@@ -402,6 +402,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         
         ### Weights using the synthetic controls objective 
         { 
+            if(T == F){ 
             chunk_k <-  ncol(X_)
             Y_mean = rep(0,times=chunk_k)
             chunk_n = nrow(X_)
@@ -409,12 +410,14 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             WtsVec = solnp(              pars  = prop.table(runif(nrow(X_), 0.49, 0.51)), #initial parameter guess 
                                          fun   = function(WTS){  sum( abs(Y_mean - .colSums( X_ * WTS,chunk_n,chunk_k)   / chunk_n  ) ) /chunk_k   + 2 * sum( WTS^2 )   },
                                          eqfun = function(WTS){sum(WTS)},#weights must sum...
-                                         eqB   = 1,  #...to 1
+                                         eqB   = 1, 
                                          LB    = rep(0,times = nrow(X_)), #weights must be non-negative 
                                          UB    = rep(1,times = nrow(X_)), #weights must be less than 1 
                                          control = list(trace = 0))$pars
             WtsVec_ = round(WtsVec * 2000  )
             reweightIndices_i = unlist(  sapply(1:length(WtsVec_),function(indi){rep(indi,times=WtsVec_[indi])}) )  
+            }
+            reweightIndices_i = knnIndices_i
             ## Any category with less than minMatch matches includes all of that category
             t_              = table( Cat_[unique(reweightIndices_i)] ); 
             t_              = t_[t_<minMatch]
