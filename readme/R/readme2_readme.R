@@ -261,8 +261,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       ## Minimum number of observations to use in each category per bootstrap iteration
       MM1           = colMeans(out_dfm_unlabeled); 
       MM2_          = colSds(out_dfm_unlabeled,MM1);
-      indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
-                                                                                                       replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
       
       est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
           if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
@@ -283,7 +281,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             })
             denominator_u = Reduce("+",dist_u)
             p_u = lapply(dist_u,function(dist_i){ 
-              prop.table(hist( dist_i / denominator_u,plot = F,breaks=seq(0,1,0.1))$counts)}) 
+              prop.table(hist( dist_i / denominator_u,plot = F,breaks=seq(0,1,0.10))$counts)}) 
             p_u = do.call(cbind,p_u)
             
             dist_l = lapply(distParams,function(dist_k){ 
@@ -295,7 +293,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
               dist_i / denominator_l}) 
             p_l_cond = lapply(p_l,function(p_l_k){ 
               do.call(cbind,lapply(l_indices_by_cat_,function(cat_k_indices){ 
-                prop.table(hist(p_l_k[cat_k_indices],plot=F, breaks=seq(0,1,0.1))$counts)
+                prop.table(hist(p_l_k[cat_k_indices],plot=F, breaks=seq(0,1,0.10))$counts)
               } ) )
             })
             p_l_cond = do.call(rbind,p_l_cond)
@@ -321,7 +319,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           X_l      = out_dfm_labeled_n[,proj_i]
           X_u      = out_dfm_unlabeled_n[,proj_i]
           
-          myBreaks = c(-Inf,seq(-1.5,1.5,0.5),Inf)
+          myBreaks = c(-Inf,seq(-1.5,1.5,0.75),Inf)
           p_u = prop.table(hist(X_u,plot = F,breaks=myBreaks)$counts)
           
           p_l_cond = do.call(cbind,lapply(l_indices_by_cat_,function(cat_k_indices){ 
@@ -338,10 +336,16 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         names(est_readme2) = colnames(X)
         return( est_readme2 ) 
       }
-      
-      
+    
       #require(Rsolnp, quietly = T)
-      BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
+      est_readme2_1 <- est_readme2 <- c()
+      est_readme2_2 <- est_readme2_3 <- c()
+      est_readme2_4 <- est_readme2_5 <-est_readme2_9 <- c()
+      count__<-1;sdOK <- F;while(sdOK == F){ 
+        count__<-count__+1
+        indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
+                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+        BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
         Y_      = out_dfm_unlabeled
@@ -459,14 +463,25 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                      est_readme2_9=est_readme2_9) ) 
       })
       
-      ### Average the bootstrapped estimates
-      est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]), na.rm = T)
-      est_readme2_1 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]), na.rm = T)
-      est_readme2_2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[3,]), na.rm = T)
-      est_readme2_3 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[4,]), na.rm = T)
-      est_readme2_4 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[5,]), na.rm = T)
-      est_readme2_5 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[6,]), na.rm = T)
-      est_readme2_9 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[7,]), na.rm = T)
+        ### Get the bootstrapped estimates
+        est_readme2 <- cbind(est_readme2,do.call(cbind,BOOTSTRAP_EST[1,]))
+        est_readme2_1 <- cbind(est_readme2_1,do.call(cbind,BOOTSTRAP_EST[2,]))
+        est_readme2_2 <- cbind(est_readme2_2,do.call(cbind,BOOTSTRAP_EST[3,]))
+        est_readme2_3 <- cbind(est_readme2_3,do.call(cbind,BOOTSTRAP_EST[4,]))
+        est_readme2_4 <- cbind(est_readme2_4,do.call(cbind,BOOTSTRAP_EST[5,]))
+        est_readme2_5 <- cbind(est_readme2_5,do.call(cbind,BOOTSTRAP_EST[6,]))
+        est_readme2_9 <- cbind(est_readme2_9,do.call(cbind,BOOTSTRAP_EST[7,]))
+        est_readme2_sd <- sum(apply(est_readme2,1,sd)) / sqrt(ncol(est_readme2))
+        print( est_readme2_sd  )
+        if(est_readme2_sd<0.01 | count__>10){sdOK<-T}
+      } 
+      est_readme2 <- rowMeans(est_readme2, na.rm = T)
+      est_readme2_1 <- rowMeans(est_readme2_1, na.rm = T)
+      est_readme2_2 <- rowMeans(est_readme2_2, na.rm = T)
+      est_readme2_3 <- rowMeans(est_readme2_3, na.rm = T)
+      est_readme2_4 <- rowMeans(est_readme2_4, na.rm = T)
+      est_readme2_5 <- rowMeans(est_readme2_5, na.rm = T)
+      est_readme2_9 <- rowMeans(est_readme2_9, na.rm = T)
   
     #use all data and distributions 
     {
