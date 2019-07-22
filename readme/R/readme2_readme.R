@@ -264,11 +264,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       
       est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
           if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
-          MM1 = colMeans(out_dfm_unlabeled_)
-          MM2     = apply(cbind(colSds(out_dfm_labeled_,  colMeans(out_dfm_labeled_)),
-                                colSds(out_dfm_unlabeled_,  colMeans(out_dfm_unlabeled_))), 1, function(xa){max(xa)})#robust approx of x*y
-          out_dfm_labeled_n      = FastScale(out_dfm_labeled_, MM1, MM2);
-          out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled_, MM1, MM2)
+          out_dfm_labeled_n      = out_dfm_labeled_
+          out_dfm_unlabeled_n      = out_dfm_unlabeled_
           RegData = sapply(1:nProj,function(proj_i){ 
             X_l      = out_dfm_labeled_n[,proj_i]
             X_u      = out_dfm_unlabeled_n[,proj_i]
@@ -310,11 +307,8 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       }
       est_DistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
         if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
-        MM1 = colMeans(out_dfm_unlabeled_)
-        MM2     = apply(cbind(colSds(out_dfm_labeled_,  colMeans(out_dfm_labeled_)),
-                              colSds(out_dfm_unlabeled_,  colMeans(out_dfm_unlabeled_))), 1, function(xa){max(xa)})#robust approx of x*y
-        out_dfm_labeled_n      = FastScale(out_dfm_labeled_, MM1, MM2);
-        out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled_, MM1, MM2)
+        out_dfm_labeled_n      = out_dfm_labeled_
+        out_dfm_unlabeled_n      = out_dfm_unlabeled_
         RegData = sapply(1:nProj,function(proj_i){
           X_l      = out_dfm_labeled_n[,proj_i]
           X_u      = out_dfm_unlabeled_n[,proj_i]
@@ -443,6 +437,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         }
         
         est_readme2_5 <- est_readme2_4 <- est_readme2_9 <- est_readme2 <- est_obsMatch(knnIndices_i)
+        browser()
         est_readme2_1 =  est_PropbDistMatch(out_dfm_labeled_   = X_[knnIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
                                      l_indices_by_cat_  = Cat_[knnIndices_i])
@@ -485,9 +480,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       est_readme2_6   = est_PropbDistMatch(out_dfm_labeled_   = out_dfm_labeled,
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
                                                 l_indices_by_cat_  = l_indices_by_cat)
-      est_readme2_8   = est_DistMatch(out_dfm_labeled_   = out_dfm_labeled,
-                                         out_dfm_unlabeled_ = out_dfm_unlabeled,
-                                         l_indices_by_cat_  = l_indices_by_cat)
+      est_readme2_8   = est_readme2_6
     }
     
     #use all data and means 
@@ -697,8 +690,8 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     #other actions 
     FinalParams_list        = list(WtsMat, BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-    #restart_action          = list(tf$variables_initializer(list(WtsMat, BiasVec)),inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
+    #restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+    restart_action          = list(tf$variables_initializer(list(WtsMat, BiasVec)),inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
   })
   readme_graph$finalize()
 
