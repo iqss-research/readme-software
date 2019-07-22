@@ -263,11 +263,12 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       MM2_          = colSds(out_dfm_unlabeled,MM1);
       
       est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,cat_){ 
+          cat_indices = tapply(1:length(cat_),cat_,c)
           RegData = sapply(1:nProj,function(proj_i){ 
             X_l      = out_dfm_labeled_[,proj_i]
             X_u      = out_dfm_unlabeled[,proj_i]
             
-            distParams = lapply(cat_,function(sa){ 
+            distParams = lapply(cat_indices,function(sa){ 
               c(mean(X_l[sa]),sd(X_l[sa]))
             })
             dist_u = lapply(distParams,function(dist_k){ 
@@ -286,7 +287,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             p_l = lapply(dist_l,function(dist_i){ 
               dist_i / denominator_l}) 
             p_l_cond = lapply(p_l,function(p_l_k){ 
-              do.call(cbind,tapply(1:length(cat_),cat_,function(cat_k_indices){ 
+              do.call(cbind,lapply(cat_indices,function(cat_k_indices){ 
                 prop.table(hist(p_l_k[cat_k_indices],plot=F, breaks=seq(0,1,0.10))$counts)
               } ) )
             })
@@ -302,8 +303,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           names(est_readme2) = colnames(X)
           return( est_readme2 ) 
       }
-      browser()
-    
+
       #require(Rsolnp, quietly = T)
       est_readme2_1 <- est_readme2 <- c()
       est_readme2_2 <- est_readme2_3 <- c()
@@ -370,39 +370,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           }
           }
         }
-        
-        ### Weights using the synthetic controls objective 
-        if(T == F){
-            chunk_k <-  ncol(X_)
-            Y_mean = rep(0,times=chunk_k)
-            chunk_n = nrow(X_)
-            
-            WtsVec = solnp(              pars  = prop.table(runif(nrow(X_), 0.49, 0.51)), #initial parameter guess 
-                                         fun   = function(WTS){  sum( abs(Y_mean - .colSums( X_ * WTS,chunk_n,chunk_k)   / chunk_n  ) ) /chunk_k   + 2 * sum( WTS^2 )   },
-                                         eqfun = function(WTS){sum(WTS)},#weights must sum...
-                                         eqB   = 1, 
-                                         LB    = rep(0,times = nrow(X_)), #weights must be non-negative 
-                                         UB    = rep(1,times = nrow(X_)), #weights must be less than 1 
-                                         control = list(trace = 0))$pars
-            WtsVec_ = round(WtsVec * 2000  )
-            reweightIndices_i = unlist(  sapply(1:length(WtsVec_),function(indi){rep(indi,times=WtsVec_[indi])}) )  
-            
-            ## Any category with less than minMatch matches includes all of that category
-            t_              = table( Cat_[unique(reweightIndices_i)] ); 
-            t_              = t_[t_<minMatch]
-            if(length(t_) > 0){ for(t__ in names(t_)){
-              reweightIndices_i = reweightIndices_i[!Cat_[reweightIndices_i] %in%  t__] ; 
-              reweightIndices_i = c(reweightIndices_i,
-                               sample(which(Cat_ == t__ ), 
-                                      minMatch, 
-                                      replace = T))
-            }
-            } 
-            est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
-            est_readme2_5 =   est_PropbDistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
-                                                 out_dfm_unlabeled_ = Y_,
-                                                 cat_  = Cat_[reweightIndices_i])
-            }
         
         ### All indices
         { 
