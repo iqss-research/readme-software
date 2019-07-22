@@ -697,8 +697,8 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     #other actions 
     FinalParams_list        = list(WtsMat, BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-    #restart_action          = list(WtsMat, BiasVec,inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
-    restart_action          = list(tf$variables_initializer(list(WtsMat, BiasVec)),inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
+    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+    #restart_action          = list(tf$variables_initializer(list(WtsMat, BiasVec)),inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
   })
   readme_graph$finalize()
 
