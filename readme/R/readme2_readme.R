@@ -302,30 +302,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           names(est_readme2) = colnames(X)
           return( est_readme2 ) 
       }
-      est_DistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,cat_){ 
-        out_dfm_labeled_n      = out_dfm_labeled_
-        out_dfm_unlabeled_n      = out_dfm_unlabeled_
-        RegData = sapply(1:nProj,function(proj_i){
-          X_l      = out_dfm_labeled_[,proj_i]
-          X_u      = out_dfm_unlabeled_[,proj_i]
-          
-          myBreaks = c(-Inf,seq(-1.5,1.5,0.75),Inf)
-          p_u = prop.table(hist(X_u,plot = F,breaks=myBreaks)$counts)
-          
-          p_l_cond = do.call(cbind,tapply(1:length(cat_),cat_,function(cat_k_indices){ 
-              prop.table(hist(X_l[cat_k_indices],plot=F, breaks=myBreaks)$counts)
-            } ) )
-      
-          Y = c(p_u)
-          X =  p_l_cond
-          list(Y=Y,X=X)
-        } ) 
-        Y = do.call(c, RegData[1,] )
-        X = do.call(rbind,RegData[2,])
-        est_readme2 = readme_est_fxn(Y=Y,X=X)
-        names(est_readme2) = colnames(X)
-        return( est_readme2 ) 
-      }
+      browser()
     
       #require(Rsolnp, quietly = T)
       est_readme2_1 <- est_readme2 <- c()
