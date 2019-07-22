@@ -262,15 +262,12 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
       MM1           = colMeans(out_dfm_unlabeled); 
       MM2_          = colSds(out_dfm_unlabeled,MM1);
       
-      est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
-          if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
-          out_dfm_labeled_n      = out_dfm_labeled_
-          out_dfm_unlabeled_n      = out_dfm_unlabeled_
+      est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,cat_){ 
           RegData = sapply(1:nProj,function(proj_i){ 
-            X_l      = out_dfm_labeled_n[,proj_i]
-            X_u      = out_dfm_unlabeled_n[,proj_i]
+            X_l      = out_dfm_labeled_[,proj_i]
+            X_u      = out_dfm_unlabeled[,proj_i]
             
-            distParams = lapply(l_indices_by_cat_,function(sa){ 
+            distParams = lapply(cat_,function(sa){ 
               c(mean(X_l[sa]),sd(X_l[sa]))
             })
             dist_u = lapply(distParams,function(dist_k){ 
@@ -289,7 +286,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             p_l = lapply(dist_l,function(dist_i){ 
               dist_i / denominator_l}) 
             p_l_cond = lapply(p_l,function(p_l_k){ 
-              do.call(cbind,lapply(l_indices_by_cat_,function(cat_k_indices){ 
+              do.call(cbind,tapply(1:length(cat_),cat_,function(cat_k_indices){ 
                 prop.table(hist(p_l_k[cat_k_indices],plot=F, breaks=seq(0,1,0.10))$counts)
               } ) )
             })
@@ -305,18 +302,17 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           names(est_readme2) = colnames(X)
           return( est_readme2 ) 
       }
-      est_DistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,l_indices_by_cat_){ 
-        if(!class(l_indices_by_cat_) %in% c("list", "array")){l_indices_by_cat_    = tapply(1:length(l_indices_by_cat_), l_indices_by_cat_, c)} 
+      est_DistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,cat_){ 
         out_dfm_labeled_n      = out_dfm_labeled_
         out_dfm_unlabeled_n      = out_dfm_unlabeled_
         RegData = sapply(1:nProj,function(proj_i){
-          X_l      = out_dfm_labeled_n[,proj_i]
-          X_u      = out_dfm_unlabeled_n[,proj_i]
+          X_l      = out_dfm_labeled_[,proj_i]
+          X_u      = out_dfm_unlabeled_[,proj_i]
           
           myBreaks = c(-Inf,seq(-1.5,1.5,0.75),Inf)
           p_u = prop.table(hist(X_u,plot = F,breaks=myBreaks)$counts)
           
-          p_l_cond = do.call(cbind,lapply(l_indices_by_cat_,function(cat_k_indices){ 
+          p_l_cond = do.call(cbind,tapply(1:length(cat_),cat_,function(cat_k_indices){ 
               prop.table(hist(X_l[cat_k_indices],plot=F, breaks=myBreaks)$counts)
             } ) )
       
@@ -428,7 +424,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
             est_readme2_4 <- est_readme2_9  <- est_obsMatch(reweightIndices_i,return_error = F)
             est_readme2_5 =   est_PropbDistMatch(out_dfm_labeled_   = X_[reweightIndices_i,],
                                                  out_dfm_unlabeled_ = Y_,
-                                                 l_indices_by_cat_  = Cat_[reweightIndices_i])
+                                                 cat_  = Cat_[reweightIndices_i])
             }
         
         ### All indices
@@ -437,14 +433,13 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         }
         
         est_readme2_5 <- est_readme2_4 <- est_readme2_9 <- est_readme2 <- est_obsMatch(knnIndices_i)
-        browser()
         est_readme2_1 =  est_PropbDistMatch(out_dfm_labeled_   = X_[knnIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
-                                     l_indices_by_cat_  = Cat_[knnIndices_i])
+                                     cat_  = Cat_[knnIndices_i])
         est_readme2_2 = est_obsMatch(AllIndices_i)
         est_readme2_3 =  est_PropbDistMatch(out_dfm_labeled_   = X_[AllIndices_i,],
                                      out_dfm_unlabeled_ = Y_,
-                                     l_indices_by_cat_  = Cat_[AllIndices_i])
+                                     cat_  = Cat_[AllIndices_i])
 
         return( list(est_readme2=est_readme2,
                      est_readme2_1=est_readme2_1,
@@ -479,7 +474,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
     {
       est_readme2_6   = est_PropbDistMatch(out_dfm_labeled_   = out_dfm_labeled,
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
-                                                l_indices_by_cat_  = l_indices_by_cat)
+                                                cat_  = categoryVec_labeled)
       est_readme2_8   = est_readme2_6
     }
     
