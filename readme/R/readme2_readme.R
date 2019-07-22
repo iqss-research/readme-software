@@ -399,7 +399,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         est_readme2_5 <- cbind(est_readme2_5,do.call(cbind,BOOTSTRAP_EST[6,]))
         est_readme2_9 <- cbind(est_readme2_9,do.call(cbind,BOOTSTRAP_EST[7,]))
         est_readme2_sd <- sum(apply(est_readme2,1,sd)) / sqrt(ncol(est_readme2))
-        print( est_readme2_sd  )
         if(est_readme2_sd<0.015 | count__>10){sdOK<-T}
       } 
       est_readme2 <- rowMeans(est_readme2, na.rm = T)
