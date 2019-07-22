@@ -377,13 +377,9 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         }
         
         est_readme2_5 <- est_readme2_4 <- est_readme2_9 <- est_readme2 <- est_obsMatch(knnIndices_i)
-        est_readme2_1 =  est_PropbDistMatch(out_dfm_labeled_   = X_[knnIndices_i,],
-                                     out_dfm_unlabeled_ = Y_,
-                                     cat_  = Cat_[knnIndices_i])
+        est_readme2_1 =  est_readme2_5
         est_readme2_2 = est_obsMatch(AllIndices_i)
-        est_readme2_3 =  est_PropbDistMatch(out_dfm_labeled_   = X_[AllIndices_i,],
-                                     out_dfm_unlabeled_ = Y_,
-                                     cat_  = Cat_[AllIndices_i])
+        est_readme2_3 =  est_readme2_5
 
         return( list(est_readme2=est_readme2,
                      est_readme2_1=est_readme2_1,
