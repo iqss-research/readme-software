@@ -102,7 +102,6 @@ readme <- function(dfm ,
                    sgdIters      = 500,
                    numProjections = 20,
                    batchSizePerCat = 10, 
-                   bagFrac        = 1, 
                    kMatch         = 3, 
                    batchSizePerCat_match = 20, 
                    minMatch       = 8,
@@ -176,7 +175,7 @@ readme <- function(dfm ,
   require(tensorflow, quietly = T)
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  start_reading(nDim=nDim_full,bagFrac = bagFrac, nProj=numProjections, regraph = regraph_)
+  start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
   
   FinalParams_LIST <- list(); tf_junk <- ls()
   
@@ -199,10 +198,9 @@ contrast_indices2 = contrast_indices2_v,
 redund_indices1 = redund_indices1_v, 
 redund_indices2 = redund_indices2_v, 
 MultMat_tf = MultMat_tf_v, 
-IL_input = dfm_labeled[grab_samp(),bag_cols]
+IL_input = dfm_labeled[grab_samp(),]
 )"
-          nDim_bag      = round(nDim_full * bagFrac)
-          bag_cols_mat = matrix(NA,nrow=nBoot,ncol=nDim_bag)
+
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
@@ -214,8 +212,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
 
-                      bag_cols               = sort(sample(1:nDim_full,nDim_bag) ) 
-                      bag_cols_mat[iter_i,] <- bag_cols
                       S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
                         IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
@@ -239,7 +235,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           try(tf$keras$backend$clear_session(), T) 
           try(tf$keras$backend$reset_uids(), T)
   
-  tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v","bag_cols_mat" )]
+  tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
   
   for(iter_i in 1:nBoot){ 
@@ -304,12 +300,6 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           return( est_readme2 ) 
       }
 
-      #require(Rsolnp, quietly = T)
-      est_readme2_1 <- est_readme2 <- c()
-      est_readme2_2 <- est_readme2_3 <- c()
-      est_readme2_4 <- est_readme2_5 <-est_readme2_9 <- c()
-      count__<-1;sdOK <- F;while(sdOK == F){ 
-        count__<-count__+1
         indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
                                                                                                         replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
         BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
@@ -376,45 +366,23 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
           AllIndices_i  = 1:nrow(X_)
         }
         
-        est_readme2_5 <- est_readme2_4 <- est_readme2_9 <- est_readme2 <- est_obsMatch(knnIndices_i)
-        est_readme2_1 =  est_readme2_5
-        est_readme2_2 = est_obsMatch(AllIndices_i)
-        est_readme2_3 =  est_readme2_5
+        est_readme2 <- est_obsMatch(knnIndices_i)
+        est_readme2_1 = est_obsMatch(AllIndices_i)
 
         return( list(est_readme2=est_readme2,
-                     est_readme2_1=est_readme2_1,
-                     est_readme2_2=est_readme2_2,
-                     est_readme2_3=est_readme2_3,
-                     est_readme2_4=est_readme2_4,
-                     est_readme2_5=est_readme2_5,
-                     est_readme2_9=est_readme2_9) ) 
+                     est_readme2_1=est_readme2_1) ) 
       })
       
         ### Get the bootstrapped estimates
-        est_readme2 <- cbind(est_readme2,do.call(cbind,BOOTSTRAP_EST[1,]))
-        est_readme2_1 <- cbind(est_readme2_1,do.call(cbind,BOOTSTRAP_EST[2,]))
-        est_readme2_2 <- cbind(est_readme2_2,do.call(cbind,BOOTSTRAP_EST[3,]))
-        est_readme2_3 <- cbind(est_readme2_3,do.call(cbind,BOOTSTRAP_EST[4,]))
-        est_readme2_4 <- cbind(est_readme2_4,do.call(cbind,BOOTSTRAP_EST[5,]))
-        est_readme2_5 <- cbind(est_readme2_5,do.call(cbind,BOOTSTRAP_EST[6,]))
-        est_readme2_9 <- cbind(est_readme2_9,do.call(cbind,BOOTSTRAP_EST[7,]))
-        est_readme2_sd <- sum(apply(est_readme2,1,sd)) / sqrt(ncol(est_readme2))
-        if(est_readme2_sd<0.015 | count__>10){sdOK<-T}
-      } 
-      est_readme2 <- rowMeans(est_readme2, na.rm = T)
-      est_readme2_1 <- rowMeans(est_readme2_1, na.rm = T)
-      est_readme2_2 <- rowMeans(est_readme2_2, na.rm = T)
-      est_readme2_3 <- rowMeans(est_readme2_3, na.rm = T)
-      est_readme2_4 <- rowMeans(est_readme2_4, na.rm = T)
-      est_readme2_5 <- rowMeans(est_readme2_5, na.rm = T)
-      est_readme2_9 <- rowMeans(est_readme2_9, na.rm = T)
+      est_readme2 <- rowMeans(cbind(est_readme2,do.call(cbind,BOOTSTRAP_EST[1,])),na.rm=T)
+      est_readme2_1 <- rowMeans(cbind(est_readme2_1,do.call(cbind,BOOTSTRAP_EST[2,])),na.rm=T)
+
   
     #use all data and distributions 
     {
-      est_readme2_6   = est_PropbDistMatch(out_dfm_labeled_   = out_dfm_labeled,
+      est_readme2_2   = est_PropbDistMatch(out_dfm_labeled_   = out_dfm_labeled,
                                                 out_dfm_unlabeled_ = out_dfm_unlabeled,
                                                 cat_  = categoryVec_labeled)
-      est_readme2_8   = est_readme2_6
     }
     
     #use all data and means 
@@ -426,7 +394,7 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
         out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled, MM1, MM2)
         ESGivenD                      =  do.call(cbind,lapply(l_indices_by_cat,function(xa){colMeans(out_dfm_labeled_n[xa,])}))
         ES                            = colMeans(out_dfm_unlabeled_n)
-        est_readme2_7                   = try(readme_est_fxn(X         = ESGivenD,
+        est_readme2_3                   = try(readme_est_fxn(X         = ESGivenD,
                                                            Y           = ES),T) 
       
       }
@@ -501,37 +469,24 @@ IL_input = dfm_labeled[grab_samp(),bag_cols]
   if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T),
                                     point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
                                     point_readme_2    = colMeans(boot_readme_2, na.rm = T) ,
-                                    point_readme_3    = colMeans(boot_readme_3, na.rm = T) ,
-                                    point_readme_4    = colMeans(boot_readme_4, na.rm = T) ,
-                                    point_readme_5    = colMeans(boot_readme_5, na.rm = T) ,
-                                    point_readme_6    = colMeans(boot_readme_6, na.rm = T) ,
-                                    point_readme_7    = colMeans(boot_readme_7, na.rm = T),
-                                    point_readme_8    = colMeans(boot_readme_8, na.rm = T),
-                                    point_readme_9    = colMeans(boot_readme_9, na.rm = T)) )  }
+                                    point_readme_3    = colMeans(boot_readme_3, na.rm = T))) )  }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
                                     point_readme_2    = colMeans(boot_readme_2, na.rm = T) ,
                                     point_readme_3    = colMeans(boot_readme_3, na.rm = T) ,
-                                    point_readme_4    = colMeans(boot_readme_4, na.rm = T) ,
-                                    point_readme_5    = colMeans(boot_readme_5, na.rm = T) ,
-                                    point_readme_6    = colMeans(boot_readme_6, na.rm = T) ,
-                                    point_readme_7    = colMeans(boot_readme_7, na.rm = T) ,
-                                    point_readme_8    = colMeans(boot_readme_8, na.rm = T) ,
-                                    point_readme_9    = colMeans(boot_readme_9, na.rm = T) ,
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
                                                            MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
 }
 
-start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
+start_reading <- function(nDim,nProj=20,regraph = F){
   eval_text = sprintf('
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Assumptions 
-    nDim_bag <- as.integer(round( %s * %s ) )
     nProj = as.integer(  %s  )  
     NObsPerCat = as.integer(  10 )  
     dropout_rate <- 0.50 
@@ -557,17 +512,17 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     
     #SET UP WEIGHTS to be optimized
     initializer_reweighting =  1/sd(replicate(500, {
-      beta__                =   runif(nDim_bag,  -1/sqrt(nDim_bag), 1/sqrt(nDim_bag)  )
-      dropout__             =   rbinom(nDim_bag, size = 1, prob = dropout_rate)
+      beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
+      dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
       beta__[dropout__==1]  <- 0
       beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
       sum(beta__) }))
-    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim_bag,nProj),-1/sqrt(nDim_bag), 1/sqrt(nDim_bag), dtype = tf$float32),dtype = tf$float32, trainable = T)
+    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = T)
     BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
     
     ### Drop-out transformation
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim_bag,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
+    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
     WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
     ### Apply non-linearity + batch normalization 
     LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
@@ -624,12 +579,11 @@ start_reading <- function(nDim,bagFrac = 1, nProj=20,regraph = F){
     #other actions 
     FinalParams_list        = list(WtsMat, BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-    #restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
-    restart_action          = list(tf$variables_initializer(list(WtsMat, BiasVec)),inverse_learning_rate$assign(  0.50 *  L2_squared_initial ))
+    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
   readme_graph$finalize()
 
-  ', nDim,bagFrac, nProj)
+  ', nDim, nProj)
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
       print("Performance warning: Rebuilding tensorflow graph...")
