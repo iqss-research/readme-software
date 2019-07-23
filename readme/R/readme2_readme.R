@@ -137,7 +137,7 @@ readme <- function(dfm ,
   
   ## Holding containers for results
   boot_readme          = matrix(0,nrow=nBoot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
-  for(aje in 1:9){ 
+  for(aje in 1:3){ 
     eval(parse(text=sprintf("boot_readme_%s = boot_readme",aje)))  
   }
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
@@ -456,7 +456,7 @@ IL_input = dfm_labeled[grab_samp(),]
     
     ## Save results 
     boot_readme[iter_i,names(est_readme2)] = est_readme2
-    for(aje in 1:9){ 
+    for(aje in 1:3){ 
         eval(parse(text=sprintf("boot_readme_%s[iter_i,names(est_readme2)] = est_readme2_%s",aje,aje)))  
     }
   } 
