@@ -373,9 +373,9 @@ IL_input = dfm_labeled[grab_samp(),]
                      est_readme2_1=est_readme2_1) ) 
       })
       
-        ### Get the bootstrapped estimates
-      est_readme2 <- rowMeans(cbind(est_readme2,do.call(cbind,BOOTSTRAP_EST[1,])),na.rm=T)
-      est_readme2_1 <- rowMeans(cbind(est_readme2_1,do.call(cbind,BOOTSTRAP_EST[2,])),na.rm=T)
+      ### Get the bootstrapped estimates
+      est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
+      est_readme2_1 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
 
   
     #use all data and distributions 
