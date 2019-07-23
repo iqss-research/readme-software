@@ -469,7 +469,7 @@ IL_input = dfm_labeled[grab_samp(),]
   if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T),
                                     point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
                                     point_readme_2    = colMeans(boot_readme_2, na.rm = T) ,
-                                    point_readme_3    = colMeans(boot_readme_3, na.rm = T))) )  }
+                                    point_readme_3    = colMeans(boot_readme_3, na.rm = T)))   }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
