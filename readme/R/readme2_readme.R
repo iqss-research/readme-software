@@ -496,7 +496,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
     redund_indices2            = tf$placeholder(tf$int32,list(NULL))
-    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim_bag))
+    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
     MultMat_tf           = tf$placeholder(tf$float32,list(NULL, NULL))
     L2_squared_initial       = tf$placeholder(tf$float32)
     
