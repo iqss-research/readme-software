@@ -487,6 +487,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Assumptions 
+    nDim = as.integer(  %s  )  
     nProj = as.integer(  %s  )  
     NObsPerCat = as.integer(  10 )  
     dropout_rate <- 0.50 
