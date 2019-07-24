@@ -227,6 +227,7 @@ IL_input = dfm_labeled[grab_samp(),]
                       
                       ### For each iteration of SGDs
                       t1=Sys.time()
+                      browser()
                       for(j in 1:sgdIters){ S_$run(learning_group,eval(parse(text = eval_dict))) } 
                       
                       print(sprintf("Done with this round of training in %s seconds!",round(Sys.time()-t1, 2)))
