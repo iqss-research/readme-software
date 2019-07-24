@@ -190,7 +190,7 @@ readme <- function(dfm ,
       unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = length(zed) <(0.95*NObsPerCat) ) }))
   }
   MultMat_tf_v          = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    urat = 0.0001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
   eval_dict = "dict( contrast_indices1 = contrast_indices1_v, 
@@ -525,6 +525,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
     MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
     WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
+
     ### Apply non-linearity + batch normalization 
     LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
     LFinal_m             = tf$nn$moments(LFinal, axes = 0L)
@@ -536,7 +537,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Spread component of objective function 
     gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
     gathering_mat        = tf$transpose(tf$reshape(gathering_mat, shape = list(-1L, NObsPerCat) ))
-    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.50)
+    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.05)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -549,8 +550,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                  0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
-                                #0.10 * tf$reduce_mean( Spread_tf ) #max Spread_tf is 0.30
+                                  0.1 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
