@@ -224,10 +224,14 @@ IL_input = dfm_labeled[grab_samp(),]
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
-                      
+
                       ### For each iteration of SGDs
                       t1=Sys.time()
-                      for(j in 1:sgdIters){ S_$run(learning_group,eval(parse(text = eval_dict))) } 
+                      for(j in 1:sgdIters){ 
+                        ti=Sys.time()
+                        S_$run(learning_group,eval(parse(text = eval_dict)))
+                        if(j%%100==0){print(sprintf("%s seconds!",round(Sys.time()-ti, 2)))}
+                      } 
                       
                       print(sprintf("Done with this round of training in %s seconds!",round(Sys.time()-t1, 2)))
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
