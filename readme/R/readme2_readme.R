@@ -234,7 +234,7 @@ IL_input = dfm_labeled[grab_samp(),]
                         S_$run(learning_group,eval(parse(text = eval_dict)))
                       } 
                       
-                      print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),ti,units="mins"),2)))
+                      print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
           try(S_$close(), T) 
