@@ -203,9 +203,10 @@ IL_input = dfm_labeled[grab_samp(),]
 
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
-                    allow_soft_placement = T, 
+                    allow_soft_placement = F, 
                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-                    inter_op_parallelism_threads = as.integer(nCores_OnJob),intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
+                    inter_op_parallelism_threads = as.integer(nCores_OnJob),
+                    intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
           for(iter_i in 1:nBoot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -227,13 +228,13 @@ IL_input = dfm_labeled[grab_samp(),]
 
                       ### For each iteration of SGDs
                       t1=Sys.time()
+                      op <- options(digits.secs = 6)
+                      
                       for(j in 1:sgdIters){ 
-                        ti=Sys.time()
                         S_$run(learning_group,eval(parse(text = eval_dict)))
-                        if(j%%100==0){print(sprintf("%s seconds!",round(Sys.time()-ti, 2)))}
                       } 
                       
-                      print(sprintf("Done with this round of training in %s seconds!",round(Sys.time()-t1, 2)))
+                      print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),ti,units="mins"),2)))
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
           try(S_$close(), T) 
