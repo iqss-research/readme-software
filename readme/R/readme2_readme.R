@@ -213,7 +213,7 @@ IL_input = dfm_labeled[grab_samp(),]
                       }
 
                       if(iter_i == 1){
-                        S_$run(init) # Initialize TensorFlow graph 
+                        S_$run(init) # Initialize TFinalParams_listensorFlow graph 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
                         IL_stats       = replicate(100, S_$run(IL_stats, feed_dict = eval(parse(text = eval_dict))))
                       
@@ -578,6 +578,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
     
     #other actions 
+    FinalParams_list        = list(WtsMat,BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
