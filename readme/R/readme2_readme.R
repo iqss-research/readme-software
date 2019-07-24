@@ -400,7 +400,6 @@ IL_input = dfm_labeled[grab_samp(),]
       
       }
       
-      #sum(abs(est_readme2-unlabeled_pd)); sum(abs(labeled_pd-unlabeled_pd))
       try(rm(BOOTSTRAP_EST,indices_list), T)  
       if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
     } 
@@ -504,7 +503,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     
     #Placeholder settings - to be filled when executing TF operations
     clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
-    inverse_learning_rate = tf$Variable(1, dtype = tf$float32, trainable = F)
+    inverse_learning_rate = tf$Variable(1., dtype = tf$float32, trainable = F)
     sgd_learning_rate      = 1. / inverse_learning_rate
     
     IL_m                = tf$nn$moments(IL_input, axes = 0L)
@@ -513,7 +512,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
     
     #SET UP WEIGHTS to be optimized
-    initializer_reweighting =  1/sd(replicate(500, {
+    initializer_reweighting =  1/sd(replicate(100, {
       beta__                =   runif(nDim,  -1/sqrt(nDim), 1/sqrt(nDim)  )
       dropout__             =   rbinom(nDim, size = 1, prob = dropout_rate)
       beta__[dropout__==1]  <- 0
@@ -524,8 +523,8 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     
     ### Drop-out transformation
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-    MASK_VEC1            = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
-    WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC1)
+    MASK_VEC           = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
+    WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC)
 
     ### Apply non-linearity + batch normalization 
     LFinal               = tf$nn$softsign( tf$matmul(IL_n, WtsMat_drop) + BiasVec)
@@ -538,7 +537,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Spread component of objective function 
     gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
     gathering_mat        = tf$transpose(tf$reshape(gathering_mat, shape = list(-1L, NObsPerCat) ))
-    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.05)
+    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.25)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -551,7 +550,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                  0.1 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
+                                  0.001 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
@@ -579,7 +578,6 @@ start_reading <- function(nDim,nProj=20,regraph = F){
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
     
     #other actions 
-    FinalParams_list        = list(WtsMat, BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
