@@ -190,7 +190,7 @@ readme <- function(dfm ,
       unlist(lapply(l_indices_by_cat, function(zed){ sample(zed, size = NObsPerCat, replace = length(zed) <(0.95*NObsPerCat) ) }))
   }
   MultMat_tf_v          = t(do.call(rbind,sapply(1:nCat,function(x){
-    urat = 0.0001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
+    urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
   eval_dict = "dict( contrast_indices1 = contrast_indices1_v, 
@@ -212,13 +212,14 @@ IL_input = dfm_labeled[grab_samp(),]
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
 
-                      S_$run(init) # Initialize TensorFlow graph
                       if(iter_i == 1){
-                        IL_sigma_last_v       = list(IL_mu_b,IL_sigma2_b)
-                        IL_sigma_last_v       = replicate(300, S_$run(IL_sigma_last_v, feed_dict = eval(parse(text = eval_dict))))
+                        S_$run(init) # Initialize TensorFlow graph 
+                        IL_stats       = list(IL_mu_b,IL_sigma2_b)
+                        IL_stats       = replicate(100, S_$run(IL_stats, feed_dict = eval(parse(text = eval_dict))))
                       
-                        IL_mu_last_v          = colMeans(do.call(rbind,IL_sigma_last_v[1,]))
-                        IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_sigma_last_v[2,])))
+                        IL_mu_last_v          = colMeans(do.call(rbind,IL_stats[1,]))
+                        IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_stats[2,])))
+                        rm(IL_stats)
                         L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
