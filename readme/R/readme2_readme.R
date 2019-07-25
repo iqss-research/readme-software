@@ -580,11 +580,9 @@ start_reading <- function(nDim,nProj=20,regraph = F){
                                       tf$reduce_sum(tf$square(Gradients_clipped[[2]][[1]]))
     inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
     
-    ### applies the gradient updates
-    myOpt_tf_apply       = Optimizer_tf$apply_gradients( Gradients_clipped )
-    
     #learning consists of gradient updates plus learning rate updates. 
-    learning_group       = list(  inverse_learning_rate_update, myOpt_tf_apply)
+    learning_group       = list(  inverse_learning_rate_update, 
+                                   Optimizer_tf$apply_gradients( Gradients_clipped ))
     
     # Initialize variables in TensorFlow Graph
     init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
