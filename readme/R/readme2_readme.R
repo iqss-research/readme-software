@@ -517,10 +517,10 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     L2_squared_initial       = tf$placeholder(tf$float32)
 
     contrast_indices1            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    contrast_indices2            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    redund_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    redund_indices2            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    MultMat_tf           = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$float32, trainable = F )
+    contrast_indices2            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    redund_indices1            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    redund_indices2            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    MultMat_tf           = tf$Variable(initial_value = tf$placeholder(tf$float32),validate_shape = FALSE,trainable = F )
 
     IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
     
