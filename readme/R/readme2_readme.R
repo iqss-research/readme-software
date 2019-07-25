@@ -215,7 +215,7 @@ IL_input = dfm_labeled[grab_samp(),]
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
-
+  browser()
                       if(iter_i == 1){
                         S_$run(init) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
@@ -226,12 +226,12 @@ IL_input = dfm_labeled[grab_samp(),]
                         rm(IL_stats)
                         L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                        contrast_indices1$assign(contrast_indices1_v)
                       }
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
 
                       ### For each iteration of SGDs
                       t1=Sys.time()
-                      browser()
                       for(j in 1:sgdIters){ 
                         S_$run(learning_group,eval(parse(text = eval_dict)))
                       } 
@@ -501,7 +501,9 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     dropout_rate <- 0.50 
     
     #INPUTS 
-    contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
+    #contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
+    contrast_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,
+dtype = tf$int32, trainable = F )
     contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
     redund_indices2            = tf$placeholder(tf$int32,list(NULL))
