@@ -226,15 +226,16 @@ IL_input = dfm_labeled[grab_samp(),]
                         IL_mu_last_v          = colMeans(do.call(rbind,IL_stats[1,]))
                         IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_stats[2,])))
                         rm(IL_stats)
-                        L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
-                        S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                         
                         #assign entries 
-                        contrast_indices1$assign(contrast_indices1_v)
-                        contrast_indices2$assign(contrast_indices2_v)
-                        redund_indices1$assign(redund_indices1_v)
-                        redund_indices2$assign(redund_indices2_v) 
-                        MultMat_tf$assign(MultMat_tf_v)
+                        S_$run(contrast_indices1$assign(contrast_indices1_v,validate_shape=F
+                        contrast_indices2$assign(contrast_indices2_v),
+                        redund_indices1$assign(redund_indices1_v),
+                        redund_indices2$assign(redund_indices2_v) ,
+                        MultMat_tf$assign(MultMat_tf_v)))
+                        
+                        L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
+                        S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
 
@@ -516,7 +517,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     #MultMat_tf           = tf$placeholder(tf$float32,list(NULL, NULL))
     L2_squared_initial       = tf$placeholder(tf$float32)
 
-    contrast_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    contrast_indices1            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
     contrast_indices2            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
     redund_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
     redund_indices2            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
