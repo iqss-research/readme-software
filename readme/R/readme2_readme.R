@@ -227,6 +227,7 @@ IL_input = dfm_labeled[grab_samp(),]
                         L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                         contrast_indices1$assign(contrast_indices1_v)
+                        readme_graph$finalize()
                       }
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
 
@@ -592,7 +593,7 @@ dtype = tf$int32, trainable = F )
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
     restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
   })
-  readme_graph$finalize()
+  #readme_graph$finalize()
 
   ', nDim, nProj)
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
