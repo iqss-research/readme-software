@@ -224,10 +224,12 @@ readme <- function(dfm ,
                         S_$run(tf$assign(redund_indices2,redund_indices2_v,validate_shape=F))
                         S_$run(tf$assign(MultMat_tf,MultMat_tf_v,validate_shape=F))
                         
-                        L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict =  dict( IL_input = dfm_labeled[grab_samp(),])  ))))))
+                        L2_squared_initial_v  = median(c(unlist(replicate(50, 
+                                                                          S_$run(L2_squared_clipped, 
+                                                                                 feed_dict =  dict( IL_input = dfm_labeled[grab_samp(),]))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
-                      S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                      S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) )
 
                       ### For each iteration of SGDs
                       t1=Sys.time()
