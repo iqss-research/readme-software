@@ -217,7 +217,6 @@ IL_input = dfm_labeled[grab_samp(),]
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
-  browser()
                       if(iter_i == 1){
                         S_$run(init) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
@@ -228,11 +227,11 @@ IL_input = dfm_labeled[grab_samp(),]
                         rm(IL_stats)
                         
                         #assign entries 
-                        S_$run(contrast_indices1$assign(contrast_indices1_v,validate_shape=F
-                        contrast_indices2$assign(contrast_indices2_v),
-                        redund_indices1$assign(redund_indices1_v),
-                        redund_indices2$assign(redund_indices2_v) ,
-                        MultMat_tf$assign(MultMat_tf_v)))
+                        S_$run(tf$assign(contrast_indices1,contrast_indices1_v,validate_shape=F))
+                        S_$run(tf$assign(contrast_indices2,contrast_indices2_v,validate_shape=F))
+                        S_$run(tf$assign(redund_indices1,redund_indices1_v,validate_shape=F))
+                        S_$run(tf$assign(redund_indices2,redund_indices2_v,validate_shape=F))
+                        S_$run(tf$assign(MultMat_tf,MultMat_tf_v,validate_shape=F))
                         
                         L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
