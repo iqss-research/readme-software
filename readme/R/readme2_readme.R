@@ -203,6 +203,8 @@ redund_indices2 = redund_indices2_v,
 MultMat_tf = MultMat_tf_v, 
 IL_input = dfm_labeled[grab_samp(),]
 )"
+  
+  eval_dict = "dict( IL_input = dfm_labeled[grab_samp(),])"
 
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
@@ -226,8 +228,13 @@ IL_input = dfm_labeled[grab_samp(),]
                         rm(IL_stats)
                         L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
+                        
+                        #assign entries 
                         contrast_indices1$assign(contrast_indices1_v)
-                        readme_graph$finalize()
+                        contrast_indices2$assign(contrast_indices2_v)
+                        redund_indices1$assign(redund_indices1_v)
+                        redund_indices2$assign(redund_indices2_v) 
+                        MultMat_tf$assign(MultMat_tf_v)
                       }
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
 
@@ -503,14 +510,20 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     
     #INPUTS 
     #contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
-    contrast_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,
-dtype = tf$int32, trainable = F )
-    contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
-    redund_indices1            = tf$placeholder(tf$int32,list(NULL))
-    redund_indices2            = tf$placeholder(tf$int32,list(NULL))
-    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
-    MultMat_tf           = tf$placeholder(tf$float32,list(NULL, NULL))
+    #contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
+    #redund_indices1            = tf$placeholder(tf$int32,list(NULL))
+    #redund_indices2            = tf$placeholder(tf$int32,list(NULL))
+    #MultMat_tf           = tf$placeholder(tf$float32,list(NULL, NULL))
     L2_squared_initial       = tf$placeholder(tf$float32)
+
+    contrast_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    contrast_indices2            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    redund_indices1            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    redund_indices2            = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    MultMat_tf           = tf$Variable(initial_value = 1L,validate_shape = FALSE,dtype = tf$int32, trainable = F )
+    L2_squared_initial       = tf$placeholder(tf$float32)
+
+    IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
     
     #Placeholder settings - to be filled when executing TF operations
     clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
