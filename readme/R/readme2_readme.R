@@ -203,7 +203,8 @@ IL_input = dfm_labeled[grab_samp(),]
 
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
-                    allow_soft_placement = F, 
+                    log_device_placement = T,
+                    allow_soft_placement = T, 
                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
                     inter_op_parallelism_threads = as.integer(nCores_OnJob),
                     intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
