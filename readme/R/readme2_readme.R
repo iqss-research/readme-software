@@ -112,6 +112,9 @@ readme <- function(dfm ,
                    nCores = 1L, 
                    nCores_OnJob = 1L ,
                    otherOption = NULL){ 
+  #set options 
+  op <- options(digits.secs = 6)
+  
   ## Get summaries of all of the document characteristics and labeled indicator
   nLabeled    = sum(labeledIndicator == 1)
   nUnlabeled  = sum(labeledIndicator == 0)
@@ -203,7 +206,6 @@ IL_input = dfm_labeled[grab_samp(),]
 
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
-                    log_device_placement = T,
                     allow_soft_placement = T, 
                     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
                     inter_op_parallelism_threads = as.integer(nCores_OnJob),
@@ -215,7 +217,7 @@ IL_input = dfm_labeled[grab_samp(),]
                       }
 
                       if(iter_i == 1){
-                        S_$run(init) # Initialize TFinalParams_listensorFlow graph 
+                        S_$run(init) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
                         IL_stats       = replicate(100, S_$run(IL_stats, feed_dict = eval(parse(text = eval_dict))))
                       
@@ -229,13 +231,13 @@ IL_input = dfm_labeled[grab_samp(),]
 
                       ### For each iteration of SGDs
                       t1=Sys.time()
-                      op <- options(digits.secs = 6)
-                      
+                      browser()
                       for(j in 1:sgdIters){ 
                         S_$run(learning_group,eval(parse(text = eval_dict)))
                       } 
-                      
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
+                      
+                      #save final parameters 
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
           try(S_$close(), T) 
