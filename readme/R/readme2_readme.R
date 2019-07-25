@@ -196,16 +196,6 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
-  eval_dict = "dict( contrast_indices1 = contrast_indices1_v, 
-contrast_indices2 = contrast_indices2_v, 
-redund_indices1 = redund_indices1_v, 
-redund_indices2 = redund_indices2_v, 
-MultMat_tf = MultMat_tf_v, 
-IL_input = dfm_labeled[grab_samp(),]
-)"
-  
-  eval_dict = "dict( IL_input = dfm_labeled[grab_samp(),])"
-
           S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T, 
@@ -220,7 +210,8 @@ IL_input = dfm_labeled[grab_samp(),]
                       if(iter_i == 1){
                         S_$run(init) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
-                        IL_stats       = replicate(100, S_$run(IL_stats, feed_dict = eval(parse(text = eval_dict))))
+                        IL_stats       = replicate(100,
+                                                   S_$run(IL_stats, feed_dict = dict( IL_input = dfm_labeled[grab_samp(),])))
                       
                         IL_mu_last_v          = colMeans(do.call(rbind,IL_stats[1,]))
                         IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_stats[2,])))
@@ -233,7 +224,7 @@ IL_input = dfm_labeled[grab_samp(),]
                         S_$run(tf$assign(redund_indices2,redund_indices2_v,validate_shape=F))
                         S_$run(tf$assign(MultMat_tf,MultMat_tf_v,validate_shape=F))
                         
-                        L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict = eval(parse(text = eval_dict)))))))
+                        L2_squared_initial_v  = median(c(unlist(replicate(50, S_$run(L2_squared_clipped, feed_dict =  dict( IL_input = dfm_labeled[grab_samp(),])  ))))))
                         S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
                       }
                       S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
@@ -241,7 +232,7 @@ IL_input = dfm_labeled[grab_samp(),]
                       ### For each iteration of SGDs
                       t1=Sys.time()
                       for(j in 1:sgdIters){ 
-                        S_$run(learning_group,eval(parse(text = eval_dict)))
+                        S_$run(learning_group,dict( IL_input = dfm_labeled[grab_samp(),]))
                       } 
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
                       
