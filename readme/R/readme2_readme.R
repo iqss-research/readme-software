@@ -209,7 +209,7 @@ readme <- function(dfm ,
                       }
                       S_$run(init2)
                       if(iter_i == 1){
-                        S_$run(init) # Initialize 
+                        S_$run(init1) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
                         IL_stats       = replicate(100,
                                                    S_$run(IL_stats, feed_dict = dict( IL_input = dfm_labeled[grab_samp(),])))
