@@ -567,7 +567,8 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                  0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
+0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)/tf$reduce_max(Spread_tf, 0L)+0.01) ))
+                                  #0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
