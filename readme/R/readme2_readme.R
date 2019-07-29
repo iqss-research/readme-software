@@ -207,6 +207,7 @@ readme <- function(dfm ,
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
+                      S_$run(init2)
                       if(iter_i == 1){
                         S_$run(init) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
@@ -587,10 +588,14 @@ start_reading <- function(nDim,nProj=20,regraph = F){
                                    Optimizer_tf$apply_gradients( Gradients_clipped ))
     
     # Initialize variables in TensorFlow Graph
-    init = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
+    init0 = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
-    
+    init1 = tf$variables_initializer(list(clip_tf,inverse_learning_rate,
+                                         Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
+                      Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
+     init2 = tf$variables_initializer(list(WtsMat, BiasVec))
+
     #other actions 
     FinalParams_list        = list(WtsMat,BiasVec)
     setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
