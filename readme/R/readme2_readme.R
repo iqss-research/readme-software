@@ -209,6 +209,7 @@ readme <- function(dfm ,
                       }
                       S_$run(init2)
                       if(iter_i == 1){
+                        browser()
                         S_$run(init1) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
                         IL_stats       = replicate(100,
