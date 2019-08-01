@@ -209,7 +209,6 @@ readme <- function(dfm ,
                       }
                       S_$run(init2)
                       if(iter_i == 1){
-                        browser()
                         S_$run(init1) # Initialize 
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
                         IL_stats       = replicate(100,
@@ -226,7 +225,7 @@ readme <- function(dfm ,
                         L2_squared_initial_v  = median(c(unlist(replicate(50, 
                                                                           S_$run(L2_squared_clipped, 
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
-                                                                                                   contrast_indices2==contrast_indices2_v,
+                                                                                                   contrast_indices2=contrast_indices2_v,
                                                                                                    redund_indices1=redund_indices1_v,
                                                                                                    redund_indices2=redund_indices2_v,
                                                                                                    MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))))))
@@ -238,7 +237,7 @@ readme <- function(dfm ,
                       t1=Sys.time()
                       for(j in 1:sgdIters){ 
                         S_$run(learning_group, dict(contrast_indices1=contrast_indices1_v,
-                                                         contrast_indices2==contrast_indices2_v,
+                                                         contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
                                                          redund_indices2=redund_indices2_v,
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))
