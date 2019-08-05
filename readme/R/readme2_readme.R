@@ -180,6 +180,15 @@ readme <- function(dfm ,
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
   
+  if(!"S_" %in% ls()){
+    S_ = tf$Session(graph = readme_graph,
+    config = tf$ConfigProto(
+    allow_soft_placement = T, 
+    device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
+    inter_op_parallelism_threads = as.integer(nCores_OnJob),
+    intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
+  }
+  
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -196,12 +205,12 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
-          S_ = tf$Session(graph = readme_graph,
-                  config = tf$ConfigProto(
-                    allow_soft_placement = T, 
-                    device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-                    inter_op_parallelism_threads = as.integer(nCores_OnJob),
-                    intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
+          #S_ = tf$Session(graph = readme_graph,
+                  #config = tf$ConfigProto(
+                    #allow_soft_placement = T, 
+                    #device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
+                    #inter_op_parallelism_threads = as.integer(nCores_OnJob),
+                    #intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
           for(iter_i in 1:nBoot){ 
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -247,9 +256,9 @@ readme <- function(dfm ,
                       #save final parameters 
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
               }
-          try(S_$close(), T) 
-          try(tf$keras$backend$clear_session(), T) 
-          try(tf$keras$backend$reset_uids(), T)
+          #try(S_$close(), T) 
+          #try(tf$keras$backend$clear_session(), T) 
+          #try(tf$keras$backend$reset_uids(), T)
   
   tf_junk <- ls()[!ls() %in% c(tf_junk, "IL_mu_last_v","IL_sigma_last_v" )]
   eval(parse(text = sprintf("rm(%s)", paste(tf_junk, collapse = ","))))
