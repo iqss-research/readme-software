@@ -181,12 +181,14 @@ readme <- function(dfm ,
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
   
   if(!"S_" %in% ls()){
-    S_ = tf$Session(graph = readme_graph,
+    print("here")
+    S_ = eval(tf$Session(graph = readme_graph,
     config = tf$ConfigProto(
     allow_soft_placement = T, 
     device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
     inter_op_parallelism_threads = as.integer(nCores_OnJob),
-    intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
+    intra_op_parallelism_threads = as.integer(nCores_OnJob) ) ), 
+    envir = globalenv())
   }
   
   FinalParams_LIST <- list(); tf_junk <- ls()
