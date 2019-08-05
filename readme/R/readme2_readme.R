@@ -196,9 +196,9 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
-          #S_ = tf$Session(graph = readme_graph,
-                  #config = tf$ConfigProto(
-                    #allow_soft_placement = T, 
+          S_ = tf$Session(graph = readme_graph,
+                  config = tf$ConfigProto(
+                    allow_soft_placement = T) ) 
                     #device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
                     #inter_op_parallelism_threads = as.integer(nCores_OnJob),
                     #intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
@@ -559,7 +559,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Spread component of objective function 
     gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
     gathering_mat        = tf$transpose(tf$reshape(gathering_mat, shape = list(-1L, NObsPerCat) ))
-    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),0.5)
+    Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),1)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
     CatDiscrim_tf        = tf$minimum(tf$abs(tf$gather(ESGivenD_tf, indices = contrast_indices1, axis = 0L) -
@@ -572,7 +572,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.01) ))
+                                0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
