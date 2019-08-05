@@ -180,17 +180,6 @@ readme <- function(dfm ,
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
   
-  if(  (!"S_" %in% ls(env = globalenv()))){ 
-    print("here")
-     eval(parse(text='S_=tf$Session(graph = readme_graph,
-    config = tf$ConfigProto(
-    allow_soft_placement = T, 
-    device_count=list("GPU"=0L, "CPU" = as.integer(1)), 
-    inter_op_parallelism_threads = as.integer(1),
-    intra_op_parallelism_threads = as.integer(1) ) )'), 
-    envir = globalenv())
-  }
-  
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
