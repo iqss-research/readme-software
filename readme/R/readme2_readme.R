@@ -571,7 +571,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf 
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
-                                tf$reduce_mean(FeatDiscrim_tf) + 
+                                tf$reduce_mean(FeatDiscrim_tf) - 
                                 0.1* tf$reduce_mean(tf$abs(Spread_tf -tf$reduce_mean(Spread_tf,0L))) + 
                                 0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
 
