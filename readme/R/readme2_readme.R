@@ -185,9 +185,9 @@ readme <- function(dfm ,
      eval(parse(text='S_=tf$Session(graph = readme_graph,
     config = tf$ConfigProto(
     allow_soft_placement = T, 
-    device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
-    inter_op_parallelism_threads = as.integer(nCores_OnJob),
-    intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )'), 
+    device_count=list("GPU"=0L, "CPU" = as.integer(1)), 
+    inter_op_parallelism_threads = as.integer(1),
+    intra_op_parallelism_threads = as.integer(1) ) )'), 
     envir = globalenv())
   }
   
