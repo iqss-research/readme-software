@@ -573,7 +573,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
 browser()
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) + 
                                 tf$reduce_mean(FeatDiscrim_tf) + 
-                                0.1* tf$abs((Spread_tf -tf$reduce_mean(Spread_tf,0L)))
+                                0.1* tf$abs((Spread_tf -tf$reduce_mean(Spread_tf,0L))) + 
                                 0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
