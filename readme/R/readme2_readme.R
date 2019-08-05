@@ -180,7 +180,7 @@ readme <- function(dfm ,
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
   
-  if(!"S_" %in% ls()){
+  if(  (!"S_" %in% ls(env = globalenv()))){ 
     print("here")
      eval(parse(text='S_=tf$Session(graph = readme_graph,
     config = tf$ConfigProto(
