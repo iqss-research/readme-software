@@ -134,6 +134,7 @@ readme <- function(dfm ,
   categoryVec_labeled   = as.factor( categoryVec )[labeledIndicator == 1]
   l_indices_by_cat      = tapply(1:length(categoryVec_labeled), categoryVec_labeled, c)
   labeled_pd            = vec2prob( categoryVec_labeled )
+  if(any(labeled_pd == 1/length(categoryVec_labeled)) ){stop("Must have at least 1 labeled document in each category.")}
   unlabeled_pd          = vec2prob( categoryVec_unlabeled )
   nCat                  = as.integer( length(labeled_pd) ); 
   rm(categoryVec);
@@ -481,15 +482,9 @@ readme <- function(dfm ,
   ## Parse output
   ## If no diagnostics wanted
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
-  if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T),
-                                    point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
-                                    point_readme_2    = colMeans(boot_readme_2, na.rm = T) ,
-                                    point_readme_3    = colMeans(boot_readme_3, na.rm = T)))   }
+  if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T)))   }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
-                                    point_readme_1    = colMeans(boot_readme_1, na.rm = T) ,
-                                    point_readme_2    = colMeans(boot_readme_2, na.rm = T) ,
-                                    point_readme_3    = colMeans(boot_readme_3, na.rm = T) ,
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
