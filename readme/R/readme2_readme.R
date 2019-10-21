@@ -228,15 +228,14 @@ readme <- function(dfm ,
                                                                                                    redund_indices1=redund_indices1_v,
                                                                                                    redund_indices2=redund_indices2_v,
                                                                                                    MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),])))))))
-                       browser()
                       S_$run( setclip_action, feed_dict = dict(L2_initial=0.50*L2_initial_v) )
+                      }
                       inv_learn_rate_seq = rep(NA,times=sgdIters+1)
                       inv_learn_rate_seq[1] = S_$run( set_inverse_learn_action, feed_dict = dict(L2_initial=max(0.50*L2_initial_v,4/3)) )
 
                       ### For each iteration of SGDs
                       t1=Sys.time()
-                      learn_seq_spot = 0 
-                      temp_vec = c()
+                      learn_seq_spot = 0 ; temp_vec = c()
                       for(j in 1:sgdIters){ 
                         if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
                         learn_seq_spot = learn_seq_spot + 1 
@@ -248,13 +247,14 @@ readme <- function(dfm ,
                                                          sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
                         temp_vec[jaja] <- inv_learn_rate_seq[learn_seq_spot]
-                      } 
+                      }
                       browser()
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
                       
                       #save final parameters 
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
-              }
+               }
+                      
           try(S_$close(), T) 
           try(tf$keras$backend$clear_session(), T) 
           try(tf$keras$backend$reset_uids(), T)
