@@ -142,9 +142,7 @@ readme <- function(dfm ,
   
   ## Holding containers for results
   boot_readme          = matrix(0,nrow=nBoot, ncol = nCat, dimnames = list(NULL, names(labeled_pd)))
-  for(aje in 1:3){ 
-    eval(parse(text=sprintf("boot_readme_%s = boot_readme",aje)))  
-  }
+  boot_readme_NoMatching <- boot_readme
   hold_coef            = labeled_pd## Holding container for coefficients (for cases where a category is missing from a bootstrap iteration)
   hold_coef[]          = 0
   MatchedPrD_div       = OrigESGivenD_div = MatchedESGivenD_div <- rep(NA, times = nBoot) # Holding container for diagnostics
@@ -428,9 +426,7 @@ readme <- function(dfm ,
     
     ## Save results 
     boot_readme[iter_i,names(est_readme2)] = est_readme2
-    for(aje in 1:3){ 
-        eval(parse(text=sprintf("boot_readme_%s[iter_i,names(est_readme2)] = est_readme2_%s",aje,aje)))  
-    }
+    boot_readme_NoMatching[iter_i,names(est_readme2)] = est_readme2_NoMatching
   } 
   
   ### Close the TensorFlow session
@@ -438,9 +434,11 @@ readme <- function(dfm ,
   ## Parse output
   ## If no diagnostics wanted
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
-  if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T)))   }
+  if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T),
+                                    point_readme_NoMatching = colMeans(boot_readme_NoMatching, na.rm = T)))   }
   ## If diagnostics wanted
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
+                                    point_readme_NoMatching = colMeans(boot_readme_NoMatching, na.rm = T),
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
                                                            MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
                                                            OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
