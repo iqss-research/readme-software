@@ -248,7 +248,6 @@ readme <- function(dfm ,
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
                         temp_vec[j] <- inv_learn_rate_seq[learn_seq_spot]
                       }
-                      browser()
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
                       
                       #save final parameters 
