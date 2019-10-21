@@ -111,6 +111,7 @@ readme <- function(dfm ,
                    diagnostics    = F, 
                    nCores = 1L, 
                    nCores_OnJob = 1L ,
+                   regraph  = F,
                    otherOption = NULL){ 
   #set options 
   op <- options(digits.secs = 6)
@@ -197,7 +198,7 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
-          S_ = tf$Session(graph = readme_graph,
+     S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T) ) 
                     #device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
@@ -220,29 +221,35 @@ readme <- function(dfm ,
                         rm(IL_stats)
                         
                         #assign entries 
-                        #S_$run(tf$assign(contrast_indices1,contrast_indices1_v,validate_shape=F))
-                        #S_$run(tf$assign(MultMat_tf,MultMat_tf_v,validate_shape=F))
-                        
-                        L2_squared_initial_v  = median(c(unlist(replicate(50, 
+                        L2_initial_v  = sqrt(median(c(unlist(replicate(50, 
                                                                           S_$run(L2_squared_clipped, 
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
                                                                                                    contrast_indices2=contrast_indices2_v,
                                                                                                    redund_indices1=redund_indices1_v,
                                                                                                    redund_indices2=redund_indices2_v,
-                                                                                                   MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))))))
-                        S_$run( setclip_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) ) 
-                      }
-                      S_$run( restart_action, feed_dict = dict(L2_squared_initial=L2_squared_initial_v) )
+                                                                                                   MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),])))))))
+                       browser()
+                      S_$run( setclip_action, feed_dict = dict(L2_initial=0.50*L2_initial_v) )
+                      inv_learn_rate_seq = rep(NA,times=sgdIters+1)
+                      inv_learn_rate_seq[1] = S_$run( set_inverse_learn_action, feed_dict = dict(L2_initial=max(0.50*L2_initial_v,4/3)) )
 
                       ### For each iteration of SGDs
                       t1=Sys.time()
+                      learn_seq_spot = 0 
+                      temp_vec = c()
                       for(j in 1:sgdIters){ 
-                        S_$run(learning_group, dict(contrast_indices1=contrast_indices1_v,
+                        if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
+                        learn_seq_spot = learn_seq_spot + 1 
+                        inv_learn_rate_seq[ja+1] = S_$run(learn_group, 
+                                                        dict(contrast_indices1=contrast_indices1_v,
                                                          contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
                                                          redund_indices2=redund_indices2_v,
-                                                         MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))
+                                                         sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
+                                                         MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
+                        temp_vec[jaja] <- inv_learn_rate_seq[learn_seq_spot]
                       } 
+                      browser()
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
                       
                       #save final parameters 
@@ -274,52 +281,10 @@ readme <- function(dfm ,
       ## Minimum number of observations to use in each category per bootstrap iteration
       MM1           = colMeans(out_dfm_unlabeled); 
       MM2_          = colSds(out_dfm_unlabeled,MM1);
-      
-      est_PropbDistMatch = function(out_dfm_labeled_, out_dfm_unlabeled_,cat_){ 
-          cat_indices = tapply(1:length(cat_),cat_,c)
-          RegData = sapply(1:nProj,function(proj_i){ 
-            X_l      = out_dfm_labeled_[,proj_i]
-            X_u      = out_dfm_unlabeled[,proj_i]
-            
-            distParams = lapply(cat_indices,function(sa){ 
-              c(mean(X_l[sa]),sd(X_l[sa]))
-            })
-            dist_u = lapply(distParams,function(dist_k){ 
-              dnorm(X_u,mean=dist_k[1], sd = dist_k[2])
-            })
-            denominator_u = Reduce("+",dist_u)
-            p_u = lapply(dist_u,function(dist_i){ 
-              prop.table(hist( dist_i / denominator_u,plot = F,breaks=seq(0,1,0.10))$counts)}) 
-            p_u = do.call(cbind,p_u)
-            
-            dist_l = lapply(distParams,function(dist_k){ 
-              dnorm(X_l,mean=dist_k[1], sd = dist_k[2])
-            })
-            denominator_l = Reduce("+",dist_l)
-            
-            p_l = lapply(dist_l,function(dist_i){ 
-              dist_i / denominator_l}) 
-            p_l_cond = lapply(p_l,function(p_l_k){ 
-              do.call(cbind,lapply(cat_indices,function(cat_k_indices){ 
-                prop.table(hist(p_l_k[cat_k_indices],plot=F, breaks=seq(0,1,0.10))$counts)
-              } ) )
-            })
-            p_l_cond = do.call(rbind,p_l_cond)
-            
-            Y = c(p_u)
-            X =  p_l_cond
-            list(Y=Y,X=X)
-          } ) 
-          Y = do.call(c, RegData[1,] )
-          X = do.call(rbind,RegData[2,])
-          est_readme2 = readme_est_fxn(Y=Y,X=X)
-          names(est_readme2) = colnames(X)
-          return( est_readme2 ) 
-      }
 
-        indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
-                                                                                                        replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
-        BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
+      indices_list  = replicate(nbootMatch,list( unlist( lapply(l_indices_by_cat,  function(x){sample(x, batchSizePerCat_match, 
+                                                                                                      replace = length(x) * 0.75 < batchSizePerCat_match  ) }) ) ) )### Sample indices for bootstrap by category. No replacement is important here.
+      BOOTSTRAP_EST = sapply(1:nbootMatch, function(boot_iter){ 
         Cat_    = categoryVec_labeled[indices_list[[boot_iter]]]; 
         X_      = out_dfm_labeled[indices_list[[boot_iter]],];
         Y_      = out_dfm_unlabeled
@@ -394,14 +359,6 @@ readme <- function(dfm ,
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
       est_readme2_1 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
 
-  
-    #use all data and distributions 
-    {
-      est_readme2_2   = est_PropbDistMatch(out_dfm_labeled_   = out_dfm_labeled,
-                                                out_dfm_unlabeled_ = out_dfm_unlabeled,
-                                                cat_  = categoryVec_labeled)
-    }
-    
     #use all data and means 
       {
         MM1 = colMeans(out_dfm_unlabeled)
@@ -508,24 +465,17 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     redund_indices1            = tf$placeholder(tf$int32,list(NULL))
     redund_indices2            = tf$placeholder(tf$int32,list(NULL))
     MultMat_tf               = tf$placeholder(tf$float32,list(NULL, NULL))
-    L2_squared_initial       = tf$placeholder(tf$float32)
-
-    #contrast_indices1            = tf$Variable( tf$int32, trainable = F )
-    #contrast_indices2            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    #redund_indices1            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    #redund_indices2            = tf$Variable(initial_value = tf$placeholder(tf$int32),validate_shape = FALSE,dtype = tf$int32, trainable = F )
-    #MultMat_tf           = tf$Variable(initial_value = tf$placeholder(tf$float32),validate_shape = FALSE,trainable = F )
+    L2_initial               = tf$placeholder(tf$float32)
 
     IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
     
-    #Placeholder settings - to be filled when executing TF operations
+    # Placeholder settings - to be filled when executing TF operations
     clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
-    inverse_learning_rate = tf$Variable(1., dtype = tf$float32, trainable = F)
-    sgd_learning_rate      = 1. / inverse_learning_rate
+    inverse_learn_rate = tf$Variable(1., dtype = tf$float32, trainable = F)
+    sgd_learn_rate     = tf$placeholder(tf$float32)
     
     IL_m                = tf$nn$moments(IL_input, axes = 0L)
-    IL_mu_b             = IL_m[[1]]
-    IL_sigma2_b         = IL_m[[2]]
+    IL_mu_b             = IL_m[[1]]; IL_sigma2_b         = IL_m[[2]]
     IL_n                = tf$nn$batch_normalization(IL_input, mean = IL_m[[1]], variance = IL_m[[2]], offset = 0, scale = 1, variance_epsilon = 0.001)
     
     #SET UP WEIGHTS to be optimized
@@ -570,7 +520,7 @@ start_reading <- function(nDim,nProj=20,regraph = F){
                                 0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
-    Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learning_rate,
+    Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learn_rate,
                                                           momentum      = 0.90, use_nesterov  = T)
     
     ### Calculates the gradients from myOpt_tf
@@ -581,25 +531,25 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     for(jack in 1:length(Gradients_clipped)){ Gradients_clipped[[jack]][[1]] = TEMP__[[1]][[jack]] } 
     L2_squared_clipped   = tf$reduce_sum(tf$square(Gradients_clipped[[1]][[1]])) + 
                                       tf$reduce_sum(tf$square(Gradients_clipped[[2]][[1]]))
-    inverse_learning_rate_update = tf$assign_add(ref = inverse_learning_rate, value = L2_squared_clipped / inverse_learning_rate)
+    inverse_learn_rate_update = tf$assign_add(ref = inverse_learn_rate, value = L2_squared_clipped / inverse_learn_rate)
     
     #learning consists of gradient updates plus learning rate updates. 
-    learning_group       = list(  inverse_learning_rate_update, 
+    learn_group       = list(  inverse_learn_rate, inverse_learn_rate_update, 
                                    Optimizer_tf$apply_gradients( Gradients_clipped ))
     
     # Initialize variables in TensorFlow Graph
-    init0 = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learning_rate,
+    init0 = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learn_rate,
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
-    init1 = tf$variables_initializer(list(clip_tf,inverse_learning_rate,
+    init1 = tf$variables_initializer(list(clip_tf,inverse_learn_rate,
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
                       Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
      init2 = tf$variables_initializer(list(WtsMat, BiasVec))
 
     #other actions 
     FinalParams_list        = list(WtsMat,BiasVec)
-    setclip_action          = clip_tf$assign(  0.50 * sqrt( L2_squared_initial )  )
-    restart_action          = inverse_learning_rate$assign(  0.50 *  L2_squared_initial )
+    setclip_action          = clip_tf$assign(  L2_initial   )
+    set_inverse_learn_action          = inverse_learn_rate$assign(  L2_initial )
   })
   readme_graph$finalize()
 
@@ -614,3 +564,4 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     print("Readme is now initialized!")
   } 
 }
+
