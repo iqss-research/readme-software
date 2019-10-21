@@ -348,15 +348,15 @@ readme <- function(dfm ,
         }
         
         est_readme2 <- est_obsMatch(knnIndices_i)
-        est_readme2_1 = est_obsMatch(AllIndices_i)
-
+        est_readme2_NoMatching = est_obsMatch(AllIndices_i)
+        
         return( list(est_readme2=est_readme2,
-                     est_readme2_1=est_readme2_1) ) 
+                     est_readme2_NoMatching=est_readme2_NoMatching) ) 
       })
       
       ### Get the bootstrapped estimates
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
-      est_readme2_1 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
+      est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
 
     #use all data and means 
       {
