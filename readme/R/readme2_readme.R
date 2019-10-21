@@ -239,14 +239,14 @@ readme <- function(dfm ,
                       for(j in 1:sgdIters){ 
                         if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
                         learn_seq_spot = learn_seq_spot + 1 
-                        inv_learn_rate_seq[ja+1] = S_$run(learn_group, 
+                        inv_learn_rate_seq[j+1] = S_$run(learn_group, 
                                                         dict(contrast_indices1=contrast_indices1_v,
                                                          contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
                                                          redund_indices2=redund_indices2_v,
                                                          sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
-                        temp_vec[jaja] <- inv_learn_rate_seq[learn_seq_spot]
+                        temp_vec[j] <- inv_learn_rate_seq[learn_seq_spot]
                       }
                       browser()
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
