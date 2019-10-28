@@ -306,7 +306,7 @@ readme <- function(dfm ,
             categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
             
             ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-            colnames(ESGivenD_noMatch) <- colnames(ESGivenD_sampled)   <- names(labeled_pd)
+            colnames(ESGivenD_sampled)   <- names(labeled_pd)
             ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
             Y_ = rep(0, times = nrow(ESGivenD_sampled))
             ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
@@ -317,9 +317,9 @@ readme <- function(dfm ,
           
           browser()
           ED_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
-          ED_sampled_averaged_NoMatch = try(colMeans(do.call(rbind,est_readme2_[2,])), T)
+          ESGivenD_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
           return( list(ED_sampled_averaged         = ED_sampled_averaged,
-                       ESGivenD_noMatch            = ESGivenD_noMatch) )
+                       ESGivenD_sampled_averaged   = ESGivenD_sampled_averaged) )
                                                 
         } 
         
