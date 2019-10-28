@@ -358,15 +358,13 @@ readme <- function(dfm ,
       if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
     } 
     
-    ## If we're just doing the transformation
-    if(justTransform == T){ 
+    ## Get the transformed data 
+    if(justTransform==T){ 
       ### Calculate the transformed DFM
       f2n = function(.){as.numeric(as.character(.))}
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
-      
-      return(list(transformed_dfm=transformed_dfm))
     } 
     
     { 
