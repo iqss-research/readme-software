@@ -364,6 +364,7 @@ readme <- function(dfm ,
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
+      return(list(transformed_dfm=transformed_dfm))
     } 
     
     { 
