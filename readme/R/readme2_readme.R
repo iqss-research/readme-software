@@ -298,7 +298,7 @@ readme <- function(dfm ,
                                         categoryVec_LabMatch, function(x){c(x) })
           
           ### Carry out estimation on the matched samples
-          est_readme2_ = try((  sapply(1:nbootMatch, function(eare){ 
+          est_readme2_ = try(  sapply(1:nbootMatch, function(eare){ 
             MatchIndices_byCat_          = lapply(MatchIndices_byCat, function(sae){ sample(sae, 
                                                                                             batchSizePerCat_match, 
                                                                                             replace = length(sae) * 0.75 < batchSizePerCat_match ) })
@@ -313,15 +313,13 @@ readme <- function(dfm ,
                                                               Y         = Y_)[names(labeled_pd)],T)
             return( list(ED_sampled      = ED_sampled,
                          ESGivenD_Match  = ESGivenD_sampled ) )    
-          } )), T)
+          } ), T)
           
           browser()
           ED_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
           ED_sampled_averaged_NoMatch = try(colMeans(do.call(rbind,est_readme2_[2,])), T)
           return( list(ED_sampled_averaged         = ED_sampled_averaged,
-                                                ED_sampled_averaged_NoMatch = ED_sampled_averaged_NoMatch
-                                                ESGivenD_noMatch            = ESGivenD_noMatch,
-                                                ED_sampled_averaged_NoMatch = ED_sampled_averaged_NoMatch) )
+                       ESGivenD_noMatch            = ESGivenD_noMatch) )
                                                 
         } 
         
@@ -350,6 +348,7 @@ readme <- function(dfm ,
         }
         
         est_readme2 <- est_obsMatch(knnIndices_i)
+        est_readme2_NoMatching <- est_obsMatch(AllIndices_i)
         return( list(est_readme2=est_readme2,
                      est_readme2_NoMatching=est_readme2_NoMatching) ) 
       })
