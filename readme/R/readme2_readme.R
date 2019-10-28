@@ -355,7 +355,6 @@ readme <- function(dfm ,
       est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
       
       try(rm(BOOTSTRAP_EST,indices_list), T)  
-      if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
     } 
     
     ## Get the transformed data 
