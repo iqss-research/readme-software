@@ -315,9 +315,8 @@ readme <- function(dfm ,
                          ESGivenD_Match  = ESGivenD_sampled ) )    
           } ), T)
           
-          browser()
           ED_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
-          ESGivenD_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
+          ESGivenD_sampled_averaged = Reduce("+",est_readme2_[2,])/length(est_readme2_[2,])
           return( list(ED_sampled_averaged         = ED_sampled_averaged,
                        ESGivenD_sampled_averaged   = ESGivenD_sampled_averaged) )
                                                 
@@ -347,6 +346,7 @@ readme <- function(dfm ,
           AllIndices_i  = 1:nrow(X_)
         }
         
+        browser()
         est_readme2 <- est_obsMatch(knnIndices_i)
         est_readme2_NoMatching <- est_obsMatch(AllIndices_i)
         return( list(est_readme2=est_readme2,
