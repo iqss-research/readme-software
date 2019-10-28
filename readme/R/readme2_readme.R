@@ -398,6 +398,7 @@ readme <- function(dfm ,
       transformed_dfm[which(labeledIndicator==1),] <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
       
+      browser()
       ESGivenD_div               = try({ 
         OldMat                   = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
         PreESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
@@ -440,9 +441,9 @@ readme <- function(dfm ,
   if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
                                     point_readme_NoMatching = colMeans(boot_readme_NoMatching, na.rm = T),
                                     diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
-                                                           MatchedPrD_div      = mean(MatchedPrD_div, na.rm = T), 
-                                                           OrigESGivenD_div    = mean(OrigESGivenD_div, na.rm = T), 
-                                                           MatchedESGivenD_div = mean(MatchedESGivenD_div, na.rm = T))) )  }
+                                                           MatchedPrD_div      = mean(NA, na.rm = T), 
+                                                           OrigESGivenD_div    = mean(NA, na.rm = T), 
+                                                           MatchedESGivenD_div = mean(NA, na.rm = T))) )  }
 }
 
 start_reading <- function(nDim,nProj=20,regraph = F){
