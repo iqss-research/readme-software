@@ -292,7 +292,7 @@ readme <- function(dfm ,
         Y_      = FastScale(Y_, MM1, MM2)
         
         ### Important functions 
-        est_obsMatch = function(weight_indices,return_error = FALSE){ 
+        est_obsMatch = function(weight_indices){ 
           categoryVec_LabMatch = Cat_[weight_indices]; X_m = X_[weight_indices,]
           MatchIndices_byCat   = tapply(1:length(categoryVec_LabMatch),
                                         categoryVec_LabMatch, function(x){c(x) })
@@ -305,20 +305,30 @@ readme <- function(dfm ,
             X__                          = X_m[unlist(MatchIndices_byCat_),]; 
             categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
             
+            ESGivenD_noMatch             = do.call(cbind, tapply(1:nrow( X_m ) , categoryVec_LabMatch, function(x){colMeans(X_m[x,])}) )
             ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
-            colnames(ESGivenD_sampled)   = names(labeled_pd)
+            colnames(ESGivenD_noMatch) <- colnames(ESGivenD_sampled)   <- names(labeled_pd)
             ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
+            ESGivenD_noMatch[rowMeans(ESGivenD_noMatch>0) %in% c(0,1),] <- 0 
             Y_ = rep(0, times = nrow(ESGivenD_sampled))
             ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                               Y         = Y_)[names(labeled_pd)],T)
-            return( list(ED_sampled=ED_sampled,
-                         error = sum(abs(ESGivenD_sampled %*%ED_sampled-Y_) )))    
+            ED_noMatch                   = try(readme_est_fxn(X         = ESGivenD_noMatch,
+                                                              Y         = Y_)[names(labeled_pd)],T)
+            return( list(ED_sampled      = ED_sampled,
+                         ED_noMatch      = ED_noMatch,
+                         ESGivenD_noMatch= ESGivenD_noMatch,
+                         ESGivenD_Match  = ESGivenD_sampled ) )    
           } )), T)
+          
+          browser()
           ED_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
-          if(return_error == FALSE){return( ED_sampled_averaged )  }
-          if(return_error == TRUE){return( list(ED_sampled_averaged=ED_sampled_averaged,
-                                                error=mean(unlist(est_readme2_[2,]) ),
-                                                errorSE=sd(unlist(est_readme2_[2,]) ) / sqrt(length(unlist(est_readme2_[2,])))  ))  }
+          ED_sampled_averaged_NoMatch = try(colMeans(do.call(rbind,est_readme2_[2,])), T)
+          return( list(ED_sampled_averaged         = ED_sampled_averaged,
+                                                ED_sampled_averaged_NoMatch = ED_sampled_averaged_NoMatch
+                                                ESGivenD_noMatch            = ESGivenD_noMatch,
+                                                ED_sampled_averaged_NoMatch = ED_sampled_averaged_NoMatch) )
+                                                
         } 
         
         ### Weights from KNN matching - find kMatch matches in X_ to Y_
@@ -345,6 +355,7 @@ readme <- function(dfm ,
           AllIndices_i  = 1:nrow(X_)
         }
         
+        browser()
         est_readme2 <- est_obsMatch(knnIndices_i)
         est_readme2_NoMatching = est_obsMatch(AllIndices_i)
         
@@ -355,20 +366,6 @@ readme <- function(dfm ,
       ### Get the bootstrapped estimates
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
       est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
-
-    #use all data and means 
-      {
-        MM1 = colMeans(out_dfm_unlabeled)
-        MM2     = apply(cbind(colSds(out_dfm_unlabeled,  colMeans(out_dfm_unlabeled)),
-                              colSds(out_dfm_labeled,  colMeans(out_dfm_labeled))), 1, function(xa){max(xa)})#robust approx of x*y
-        out_dfm_labeled_n      = FastScale(out_dfm_labeled, MM1, MM2);
-        out_dfm_unlabeled_n      = FastScale(out_dfm_unlabeled, MM1, MM2)
-        ESGivenD                      =  do.call(cbind,lapply(l_indices_by_cat,function(xa){colMeans(out_dfm_labeled_n[xa,])}))
-        ES                            = colMeans(out_dfm_unlabeled_n)
-        est_readme2_3                   = try(readme_est_fxn(X         = ESGivenD,
-                                                           Y           = ES),T) 
-      
-      }
       
       try(rm(BOOTSTRAP_EST,indices_list), T)  
       if(diagnostics == F){rm(out_dfm_labeled,out_dfm_unlabeled) }
