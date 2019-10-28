@@ -20,8 +20,6 @@
 #'
 #' @param verbose Should progress updates be given? Input should be a Boolean. 
 #' 
-#' @param diagnostics Should diagnostics be returned? Input should be a Boolean. 
-#'  
 #' @param sgdIters How many stochastic gradient descent iterations should be used? Input should be a positive number.   
 #'  
 #' @param justTransform A Boolean indicating whether the user wants to extract the quanficiation-optimized 
@@ -316,9 +314,7 @@ readme <- function(dfm ,
           } ), T)
           
           ED_sampled_averaged = try(colMeans(do.call(rbind,est_readme2_[1,])), T)
-          ESGivenD_sampled_averaged = Reduce("+",est_readme2_[2,])/length(est_readme2_[2,])
-          return( list(ED_sampled_averaged         = ED_sampled_averaged,
-                       ESGivenD_sampled_averaged   = ESGivenD_sampled_averaged) )
+          return( list(ED_sampled_averaged         = ED_sampled_averaged ) )
                                                 
         } 
         
@@ -346,11 +342,12 @@ readme <- function(dfm ,
           AllIndices_i  = 1:nrow(X_)
         }
         
-        browser()
         est_readme2 <- est_obsMatch(knnIndices_i)
         est_readme2_NoMatching <- est_obsMatch(AllIndices_i)
-        return( list(est_readme2=est_readme2,
-                     est_readme2_NoMatching=est_readme2_NoMatching) ) 
+        return( list(est_readme2=est_readme2$ED_sampled_averaged,
+                     est_readme2_NoMatching=est_readme2_NoMatching$ED_sampled_averaged,
+                     est_readme2_ESGivenD =est_readme2$ESGivenD_sampled_averaged,
+                     est_readme2_ESGivenD_NoMatching=est_readme2_NoMatching$ESGivenD_sampled_averaged) ) 
       })
       
       ### Get the bootstrapped estimates
@@ -385,30 +382,6 @@ readme <- function(dfm ,
       transformed_dfm[which(labeledIndicator==1),] <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
       
-      ESGivenD_div               = try({ 
-        OldMat                   = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
-        PreESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
-                                                        tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1], function(za){
-                                                          colMeans(OldMat[za,]) }))
-        
-        NewMat                    = apply(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,-1], 2, f2n)
-        PostESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1]),
-                                                         tf_est_results$transformed_labeled_dfm$matched_transformed_labeled_dfm[,1], function(za){colMeans(NewMat[za,])}))
-        
-        unlabeled_transformed_dfm = apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
-        TrueESGivenD              = do.call(cbind,tapply(1:nrow(unlabeled_transformed_dfm), categoryVec_unlabeled, function(za){
-          colMeans(unlabeled_transformed_dfm[za,]) }))
-        sharedCols                = intersect(colnames(TrueESGivenD),  colnames(PostESGivenD))
-        
-        OrigESGivenD_div_         = mean(abs(c(PreESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
-        MatchedESGivenD_div_      = mean(abs(c(PostESGivenD[,sharedCols]) - c(TrueESGivenD[,sharedCols])))
-        return__                  = t( data.frame(OrigESGivenD_div_    = OrigESGivenD_div_, 
-                                                  MatchedESGivenD_div_ = MatchedESGivenD_div_ ) ) 
-        return__
-      }, T)
-      MatchedPrD_div[iter_i]      = sum(abs(vec2prob(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1])[names(unlabeled_pd)] - unlabeled_pd))
-      OrigESGivenD_div[iter_i]    = try(ESGivenD_div["OrigESGivenD_div_",1], T) 
-      MatchedESGivenD_div[iter_i] = try(ESGivenD_div["MatchedESGivenD_div_",1], T)  
     }
     
     ## Save results 
@@ -421,15 +394,10 @@ readme <- function(dfm ,
   ## Parse output
   ## If no diagnostics wanted
   #sort( sapply(ls(),function(x){object.size(get(x))})) 
-  if(diagnostics == F){return( list(point_readme = colMeans(boot_readme, na.rm = T),
-                                    point_readme_NoMatching = colMeans(boot_readme_NoMatching, na.rm = T)))   }
-  ## If diagnostics wanted
-  if(diagnostics == T){return( list(point_readme    = colMeans(boot_readme, na.rm = T) ,
-                                    point_readme_NoMatching = colMeans(boot_readme_NoMatching, na.rm = T),
-                                    diagnostics     = list(OrigPrD_div         = sum(abs(labeled_pd[names(unlabeled_pd)] - unlabeled_pd)),
-                                                           MatchedPrD_div      = mean(NA, na.rm = T), 
-                                                           OrigESGivenD_div    = mean(NA, na.rm = T), 
-                                                           MatchedESGivenD_div = mean(NA, na.rm = T))) )  }
+  return( list(point_readme = colMeans(boot_readme, na.rm = T),
+               point_readme_NoMatching = colMeans(boot_readme_NoMatching, na.rm = T),
+               transformed_dfm = transformed_dfm)) 
+
 }
 
 start_reading <- function(nDim,nProj=20,regraph = F){
