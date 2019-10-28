@@ -305,19 +305,13 @@ readme <- function(dfm ,
             X__                          = X_m[unlist(MatchIndices_byCat_),]; 
             categoryVec_LabMatch_        = categoryVec_LabMatch[unlist(MatchIndices_byCat_)]
             
-            ESGivenD_noMatch             = do.call(cbind, tapply(1:nrow( X_m ) , categoryVec_LabMatch, function(x){colMeans(X_m[x,])}) )
             ESGivenD_sampled             = do.call(cbind, tapply(1:nrow( X__ ) , categoryVec_LabMatch_, function(x){colMeans(X__[x,])}) )
             colnames(ESGivenD_noMatch) <- colnames(ESGivenD_sampled)   <- names(labeled_pd)
             ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0 
-            ESGivenD_noMatch[rowMeans(ESGivenD_noMatch>0) %in% c(0,1),] <- 0 
             Y_ = rep(0, times = nrow(ESGivenD_sampled))
             ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
                                                               Y         = Y_)[names(labeled_pd)],T)
-            ED_noMatch                   = try(readme_est_fxn(X         = ESGivenD_noMatch,
-                                                              Y         = Y_)[names(labeled_pd)],T)
             return( list(ED_sampled      = ED_sampled,
-                         ED_noMatch      = ED_noMatch,
-                         ESGivenD_noMatch= ESGivenD_noMatch,
                          ESGivenD_Match  = ESGivenD_sampled ) )    
           } )), T)
           
@@ -355,10 +349,7 @@ readme <- function(dfm ,
           AllIndices_i  = 1:nrow(X_)
         }
         
-        browser()
         est_readme2 <- est_obsMatch(knnIndices_i)
-        est_readme2_NoMatching = est_obsMatch(AllIndices_i)
-        
         return( list(est_readme2=est_readme2,
                      est_readme2_NoMatching=est_readme2_NoMatching) ) 
       })
@@ -395,7 +386,6 @@ readme <- function(dfm ,
       transformed_dfm[which(labeledIndicator==1),] <- apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
       
-      browser()
       ESGivenD_div               = try({ 
         OldMat                   = apply(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,-1], 2, f2n)
         PreESGivenD              = do.call(cbind,tapply(1:length(tf_est_results$transformed_labeled_dfm$unmatched_transformed_labeled_dfm[,1]),
