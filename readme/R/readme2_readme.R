@@ -266,7 +266,7 @@ readme <- function(dfm ,
       out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T)
     } 
     if(dfm_class != "list"){ 
-      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_labeled, WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T) 
+      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_unlabeled, WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T) 
     } 
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
     
@@ -369,12 +369,10 @@ readme <- function(dfm ,
     
     { 
       ### Save first iteration as tf_est_results
-      tf_est_results <- list(transformed_unlabeled_dfm = out_dfm_unlabeled,
-                             transformed_labeled_dfm   = list(unmatched_transformed_labeled_dfm = cbind(as.character(categoryVec_labeled), out_dfm_labeled),
-                                                              matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
+      tf_est_results <- list(transformed_labeled_dfm   = out_dfm_labeled,
+                             transformed_unlabeled_dfm = out_dfm_unlabeled)
       
       ### Calculate the transformed DFM
-      browser()
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- try(apply(tf_est_results$transformed_labeled_dfm, 2, f2n),T)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
