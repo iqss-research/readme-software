@@ -374,6 +374,7 @@ readme <- function(dfm ,
                                                               matched_transformed_labeled_dfm   = cbind(as.character(categoryVec_labeled), out_dfm_labeled)))
       
       ### Calculate the transformed DFM
+      browser()
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- try(apply(tf_est_results$transformed_labeled_dfm, 2, f2n),T)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
