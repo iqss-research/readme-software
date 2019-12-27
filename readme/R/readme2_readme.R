@@ -399,7 +399,8 @@ readme <- function(dfm ,
 start_reading <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
-  #tf$reset_default_graph()
+  suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
+  tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Assumptions 
