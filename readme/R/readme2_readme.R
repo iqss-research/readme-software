@@ -173,8 +173,6 @@ readme <- function(dfm ,
   }
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   
-  require(tensorflow,quietly=T)
-  suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   graphfil = graph_file_gen(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
@@ -524,3 +522,5 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
   } 
 }
 
+require(tensorflow,quietly=T)
+suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
