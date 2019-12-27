@@ -179,8 +179,8 @@ readme <- function(dfm ,
                 use_env = environment())
   source(graph_file,local=F)
   try(unlink(graph_file),T);
-  #require(tensorflow,quietly=T)
-  #suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
+  require(tensorflow,quietly=T)
+  suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   
   FinalParams_LIST <- list(); tf_junk <- ls()
   
