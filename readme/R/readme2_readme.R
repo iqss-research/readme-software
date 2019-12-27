@@ -507,11 +507,13 @@ start_reading <- function(nDim,nProj=20,regraph = F,use_env){
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
       print("Performance warning: Rebuilding tensorflow graph...")
-      suppressWarnings(rm(readme_graph, envir = globalenv())); tf$reset_default_graph()
+      suppressWarnings(rm(readme_graph, envir = use_env)); #tf$reset_default_graph()
     }
     print("Building master readme graph...")
+    #use_env = globalenv()
     #eval(parse(text=eval_text), envir = globalenv())
     #eval.parent(parse(text=eval_text))
+    browser() 
     eval(parse(text=eval_text), envir = use_env)
     print("Readme is now initialized!")
   } 
