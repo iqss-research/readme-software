@@ -177,6 +177,7 @@ readme <- function(dfm ,
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
+  browser() 
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_,
                 use_env = environment())
 
@@ -396,10 +397,11 @@ readme <- function(dfm ,
 
 }
 
-start_reading <- function(nDim,nProj=20,regraph = F,use_env){
+#start_reading <- function(){
+#start_reading <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
-  suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
+  suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
