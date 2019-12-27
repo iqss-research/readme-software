@@ -177,7 +177,8 @@ readme <- function(dfm ,
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
+  start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_,
+                use_env = environment())
 
   FinalParams_LIST <- list(); tf_junk <- ls()
   
@@ -395,7 +396,7 @@ readme <- function(dfm ,
 
 }
 
-start_reading <- function(nDim,nProj=20,regraph = F){
+start_reading <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
   tf$reset_default_graph()
@@ -510,7 +511,8 @@ start_reading <- function(nDim,nProj=20,regraph = F){
     }
     print("Building master readme graph...")
     #eval(parse(text=eval_text), envir = globalenv())
-    eval.parent(parse(text=eval_text))
+    #eval.parent(parse(text=eval_text))
+    eval(parse(text=eval_text), envir = use_env)
     print("Readme is now initialized!")
   } 
 }
