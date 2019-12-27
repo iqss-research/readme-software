@@ -177,6 +177,7 @@ readme <- function(dfm ,
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
+  browser()
   graph_file = graph_file_gen(nDim=nDim_full,nProj=numProjections, regraph = regraph_,
                 use_env = environment())
   source(graph_file,local=T)
@@ -521,7 +522,6 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env){
     cat(eval_text, file = zz)
     close(zz)
     #eval(parse(text=eval_text), envir = use_env)
-    print("Readme is now initialized!")
     return( graphfil )
   } 
 }
