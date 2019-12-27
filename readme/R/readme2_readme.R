@@ -111,6 +111,9 @@ readme <- function(dfm ,
                    nCores_OnJob = 1L ,
                    regraph  = F,
                    otherOption = NULL){ 
+  eval(parse(text="require(tensorflow,quietly=T)"),envir = globalenv())
+  eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
+  
   #set options 
   op <- options(digits.secs = 6)
   
@@ -521,6 +524,3 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
     return( graphfil )
   } 
 }
-
-eval(parse(text="require(tensorflow,quietly=T)"),envir = globalenv())
-eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
