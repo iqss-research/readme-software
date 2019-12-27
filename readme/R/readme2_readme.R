@@ -522,5 +522,5 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
   } 
 }
 
-require(tensorflow,quietly=T)
-suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
+eval(parse(text="require(tensorflow,quietly=T)"),envir = globalenv())
+eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
