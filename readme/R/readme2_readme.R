@@ -175,10 +175,9 @@ readme <- function(dfm ,
   
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  browser()
   graph_file = graph_file_gen(nDim=nDim_full,nProj=numProjections, regraph = regraph_,
                 use_env = environment())
-  source(graph_file,local=T)
+  source(graph_file,local=F)
   try(unlink(graph_file),T);
   #require(tensorflow,quietly=T)
   #suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
