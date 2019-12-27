@@ -177,6 +177,7 @@ readme <- function(dfm ,
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
+  browser() 
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
   
   FinalParams_LIST <- list(); tf_junk <- ls()
