@@ -178,7 +178,7 @@ readme <- function(dfm ,
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   graphfil = graph_file_gen(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
-  try(source(graphfil,local=T),T) 
+  try(source(graphfil,local=F),T) 
   #try(unlink(graphfil),T);
   
   FinalParams_LIST <- list(); tf_junk <- ls()
@@ -400,8 +400,8 @@ readme <- function(dfm ,
 graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
   { 
   eval_text = sprintf('
-  require(tensorflow,quietly=T)
-  suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
+  #require(tensorflow,quietly=T)
+  #suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
