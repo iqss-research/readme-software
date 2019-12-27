@@ -177,10 +177,11 @@ readme <- function(dfm ,
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  browser() 
-  start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_,
+  graph_file = graph_file_gen(nDim=nDim_full,nProj=numProjections, regraph = regraph_,
                 use_env = environment())
-
+  source(graph_file,local=T)
+  try(unlink(graph_file),T);
+  
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -397,8 +398,7 @@ readme <- function(dfm ,
 
 }
 
-#start_reading <- function(){
-start_reading <- function(nDim,nProj=20,regraph = F,use_env){
+graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
   suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
@@ -515,9 +515,14 @@ start_reading <- function(nDim,nProj=20,regraph = F,use_env){
     print("Building master readme graph...")
     #use_env = globalenv()
     #eval(parse(text=eval_text), envir = globalenv())
-    eval.parent(parse(text=eval_text))
+    #eval.parent(parse(text=eval_text))
+    graphfil <- tempfile(fileext=".R")
+    zz <- file(graphfil, "w")  # open an output file connection
+    cat(eval_text, file = zz)
+    close(zz)
     #eval(parse(text=eval_text), envir = use_env)
     print("Readme is now initialized!")
+    return( graphfil )
   } 
 }
 
