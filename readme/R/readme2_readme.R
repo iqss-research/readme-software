@@ -397,7 +397,7 @@ readme <- function(dfm ,
 
 }
 
-graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env){
+graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
   { 
   eval_text = sprintf('
   require(tensorflow,quietly=T)
