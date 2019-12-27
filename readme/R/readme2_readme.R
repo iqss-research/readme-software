@@ -402,7 +402,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
   require(tensorflow,quietly=T)
-  suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
+  suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
