@@ -4,14 +4,14 @@
 #' 
 #' @param my_text Vector of character strings containing the raw document texts.
 #' 
+#' @param finalEncoding A character string indicating the desired encoding for the text vector (default = "ASCII")
+#' 
 #' @return A vector of character strings with the processed texts, each token is separated by a space.
 #' 
 #' @export 
 #' 
 #' 
-cleanme <- function(my_text){ 
-  finalEncoding <- "ASCII"
-  
+cleanme <- function(my_text,finalEncoding = "ASCII"){ 
   ### Convert to ASCII encoding
   my_text <- sapply(my_text, 
                     function(x){ startingEncoding <- Encoding(x)
@@ -46,7 +46,9 @@ cleanme <- function(my_text){
   my_text <- gsub(my_text, pattern = "\\):", replace = " <sadface> ")
   my_text <- gsub(my_text, pattern = "\\)-:", replace = " <sadface> ")
   my_text <- gsub(my_text, pattern = "D:", replace = " <sadface> ")
-  my_text <- gsub(my_text, pattern = "<3", replace = " ♥ ")
+  my_text_ <- try(gsub(my_text, pattern = "<3", replace = " ♥ "),T)
+  if(!class(my_text_) == 'try-error'){my_text <- my_text_}
+  rm(my_text_)
   
   ## Remove punctuation
   my_text <- gsub(my_text, pattern = "\\s*-\\B|\\B-\\s*", replace = " ") 
