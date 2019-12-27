@@ -198,6 +198,7 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
+  browser()
      S_ = tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     allow_soft_placement = T) ) 
