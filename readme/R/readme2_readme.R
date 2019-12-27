@@ -173,8 +173,7 @@ readme <- function(dfm ,
   }
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   
-  require(tensorflow, quietly = T)
-  browser() 
+  require(tensorflow,quietly=T)
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
@@ -508,7 +507,9 @@ start_reading <- function(nDim,nProj=20,regraph = F){
       suppressWarnings(rm(readme_graph, envir = globalenv())); tf$reset_default_graph()
     }
     print("Building master readme graph...")
-    eval(parse(text=eval_text), envir = globalenv())
+    browser() 
+    #eval(parse(text=eval_text), envir = globalenv())
+    eval(parse(text=eval_text),local=T)
     print("Readme is now initialized!")
   } 
 }
