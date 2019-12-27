@@ -513,8 +513,8 @@ start_reading <- function(nDim,nProj=20,regraph = F,use_env){
     print("Building master readme graph...")
     #use_env = globalenv()
     #eval(parse(text=eval_text), envir = globalenv())
-    #eval.parent(parse(text=eval_text))
-    eval(parse(text=eval_text), envir = use_env)
+    eval.parent(parse(text=eval_text))
+    #eval(parse(text=eval_text), envir = use_env)
     print("Readme is now initialized!")
   } 
 }
