@@ -399,7 +399,7 @@ readme <- function(dfm ,
 start_reading <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
-  tf$reset_default_graph()
+  #tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Assumptions 
@@ -513,7 +513,6 @@ start_reading <- function(nDim,nProj=20,regraph = F,use_env){
     #use_env = globalenv()
     #eval(parse(text=eval_text), envir = globalenv())
     #eval.parent(parse(text=eval_text))
-    browser() 
     eval(parse(text=eval_text), envir = use_env)
     print("Readme is now initialized!")
   } 
