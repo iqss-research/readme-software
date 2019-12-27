@@ -174,6 +174,7 @@ readme <- function(dfm ,
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   
   require(tensorflow, quietly = T)
+  browser() 
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
