@@ -177,9 +177,8 @@ readme <- function(dfm ,
   suppressWarnings(try(tensorflow::use_compat(version='v1'), T))
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T) 
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  browser() 
   start_reading(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
-  
+
   FinalParams_LIST <- list(); tf_junk <- ls()
   
   ## For calculating discrimination - how many possible cross-category contrasts are there
@@ -397,6 +396,7 @@ readme <- function(dfm ,
 }
 
 start_reading <- function(nDim,nProj=20,regraph = F){
+  { 
   eval_text = sprintf('
   tf$reset_default_graph()
   readme_graph = tf$Graph()
@@ -502,15 +502,15 @@ start_reading <- function(nDim,nProj=20,regraph = F){
   readme_graph$finalize()
 
   ', nDim, nProj)
+  } 
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
       print("Performance warning: Rebuilding tensorflow graph...")
       suppressWarnings(rm(readme_graph, envir = globalenv())); tf$reset_default_graph()
     }
     print("Building master readme graph...")
-    browser() 
     #eval(parse(text=eval_text), envir = globalenv())
-    eval(parse(text=eval_text),local=T)
+    eval.parent(parse(text=eval_text))
     print("Readme is now initialized!")
   } 
 }
