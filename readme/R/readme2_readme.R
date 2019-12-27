@@ -198,10 +198,9 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
  
-  browser()
-     S_ = tf$Session(graph = readme_graph,
+     S_ = eval(parse(text="tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
-                    allow_soft_placement = T) ) 
+                    allow_soft_placement = T) )"),envir = globalenv())
                     #device_count=list("GPU"=0L, "CPU" = as.integer(nCores)), 
                     #inter_op_parallelism_threads = as.integer(nCores_OnJob),
                     #intra_op_parallelism_threads = as.integer(nCores_OnJob) ) )
@@ -402,8 +401,6 @@ readme <- function(dfm ,
 graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
   { 
   eval_text = sprintf('
-  #require(tensorflow,quietly=T)
-  #suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
