@@ -398,7 +398,7 @@ readme <- function(dfm ,
 }
 
 #start_reading <- function(){
-#start_reading <- function(nDim,nProj=20,regraph = F,use_env){
+start_reading <- function(nDim,nProj=20,regraph = F,use_env){
   { 
   eval_text = sprintf('
   suppressWarnings(try(tensorflow::use_compat(version="v1"), T))
