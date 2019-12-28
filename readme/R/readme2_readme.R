@@ -110,12 +110,13 @@ readme <- function(dfm ,
                    nCores = 1L, 
                    nCores_OnJob = 1L ,
                    regraph  = F,
-                   conda_env = NULL
+                   conda_env = NULL,
                    otherOption = NULL){ 
   eval(parse(text="require(tensorflow,quietly=T)"),envir = globalenv())
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   if(!is.null(conda_env)){
-    eval(parse(text="suppressWarnings(try(tensorflow::use_condaenv(condaenv='Rtensorflow2',required=F), T))"),envir = globalenv())
+    eval(parse(text=sprintf("suppressWarnings(try(tensorflow::use_condaenv(condaenv='%s',required=F), T))",
+                          conda_env)),envir = globalenv())
   }
   
   #set options 
