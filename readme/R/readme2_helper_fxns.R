@@ -46,9 +46,6 @@ cleanme <- function(my_text,finalEncoding = "ASCII"){
   my_text <- gsub(my_text, pattern = "\\):", replace = " <sadface> ")
   my_text <- gsub(my_text, pattern = "\\)-:", replace = " <sadface> ")
   my_text <- gsub(my_text, pattern = "D:", replace = " <sadface> ")
-  my_text_ <- try(gsub(my_text, pattern = "<3", replace = " ♥ "),T)
-  if(!class(my_text_) == 'try-error'){my_text <- my_text_}
-  rm(my_text_)
   
   ## Remove punctuation
   my_text <- gsub(my_text, pattern = "\\s*-\\B|\\B-\\s*", replace = " ") 
