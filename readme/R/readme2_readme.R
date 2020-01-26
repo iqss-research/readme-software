@@ -272,7 +272,6 @@ readme <- function(dfm ,
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
     
     if(dfm_class == "list"){ 
-      browser()
       out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T)
     } 
     if(dfm_class != "list"){ 
@@ -372,8 +371,9 @@ readme <- function(dfm ,
       ### Calculate the transformed DFM
       f2n = function(.){as.numeric(as.character(.))}
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
-      transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n)
-      transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n)
+      test_ = try(transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n), T) 
+      test__ = try(transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n), T) 
+      if(class(test__) == 'try-error' | class(test_) == "try-error"){browser()}
       return(list(transformed_dfm=transformed_dfm))
     } 
     
@@ -386,6 +386,7 @@ readme <- function(dfm ,
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       transformed_dfm[which(labeledIndicator==1),] <- try(apply(tf_est_results$transformed_labeled_dfm, 2, f2n),T)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
+      transformed_dfm = apply(transformed_dfm, 2, f2n)
     }
     
     ## Save results 
