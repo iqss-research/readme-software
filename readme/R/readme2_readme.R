@@ -204,7 +204,6 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
 
-    browser()
      S_ = eval(parse(text="tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     device_count=list('GPU'=0L, 'CPU' = as.integer(1)),
@@ -409,12 +408,15 @@ readme <- function(dfm ,
 
 graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED=NULL){
   {
+  seed_text <- ";"
+  if(!is.null(TF_SEED)){seed_text = sprintf("tf$set_random_seed(%s)",TF_SEED)}
+
   eval_text = sprintf('
   tf$reset_default_graph()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Set seed
-    if(!is.null(TF_SEED)){tf$set_random_seed(TF_SEED)}
+    %s
 
     #Assumptions
     nDim = as.integer(  %s  )
@@ -507,7 +509,6 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     init1 = tf$variables_initializer(list(clip_tf,inverse_learn_rate,
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
                       Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
-browser()
     init2 = tf$variables_initializer(list(WtsMat, BiasVec))
 
     #other actions
@@ -517,7 +518,7 @@ browser()
   })
   readme_graph$finalize()
 
-  ', nDim, nProj)
+  ', seed_text, nDim, nProj)
   }
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
