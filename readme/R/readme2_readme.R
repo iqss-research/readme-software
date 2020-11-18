@@ -215,6 +215,7 @@ readme <- function(dfm ,
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
+            browser()
                         S_$run(init2)
                       if(iter_i == 1){
                         S_$run(init1) # Initialize
@@ -506,7 +507,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
     init1 = tf$variables_initializer(list(clip_tf,inverse_learn_rate,
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
                       Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
-     init2 = tf$variables_initializer(list(WtsMat, BiasVec))
+    init2 = tf$variables_initializer(list(WtsMat, BiasVec))
 
     #other actions
     FinalParams_list        = list(WtsMat,BiasVec)
