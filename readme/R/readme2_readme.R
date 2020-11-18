@@ -113,7 +113,7 @@ readme <- function(dfm ,
                    conda_env = NULL,
                    otherOption = NULL,
                    tensorflowSeed = NULL){
-  eval(parse(text="require(tensorflow,quietly=T)"),envir = globalenv())
+  eval(parse(text="library(tensorflow)"),envir = globalenv())
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   if(!is.null(conda_env)){
     eval(parse(text=sprintf("suppressWarnings(try(tensorflow::use_condaenv(condaenv='%s',required=F), T))",
@@ -209,7 +209,8 @@ readme <- function(dfm ,
                     device_count=list('GPU'=0L, 'CPU' = as.integer(1)),
                     inter_op_parallelism_threads = as.integer(1),
                     intra_op_parallelism_threads = as.integer(1),
-                    allow_soft_placement = T) )"),envir = globalenv())
+                    allow_soft_placement = T) )"))
+                    #allow_soft_placement = T) )"),envir = globalenv())
           for(iter_i in 1:nBoot){
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
