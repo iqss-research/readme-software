@@ -507,6 +507,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
     init1 = tf$variables_initializer(list(clip_tf,inverse_learn_rate,
                                          Optimizer_tf$get_slot(tf$trainable_variables()[[1]],Optimizer_tf$get_slot_names()),
                       Optimizer_tf$get_slot(tf$trainable_variables()[[2]],Optimizer_tf$get_slot_names())))
+browser()
     init2 = tf$variables_initializer(list(WtsMat, BiasVec))
 
     #other actions
