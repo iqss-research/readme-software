@@ -205,6 +205,7 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
 
+  browser()
      S_ = eval(parse(text="tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     device_count=list('GPU'=0L, 'CPU' = as.integer(1)),
