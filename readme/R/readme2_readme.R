@@ -184,8 +184,9 @@ readme <- function(dfm ,
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  graphfil = graph_file_gen(nDim=nDim_full,nProj=numProjections, regraph = regraph_)
-  try(source(graphfil,local=F),T)
+  genGraph = graph_file_gen(nDim=nDim_full,nProj=numProjections,regraph = regraph_,TF_SEED=tensorflowSeed)
+  environment(tensorflowSeed) <- globalenv()
+  #try(source(graphfil,local=F),T)
   #try(unlink(graphfil),T);
 
   FinalParams_LIST <- list(); tf_junk <- ls()
@@ -204,14 +205,12 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
 
-  browser()
      S_ = eval(parse(text="tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     device_count=list('GPU'=0L, 'CPU' = as.integer(1)),
                     inter_op_parallelism_threads = as.integer(1),
                     intra_op_parallelism_threads = as.integer(1),
                     allow_soft_placement = T) )"),envir = globalenv())
-                    #allow_soft_placement = T) )"))
           for(iter_i in 1:nBoot){
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
@@ -416,7 +415,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Set seed
-    if(!is.null(tensorflowSeed)){tf$set_random_seed(tensorflowSeed)}
+    if(!is.null(TF_SEED)){tf$set_random_seed(TF_SEED)}
 
     #Assumptions
     nDim = as.integer(  %s  )
