@@ -113,7 +113,8 @@ readme <- function(dfm ,
                    conda_env = NULL,
                    otherOption = NULL,
                    tensorflowSeed = NULL){
-  eval(parse(text="library(tensorflow)"),envir = globalenv())
+  #eval(parse(text="library(tensorflow)"),envir = globalenv())
+  library(tensorflow)
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   if(!is.null(conda_env)){
     eval(parse(text=sprintf("suppressWarnings(try(tensorflow::use_condaenv(condaenv='%s',required=F), T))",
