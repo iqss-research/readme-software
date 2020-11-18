@@ -113,7 +113,7 @@ readme <- function(dfm ,
                    conda_env = NULL,
                    otherOption = NULL,
                    tensorflowSeed = NULL){
-  eval(parse(text="require(tensorflow,T)"),envir = globalenv())
+  eval(parse(text="require('tensorflow',quietly=T)"),envir = globalenv())
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   if(!is.null(conda_env)){
     eval(parse(text=sprintf("suppressWarnings(try(tensorflow::use_condaenv(condaenv='%s',required=F), T))",
@@ -184,7 +184,7 @@ readme <- function(dfm ,
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  genGraph = graph_file_gen(nDim=nDim_full,nProj=numProjections,regraph = regraph_,TF_SEED=tensorflowSeed)
+  graph_file_gen(nDim=nDim_full,nProj=numProjections,regraph = regraph_,TF_SEED=tensorflowSeed)
   environment(tensorflowSeed) <- globalenv()
   #try(source(graphfil,local=F),T)
   #try(unlink(graphfil),T);
@@ -217,7 +217,7 @@ readme <- function(dfm ,
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
             browser()
-                        S_$run(init2)
+                      S_$run(init2)
                       if(iter_i == 1){
                         S_$run(init1) # Initialize
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
@@ -408,7 +408,7 @@ readme <- function(dfm ,
 
 }
 
-graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv()){
+graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED=NULL){
   {
   eval_text = sprintf('
   tf$reset_default_graph()
