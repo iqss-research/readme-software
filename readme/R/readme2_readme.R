@@ -248,8 +248,7 @@ readme <- function(dfm ,
                       for(j in 1:sgdIters){
                         if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
                         learn_seq_spot = learn_seq_spot + 1
-                        browser()
-                        inv_learn_rate_seq[j+1] = S_$run(learn_group[[1]],
+                        inv_learn_rate_seq[j+1] = S_$run(learn_group,
                                                         dict(contrast_indices1=contrast_indices1_v,
                                                          contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
@@ -503,7 +502,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     inverse_learn_rate_update = tf$assign_add(ref = inverse_learn_rate, value = L2_squared_clipped / inverse_learn_rate)
 
     #learning consists of gradient updates plus learning rate updates.
-    learn_group       = list(  tf$group(inverse_learn_rate, inverse_learn_rate_update),
+    learn_group       = list(  inverse_learn_rate, inverse_learn_rate_update,
                                    Optimizer_tf$apply_gradients( Gradients_clipped ))
 
     # Initialize variables in TensorFlow Graph
