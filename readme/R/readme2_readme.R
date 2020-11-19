@@ -417,7 +417,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Set seed
-    %s
+    set.seed(TF_SEED);%s
 
     #Assumptions
     nDim = as.integer(  %s  )
