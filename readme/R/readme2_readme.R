@@ -249,7 +249,7 @@ readme <- function(dfm ,
                         if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
                         learn_seq_spot = learn_seq_spot + 1
                         browser()
-                        inv_learn_rate_seq[j+1] = S_$run(learn_group,
+                        inv_learn_rate_seq[j+1] = S_$run(learn_group[[1]],
                                                         dict(contrast_indices1=contrast_indices1_v,
                                                          contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
