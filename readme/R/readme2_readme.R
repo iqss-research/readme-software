@@ -502,8 +502,8 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     inverse_learn_rate_update = tf$assign_add(ref = inverse_learn_rate, value = L2_squared_clipped / inverse_learn_rate)
 
     #learning consists of gradient updates plus learning rate updates.
-    learn_group       = list(  inverse_learn_rate, inverse_learn_rate_update,
-                                   Optimizer_tf$apply_gradients( Gradients_clipped ))
+    learn_group       = list(  tf$group(inverse_learn_rate, inverse_learn_rate_update,
+                                   Optimizer_tf$apply_gradients( Gradients_clipped )))
 
     # Initialize variables in TensorFlow Graph
     init0 = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learn_rate,
