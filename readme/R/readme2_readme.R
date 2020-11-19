@@ -113,6 +113,7 @@ readme <- function(dfm ,
                    conda_env = NULL,
                    otherOption = NULL,
                    tensorflowSeed = NULL){
+  if(!is.null(tensorflowSeed)){set.seed(tensorflowSeed)}
   eval(parse(text="require('tensorflow',quietly=T)"),envir = globalenv())
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   if(!is.null(conda_env)){
