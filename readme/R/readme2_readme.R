@@ -521,7 +521,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
   })
   readme_graph$finalize()
 
-  ', TF_SEED,seed_text, nDim, nProj)
+  ', seed_text, nDim, nProj)
   }
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
