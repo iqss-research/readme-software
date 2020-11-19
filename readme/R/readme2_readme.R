@@ -186,6 +186,7 @@ readme <- function(dfm ,
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   graphSource = graph_file_gen(nDim=nDim_full,nProj=numProjections,regraph = regraph_,TF_SEED=tensorflowSeed)
+  browser()
   try(source(graphSource,local=F),T)
   try(unlink(graphSource),T);
 
@@ -417,7 +418,8 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Set seed
-    set.seed(TF_SEED);%s
+    set.seed(TF_SEED)
+    %s
 
     #Assumptions
     nDim = as.integer(  %s  )
