@@ -211,13 +211,13 @@ readme <- function(dfm ,
                     inter_op_parallelism_threads = as.integer(1),
                     intra_op_parallelism_threads = as.integer(1),
                     allow_soft_placement = T) )"),envir = globalenv())
-     tmp_ <- c()
           for(iter_i in 1:nBoot){
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       S_$run(init2)
+                      print(S_$run(WtsMat))
                       if(iter_i == 1){
                         S_$run(init1) # Initialize
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
@@ -241,7 +241,6 @@ readme <- function(dfm ,
                       inv_learn_rate_seq = rep(NA,times=sgdIters+1)
                       inv_learn_rate_seq[1] = S_$run( set_inverse_learn_action, feed_dict = dict(L2_initial=max(2*L2_initial_v,4/3)) )
 
-                      tmp_ = cbind(tmp_,grab_samp())
                       ### For each iteration of SGDs
                       t1=Sys.time()
                       learn_seq_spot = 0 ; temp_vec = c()
@@ -262,7 +261,6 @@ readme <- function(dfm ,
                       #save final parameters
                       FinalParams_LIST[[length(FinalParams_LIST)+1]] <- S_$run( FinalParams_list )
                }
-    print(head(tmp_))
           try(S_$close(), T)
           try(tf$keras$backend$clear_session(), T)
           try(tf$keras$backend$reset_uids(), T)
