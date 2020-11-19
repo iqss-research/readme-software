@@ -211,7 +211,7 @@ readme <- function(dfm ,
                     inter_op_parallelism_threads = as.integer(1),
                     intra_op_parallelism_threads = as.integer(1),
                     allow_soft_placement = T) )"),envir = globalenv())
-          for(iter_i in 1:nBoot){
+    for(iter_i in 1:nBoot){
                       if (verbose == T & iter_i %% 10 == 0){
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
@@ -219,12 +219,12 @@ readme <- function(dfm ,
                       S_$run(init2)
                       if(iter_i == 1){
                         S_$run(init1) # Initialize
-                        IL_stats       = list(IL_mu_b,IL_sigma2_b)
-                        IL_stats       = replicate(100,
+                        IL_stats        = list(IL_mu_b,IL_sigma2_b)
+                        IL_stats        = replicate(100,
                                                    S_$run(IL_stats, feed_dict = dict( IL_input = dfm_labeled[grab_samp(),])))
 
-                        IL_mu_last_v          = colMeans(do.call(rbind,IL_stats[1,]))
-                        IL_sigma_last_v       = sqrt(colMeans(do.call(rbind,IL_stats[2,])))
+                        IL_mu_last_v     = colMeans(do.call(rbind,IL_stats[1,]))
+                        IL_sigma_last_v  = sqrt(colMeans(do.call(rbind,IL_stats[2,])))
                         rm(IL_stats)
 
                         #assign entries
@@ -255,6 +255,7 @@ readme <- function(dfm ,
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
                         temp_vec[j] <- inv_learn_rate_seq[learn_seq_spot]
                       }
+                      print(head(inv_learn_rate_seq))
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
 
                       #save final parameters
@@ -455,7 +456,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
 
     ### Drop-out transformation
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
-    MASK_VEC           = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
+    MASK_VEC             = tf$multiply(tf$nn$relu(tf$sign(tf$random_uniform(list(nDim,1L),-0.5,ulim1,dtype = tf$float32))), 1 / (ulim1/(ulim1+0.5)))
     WtsMat_drop          = tf$multiply(WtsMat, MASK_VEC)
 
     ### Apply non-linearity + batch normalization
