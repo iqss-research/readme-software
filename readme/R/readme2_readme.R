@@ -248,13 +248,19 @@ readme <- function(dfm ,
                       for(j in 1:sgdIters){
                         if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
                         learn_seq_spot = learn_seq_spot + 1
-                        inv_learn_rate_seq[j+1] = S_$run(learn_group,
-                                                        dict(contrast_indices1=contrast_indices1_v,
+                        S_$run(apply_gradients, dict(contrast_indices1=contrast_indices1_v,
                                                          contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
                                                          redund_indices2=redund_indices2_v,
                                                          sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
+                        inv_learn_rate_seq[j+1] = S_$run(grab_learnRate,
+                                                         dict(contrast_indices1=contrast_indices1_v,
+                                                              contrast_indices2=contrast_indices2_v,
+                                                              redund_indices1=redund_indices1_v,
+                                                              redund_indices2=redund_indices2_v,
+                                                              sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
+                                                              MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
                         temp_vec[j] <- inv_learn_rate_seq[learn_seq_spot]
                       }
                       print(tail(inv_learn_rate_seq))
@@ -502,8 +508,8 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     inverse_learn_rate_update = tf$assign_add(ref = inverse_learn_rate, value = L2_squared_clipped / inverse_learn_rate)
 
     #learning consists of gradient updates plus learning rate updates.
-    learn_group       = list(  inverse_learn_rate, inverse_learn_rate_update,
-                                   Optimizer_tf$apply_gradients( Gradients_clipped ))
+    apply_gradients       = list(  Optimizer_tf$apply_gradients( Gradients_clipped ))
+    grab_learnRate = list(inverse_learn_rate, inverse_learn_rate_update)
 
     # Initialize variables in TensorFlow Graph
     init0 = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learn_rate,
