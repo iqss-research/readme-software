@@ -217,7 +217,6 @@ readme <- function(dfm ,
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
                       S_$run(init2)
-                      print(S_$run(WtsMat))
                       if(iter_i == 1){
                         S_$run(init1) # Initialize
                         IL_stats       = list(IL_mu_b,IL_sigma2_b)
