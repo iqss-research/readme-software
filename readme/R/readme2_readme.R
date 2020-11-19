@@ -240,6 +240,8 @@ readme <- function(dfm ,
                       inv_learn_rate_seq = rep(NA,times=sgdIters+1)
                       inv_learn_rate_seq[1] = S_$run( set_inverse_learn_action, feed_dict = dict(L2_initial=max(2*L2_initial_v,4/3)) )
 
+                      print(L2_initial_v)
+
                       ### For each iteration of SGDs
                       t1=Sys.time()
                       learn_seq_spot = 0 ; temp_vec = c()
@@ -255,7 +257,7 @@ readme <- function(dfm ,
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
                         temp_vec[j] <- inv_learn_rate_seq[learn_seq_spot]
                       }
-                      print(head(inv_learn_rate_seq))
+                      print(tail(inv_learn_rate_seq))
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
 
                       #save final parameters
