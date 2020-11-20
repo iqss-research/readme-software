@@ -339,7 +339,6 @@ readme <- function(dfm ,
           knnIndices_i  = try(c(FNN::get.knnx(data    = X_,
                                                 query = Y_,
                                                 k     = kMatch)$nn.index) , T)
-          print(knnIndices_i)#tmp
 
           ## Any category with less than minMatch matches includes all of that category
           t_              = table( Cat_[unique(knnIndices_i)] );
@@ -367,6 +366,7 @@ readme <- function(dfm ,
                      est_readme2_ESGivenD_NoMatching=est_readme2_NoMatching$ESGivenD_sampled_averaged) )
       })
 
+      print(head(BOOTSTRAP_EST))#tmp
       ### Get the bootstrapped estimates
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
       est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
