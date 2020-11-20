@@ -114,12 +114,12 @@ readme <- function(dfm ,
                    otherOption = NULL,
                    tensorflowSeed = NULL){
   if(!is.null(tensorflowSeed)){set.seed(tensorflowSeed)}
-  eval(parse(text="require('tensorflow',quietly=T)"),envir = globalenv())
-  eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
+  try(eval(parse(text="require('tensorflow',quietly=T)"),envir = globalenv()),T)
   if(!is.null(conda_env)){
     eval(parse(text=sprintf("suppressWarnings(try(tensorflow::use_condaenv(condaenv='%s',required=F), T))",
                           conda_env)),envir = globalenv())
   }
+  eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
 
   #set options
   op <- options(digits.secs = 6)
@@ -240,29 +240,18 @@ readme <- function(dfm ,
                       inv_learn_rate_seq = rep(NA,times=sgdIters+1)
                       inv_learn_rate_seq[1] = S_$run( set_inverse_learn_action, feed_dict = dict(L2_initial=max(2*L2_initial_v,4/3)) )
 
-                      print(L2_initial_v)
-
                       ### For each iteration of SGDs
                       t1=Sys.time()
                       learn_seq_spot = 0 ; temp_vec = c()
                       for(j in 1:sgdIters){
                         if(j %% 100 == 0 & j < 0.75*sgdIters){learn_seq_spot=0}
                         learn_seq_spot = learn_seq_spot + 1
-                        S_$run(apply_gradients, dict(contrast_indices1=contrast_indices1_v,
+                        S_$run(applyGradients_updateRate, dict(contrast_indices1=contrast_indices1_v,
                                                          contrast_indices2=contrast_indices2_v,
                                                          redund_indices1=redund_indices1_v,
                                                          redund_indices2=redund_indices2_v,
                                                          sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
                                                          MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
-                        if(T == F){
-                        S_$run(apply_learnRate_update,
-                                                         dict(contrast_indices1=contrast_indices1_v,
-                                                              contrast_indices2=contrast_indices2_v,
-                                                              redund_indices1=redund_indices1_v,
-                                                              redund_indices2=redund_indices2_v,
-                                                              sgd_learn_rate = 1/inv_learn_rate_seq[learn_seq_spot],
-                                                              MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))
-                        }
                         inv_learn_rate_seq[j+1] = S_$run(grab_learnRate,
                                                          dict(contrast_indices1=contrast_indices1_v,
                                                               contrast_indices2=contrast_indices2_v,
@@ -272,7 +261,6 @@ readme <- function(dfm ,
                                                               MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))[[1]]
                         temp_vec[j] <- inv_learn_rate_seq[learn_seq_spot]
                       }
-                      print(tail(inv_learn_rate_seq))
                       print(sprintf("Done with this round of training in %s minutes!",round(difftime(Sys.time(),t1,units="mins"),2)))
 
                       #save final parameters
@@ -517,9 +505,8 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     inverse_learn_rate_update = tf$assign_add(ref = inverse_learn_rate, value = L2_squared_clipped / inverse_learn_rate)
 
     #learning consists of gradient updates plus learning rate updates.
-    apply_gradients       = list(  inverse_learn_rate_update,Optimizer_tf$apply_gradients( Gradients_clipped ))
-    grab_learnRate        = list(inverse_learn_rate)
-    apply_learnRate_update = inverse_learn_rate_update
+    applyGradients_updateRate       = list(  inverse_learn_rate_update, Optimizer_tf$apply_gradients( Gradients_clipped ))
+    grab_learnRate        = list( inverse_learn_rate )
 
     # Initialize variables in TensorFlow Graph
     init0 = tf$variables_initializer(list(WtsMat, BiasVec,clip_tf,inverse_learn_rate,
