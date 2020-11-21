@@ -360,8 +360,6 @@ readme <- function(dfm ,
 
         est_readme2 <- est_obsMatch(knnIndices_i)
         est_readme2_NoMatching <- est_obsMatch(AllIndices_i)
-        print(est_readme2);print("tmp")
-        print(est_readme2_NoMatching);print("tmp")
 
         return( list(est_readme2=est_readme2$ED_sampled_averaged,
                      est_readme2_NoMatching=est_readme2_NoMatching$ED_sampled_averaged,
@@ -370,8 +368,8 @@ readme <- function(dfm ,
       })
 
       ### Get the bootstrapped estimates
-      est_readme2 <- rowMeans(apply(do.call(cbind,BOOTSTRAP_EST[1,]),2,f2n),na.rm=T)
-      est_readme2_NoMatching <- rowMeans(apply(do.call(cbind,BOOTSTRAP_EST[2,]),2,f2n),na.rm=T)
+      est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
+      est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
 
       try(rm(BOOTSTRAP_EST,indices_list), T)
     }
