@@ -360,13 +360,20 @@ readme <- function(dfm ,
 
         est_readme2 <- est_obsMatch(knnIndices_i)
         est_readme2_NoMatching <- est_obsMatch(AllIndices_i)
+
+        print(list(est_readme2=est_readme2$ED_sampled_averaged,
+                   est_readme2_NoMatching=est_readme2_NoMatching$ED_sampled_averaged,
+                   est_readme2_ESGivenD =est_readme2$ESGivenD_sampled_averaged,
+                   est_readme2_ESGivenD_NoMatching=est_readme2_NoMatching$ESGivenD_sampled_averaged)) #tmp
+
         return( list(est_readme2=est_readme2$ED_sampled_averaged,
                      est_readme2_NoMatching=est_readme2_NoMatching$ED_sampled_averaged,
                      est_readme2_ESGivenD =est_readme2$ESGivenD_sampled_averaged,
                      est_readme2_ESGivenD_NoMatching=est_readme2_NoMatching$ESGivenD_sampled_averaged) )
       })
+      print(BOOTSTRAP_EST[1,])
 
-      print(head(BOOTSTRAP_EST))#tmp
+      browser()
       ### Get the bootstrapped estimates
       est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
       est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
