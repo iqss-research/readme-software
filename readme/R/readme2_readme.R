@@ -474,8 +474,8 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
 
     ## Spread component of objective function
+    browser()
     gathering_mat0        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
-  browser()
     gathering_mat        = tf$transpose(tf$reshape(gathering_mat0, shape = list(-1L, NObsPerCat) ))
     Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),1)
 
