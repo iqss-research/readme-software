@@ -157,6 +157,7 @@ readme <- function(dfm ,
 
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
+  nProj <- numProjections
   if(is.null(numProjections)){nProj = as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   #Start SGD
