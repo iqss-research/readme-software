@@ -228,14 +228,6 @@ readme <- function(dfm ,
                         rm(IL_stats)
 
                         #assign entries
-                        browser()
-                        table( categoryVec_labeled[grab_samp()] )
-                        myT = S_$run(gathering_mat,
-                               feed_dict =  dict(contrast_indices1=contrast_indices1_v,
-                                                 contrast_indices2=contrast_indices2_v,
-                                                 redund_indices1=redund_indices1_v,
-                                                 redund_indices2=redund_indices2_v,
-                                                 MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))
                         L2_initial_v  = sqrt(median(c(unlist(replicate(50,
                                                         S_$run(L2_squared_clipped,
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
