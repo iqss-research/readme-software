@@ -228,7 +228,6 @@ readme <- function(dfm ,
                         rm(IL_stats)
 
                         #assign entries
-                        browser()
                         L2_initial_v  = sqrt(median(c(unlist(replicate(50,
                                                         S_$run(L2_squared_clipped,
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
@@ -429,7 +428,6 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     #Assumptions
     nDim = as.integer(  %s  )
     nProj = as.integer(  %s  )
-    NObsPerCat = as.integer(  10 )
     dropout_rate <- 0.50
 
     #INPUTS
