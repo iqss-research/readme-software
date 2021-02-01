@@ -98,7 +98,7 @@ readme <- function(dfm ,
                    categoryVec,
                    nBoot          = 25,
                    sgdIters       = 500,
-                   numProjections = 20,
+                   numProjections = NULL,
                    batchSizePerCat = 10,
                    kMatch         = 3,
                    batchSizePerCat_match = 20,
@@ -157,7 +157,7 @@ readme <- function(dfm ,
 
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
-  nProj                 = as.integer(max( numProjections, nCat+1) ); ## Number of projections
+  if(is.null(numProjections)){nProj = as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   #Start SGD
   if (verbose == T){
@@ -185,7 +185,7 @@ readme <- function(dfm ,
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  graphSource = graph_file_gen(nDim=nDim_full,nProj=numProjections,NObsPerCat=NObsPerCat,regraph = regraph_,TF_SEED=tensorflowSeed)
+  graphSource = graph_file_gen(nDim=nDim_full,nProj=nProj,NObsPerCat=NObsPerCat,regraph = regraph_,TF_SEED=tensorflowSeed)
   try(source(graphSource,local=F),T)
   try(unlink(graphSource),T);
 
@@ -229,6 +229,16 @@ readme <- function(dfm ,
 
                         #assign entries
                         browser()
+                        my_m = S_$run(FeatDiscrim_tf,
+                               feed_dict =  dict(contrast_indices1=contrast_indices1_v,
+                                                 contrast_indices2=contrast_indices2_v,
+                                                 redund_indices1=redund_indices1_v,
+                                                 redund_indices2=redund_indices2_v,
+                                                 MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))
+                        table(my_m)
+                        batchSizePerCat
+                        20*3
+                        table( categoryVec_labeled[grab_samp()])
                         L2_initial_v  = sqrt(median(c(unlist(replicate(50,
                                                         S_$run(L2_squared_clipped,
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
