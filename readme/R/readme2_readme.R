@@ -205,6 +205,7 @@ readme <- function(dfm ,
     urat = 0.001; uncertainty_amt = urat / ( (nCat - 1 ) * urat + 1  ); MM = matrix(uncertainty_amt, nrow = NObsPerCat,ncol = nCat); MM[,x] = 1-(nCat-1)*uncertainty_amt
     return( list(MM) )  } )) ); MultMat_tf_v          = MultMat_tf_v  / rowSums( MultMat_tf_v )
 
+  browser()
      S_ = eval(parse(text="tf$Session(graph = readme_graph,
                   config = tf$ConfigProto(
                     device_count=list('GPU'=0L, 'CPU' = as.integer(1)),
@@ -432,17 +433,17 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     dropout_rate <- 0.50
 
     #INPUTS
-    contrast_indices1            = tf$placeholder(tf$int32,list(NULL))
-    contrast_indices2            = tf$placeholder(tf$int32,list(NULL))
-    redund_indices1            = tf$placeholder(tf$int32,list(NULL))
-    redund_indices2            = tf$placeholder(tf$int32,list(NULL))
-    MultMat_tf               = tf$placeholder(tf$float32,list(NULL, NULL))
-    L2_initial               = tf$placeholder(tf$float32)
+    contrast_indices1       = tf$placeholder(tf$int32,list(NULL))
+    contrast_indices2       = tf$placeholder(tf$int32,list(NULL))
+    redund_indices1         = tf$placeholder(tf$int32,list(NULL))
+    redund_indices2         = tf$placeholder(tf$int32,list(NULL))
+    MultMat_tf              = tf$placeholder(tf$float32,list(NULL, NULL))
+    L2_initial              = tf$placeholder(tf$float32)
 
     IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
 
     # Placeholder settings - to be filled when executing TF operations
-    clip_tf               = tf$Variable(10000., dtype = tf$float32, trainable = F )
+    clip_tf            = tf$Variable(10000., dtype = tf$float32, trainable = F )
     inverse_learn_rate = tf$Variable(1., dtype = tf$float32, trainable = F)
     sgd_learn_rate     = tf$placeholder(tf$float32)
 
@@ -474,8 +475,8 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     ESGivenD_tf          = tf$matmul(MultMat_tf,LFinal_n)
 
     ## Spread component of objective function
-    gathering_mat        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
-    gathering_mat        = tf$transpose(tf$reshape(gathering_mat, shape = list(-1L, NObsPerCat) ))
+    gathering_mat0        = tf$range(start = 0L, limit = tf$shape(LFinal_n)[[0]], delta = 1L, dtype = tf$int32)
+    gathering_mat        = tf$transpose(tf$reshape(gathering_mat0, shape = list(-1L, NObsPerCat) ))
     Spread_tf            = tf$minimum(tf$reduce_mean(tf$abs(tf$gather(params = LFinal_n, indices = gathering_mat, axis = 0L) - ESGivenD_tf), 0L),1)
 
     ## Category discrimination (absolute difference in all E[S|D] columns)
