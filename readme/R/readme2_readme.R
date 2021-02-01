@@ -185,7 +185,7 @@ readme <- function(dfm ,
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  graphSource = graph_file_gen(nDim=nDim_full,nProj=numProjections,regraph = regraph_,TF_SEED=tensorflowSeed)
+  graphSource = graph_file_gen(nDim=nDim_full,nProj=numProjections,NObsPerCat=NObsPerCat,regraph = regraph_,TF_SEED=tensorflowSeed)
   try(source(graphSource,local=F),T)
   try(unlink(graphSource),T);
 
@@ -228,6 +228,14 @@ readme <- function(dfm ,
                         rm(IL_stats)
 
                         #assign entries
+                        browser()
+                        table( categoryVec_labeled[grab_samp()] )
+                        myT = S_$run(gathering_mat,
+                               feed_dict =  dict(contrast_indices1=contrast_indices1_v,
+                                                 contrast_indices2=contrast_indices2_v,
+                                                 redund_indices1=redund_indices1_v,
+                                                 redund_indices2=redund_indices2_v,
+                                                 MultMat_tf = MultMat_tf_v,IL_input = dfm_labeled[grab_samp(),]))
                         L2_initial_v  = sqrt(median(c(unlist(replicate(50,
                                                         S_$run(L2_squared_clipped,
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
@@ -413,7 +421,7 @@ readme <- function(dfm ,
 
 }
 
-graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED=NULL){
+graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,regraph = F,use_env=globalenv(),TF_SEED=NULL){
   {
   seed_text <- ";"
   if(!is.null(TF_SEED)){seed_text = sprintf("tf$set_random_seed(%s)",TF_SEED)}
@@ -428,6 +436,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
     #Assumptions
     nDim = as.integer(  %s  )
     nProj = as.integer(  %s  )
+    NObsPerCat = as.integer(  %s )
     dropout_rate <- 0.50
 
     #INPUTS
@@ -524,7 +533,7 @@ graph_file_gen <- function(nDim,nProj=20,regraph = F,use_env=globalenv(),TF_SEED
   })
   readme_graph$finalize()
 
-  ', seed_text, nDim, nProj)
+  ', seed_text, nDim, nProj,NObsPerCat)
   }
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
