@@ -229,6 +229,7 @@ readme <- function(dfm ,
                         rm(IL_stats)
 
                         #assign entries
+                        browser()
                         L2_initial_v  = sqrt(median(c(unlist(replicate(50,
                                                         S_$run(L2_squared_clipped,
                                                                                  feed_dict =  dict(contrast_indices1=contrast_indices1_v,
