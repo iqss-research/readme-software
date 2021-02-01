@@ -185,6 +185,7 @@ readme <- function(dfm ,
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
+  browser()
   graphSource = graph_file_gen(nDim=nDim_full,nProj=numProjections,regraph = regraph_,TF_SEED=tensorflowSeed)
   try(source(graphSource,local=F),T)
   try(unlink(graphSource),T);
