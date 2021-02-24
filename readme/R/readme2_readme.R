@@ -96,7 +96,7 @@
 readme <- function(dfm ,
                    labeledIndicator,
                    categoryVec,
-                   nBoot          = 25,
+                   nBoot          = 15,
                    sgdIters       = 500,
                    numProjections = NULL,
                    batchSizePerCat = 10,
