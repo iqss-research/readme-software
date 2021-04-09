@@ -112,6 +112,9 @@ readme <- function(dfm ,
                    regraph  = F,
                    conda_env = NULL,
                    otherOption = NULL,
+                   forceLowerDimThanCats = F,
+                   wt_catDistinctiveness = NULL,
+                   wt_featDistinctiveness = NULL,
                    tensorflowSeed = NULL){
   if(!is.null(tensorflowSeed)){set.seed(tensorflowSeed)}
   try(eval(parse(text="require('tensorflow',quietly=T)"),envir = globalenv()),T)
@@ -121,6 +124,7 @@ readme <- function(dfm ,
   }
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
 
+  tensorflow::tf_config()
   #set options
   op <- options(digits.secs = 6)
 
@@ -157,8 +161,6 @@ readme <- function(dfm ,
 
   #Parameters for Batch-SGD
   NObsPerCat            = as.integer( batchSizePerCat )#min(r_clip_by_value(as.integer( round( sqrt(  nrow(dfm_labeled)*labeled_pd))),minBatch,maxBatch)) ## Number of observations to sample per category
-  nProj <- numProjections
-  if(is.null(numProjections)){nProj = as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   #Start SGD
   if (verbose == T){
@@ -183,6 +185,8 @@ readme <- function(dfm ,
                return( zap )   })
   }
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
+  nProj <- numProjections
+  if(is.null(numProjections) & forceLowerDimThanCats){nProj <- as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
@@ -488,9 +492,17 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,regraph = F,use_env=globa
                                                tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = 1L)), 1.50)
 
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf
+    if( is.null(wt_catDistinctiveness)  | is.null(wt_featDistinctiveness)){
     Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) +
                                 tf$reduce_mean(FeatDiscrim_tf) +
                                 0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
+    }
+
+    if( !is.null(wt_catDistinctiveness)  & !is.null(wt_featDistinctiveness)){
+    Loss_tf            = -( wt_catDistinctiveness * tf$reduce_mean(CatDiscrim_tf) +
+                      wt_featDistinctiveness *tf$reduce_mean(FeatDiscrim_tf) +
+                      0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
+  }
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learn_rate,
