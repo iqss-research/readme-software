@@ -345,9 +345,11 @@ readme <- function(dfm ,
 
         ### Weights from KNN matching - find kMatch matches in X_ to Y_
         {
+          print(dim(X_));print(dim(Y_));print(kMatch)
           knnIndices_i  = try(c(FNN::get.knnx(data    = X_,
                                                 query = Y_,
                                                 k     = kMatch)$nn.index) , T)
+          print(summary( knnIndices_i) )
 
           ## Any category with less than minMatch matches includes all of that category
           t_              = table( Cat_[unique(knnIndices_i)] );
