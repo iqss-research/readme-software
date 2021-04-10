@@ -345,7 +345,8 @@ readme <- function(dfm ,
 
         ### Weights from KNN matching - find kMatch matches in X_ to Y_
         {
-          print(dim(X_));print(dim(Y_));print(kMatch)
+          print(sum(X_));print(sum(Y_));print(kMatch)
+          browser()
           knnIndices_i  = try(c(FNN::get.knnx(data    = X_,
                                                 query = Y_,
                                                 k     = kMatch)$nn.index) , T)
