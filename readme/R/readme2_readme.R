@@ -423,6 +423,20 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,regraph = F,use_env=globa
   seed_text <- ";"
   if(!is.null(TF_SEED)){seed_text = sprintf("tf$set_random_seed(%s)",TF_SEED)}
 
+
+  if( is.null(wt_catDistinctiveness)  | is.null(wt_featDistinctiveness)){
+    loss_text <- "Loss_tf      = -( tf$reduce_mean(CatDiscrim_tf) +
+                              tf$reduce_mean(FeatDiscrim_tf) +
+                              0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))"
+  }
+
+  if( !is.null(wt_catDistinctiveness)  & !is.null(wt_featDistinctiveness)){
+    loss_text <- sprintf("Loss_tf            = -( %s * tf$reduce_mean(CatDiscrim_tf) +
+                              %s *tf$reduce_mean(FeatDiscrim_tf) +
+                              0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))",
+                         wt_catDistinctiveness, wt_featDistinctiveness)
+  }
+
   eval_text = sprintf('
   tf$reset_default_graph()
   readme_graph = tf$Graph()
@@ -492,17 +506,7 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,regraph = F,use_env=globa
                                                tf$gather(CatDiscrim_tf, indices = redund_indices2, axis = 1L)), 1.50)
 
     ## Loss function CatDiscrim + FeatDiscrim + Spread_tf
-    if( is.null(wt_catDistinctiveness)  | is.null(wt_featDistinctiveness)){
-    Loss_tf            = -( tf$reduce_mean(CatDiscrim_tf) +
-                                tf$reduce_mean(FeatDiscrim_tf) +
-                                0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
-    }
-
-    if( !is.null(wt_catDistinctiveness)  & !is.null(wt_featDistinctiveness)){
-    Loss_tf            = -( wt_catDistinctiveness * tf$reduce_mean(CatDiscrim_tf) +
-                      wt_featDistinctiveness *tf$reduce_mean(FeatDiscrim_tf) +
-                      0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))
-  }
+    %s # see above for loss_text definition
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learn_rate,
@@ -538,7 +542,7 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,regraph = F,use_env=globa
   })
   readme_graph$finalize()
 
-  ', seed_text, nDim, nProj,NObsPerCat)
+  ', seed_text, nDim, nProj,NObsPerCat,loss_text)
   }
   if(  (!"readme_graph" %in% ls(env = globalenv())) | regraph == T){
     if(regraph == T){
