@@ -188,7 +188,7 @@ readme <- function(dfm ,
   if(is.null(numProjections) ){nProj <- as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
-  if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
+  if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T;try(rm(readme_graph),T)}
   graphSource = graph_file_gen(nDim                    = nDim_full,
                                nProj                   = nProj,
                                NObsPerCat              = NObsPerCat,
@@ -442,7 +442,6 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
                               0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))",
                          wt_catDistinctiveness, wt_featDistinctiveness)
   }
-  print(loss_text)
 
   eval_text = sprintf('
   tf$reset_default_graph()
