@@ -112,7 +112,6 @@ readme <- function(dfm ,
                    regraph  = F,
                    conda_env = NULL,
                    otherOption = NULL,
-                   forceLowerDimThanCats = F,
                    wt_catDistinctiveness = NULL,
                    wt_featDistinctiveness = NULL,
                    tensorflowSeed = NULL){
@@ -186,12 +185,13 @@ readme <- function(dfm ,
   }
   dfm_labeled = WinsMat(dfm_labeled, WinsValues)
   nProj <- numProjections
-  if(is.null(numProjections) & forceLowerDimThanCats){nProj <- as.integer(max( 20, nCat+1) )}; ## Number of projections
+  if(is.null(numProjections) ){nProj <- as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
   graphSource = graph_file_gen(nDim                    = nDim_full,
-                               nProj                   = nProj,NObsPerCat=NObsPerCat,
+                               nProj                   = nProj,
+                               NObsPerCat              = NObsPerCat,
                                wt_catDistinctiveness   = wt_catDistinctiveness,
                                wt_featDistinctiveness  = wt_featDistinctiveness,
                                regraph  =  regraph_, TF_SEED = tensorflowSeed)
@@ -430,7 +430,6 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
   seed_text <- ";"
   if(!is.null(TF_SEED)){seed_text = sprintf("tf$set_random_seed(%s)",TF_SEED)}
 
-
   if( is.null(wt_catDistinctiveness)  | is.null(wt_featDistinctiveness)){
     loss_text <- "Loss_tf      = -( tf$reduce_mean(CatDiscrim_tf) +
                               tf$reduce_mean(FeatDiscrim_tf) +
@@ -443,6 +442,7 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
                               0.01 * tf$reduce_mean( tf$log(tf$reduce_min(Spread_tf, 0L)+0.001) ))",
                          wt_catDistinctiveness, wt_featDistinctiveness)
   }
+  print(loss_text)
 
   eval_text = sprintf('
   tf$reset_default_graph()
