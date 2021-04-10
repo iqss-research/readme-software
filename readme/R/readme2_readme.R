@@ -190,7 +190,11 @@ readme <- function(dfm ,
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
   if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T}
-  graphSource = graph_file_gen(nDim=nDim_full,nProj=nProj,NObsPerCat=NObsPerCat,regraph = regraph_,TF_SEED=tensorflowSeed)
+  graphSource = graph_file_gen(nDim                    = nDim_full,
+                               nProj                   = nProj,NObsPerCat=NObsPerCat,
+                               wt_catDistinctiveness   = wt_catDistinctiveness,
+                               wt_featDistinctiveness  = wt_featDistinctiveness,
+                               regraph  =  regraph_, TF_SEED = tensorflowSeed)
   try(source(graphSource,local=F),T)
   try(unlink(graphSource),T);
 
@@ -418,7 +422,10 @@ readme <- function(dfm ,
 
 }
 
-graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,regraph = F,use_env=globalenv(),TF_SEED=NULL){
+graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
+                           wt_catDistinctiveness=NULL,
+                           wt_featDistinctiveness=NULL,
+                           regraph = F,use_env=globalenv(),TF_SEED=NULL){
   {
   seed_text <- ";"
   if(!is.null(TF_SEED)){seed_text = sprintf("tf$set_random_seed(%s)",TF_SEED)}
