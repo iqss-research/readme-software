@@ -108,6 +108,7 @@ readme <- function(dfm ,
                    verbose        = F,
                    diagnostics    = F,
                    nCores = 1L,
+                   sigma_ep = 0,
                    nCores_OnJob = 1L ,
                    regraph  = F,
                    conda_env = NULL,
@@ -284,14 +285,14 @@ readme <- function(dfm ,
 
   for(iter_i in 1:nBoot){
     ### Given the learned parameters, output the feature transformations for the entire matrix
-    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
+    out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / (sigma_ep+IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
 
     if(dfm_class == "list"){
-      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T)
+      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) /(sigma_ep+IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T)
     }
     if(dfm_class != "list"){
-      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_unlabeled, WinsValues)) - IL_mu_last_v) / IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T)
+      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_unlabeled, WinsValues)) - IL_mu_last_v) / (sigma_ep+IL_sigma_last_v) + c(FinalParams_LIST[[iter_i]][[2]])),T)
     }
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
 
@@ -310,7 +311,7 @@ readme <- function(dfm ,
         Y_      = out_dfm_unlabeled
 
         ### Normalize X and Y
-        MM2     = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})#robust approx of x*y
+        MM2     = apply(cbind(MM2_, colSds(X_,  colMeans(X_))), 1, function(xa){max(xa)})
         X_      = FastScale(X_, MM1, MM2);
         Y_      = FastScale(Y_, MM1, MM2)
 
