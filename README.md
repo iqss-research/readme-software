@@ -6,6 +6,8 @@ An R package for estimating category proportions in an unlabeled set of document
 
 Use the discussions feature, https://github.com/iqss-research/readme-software/discussions, to discuss this software, ask questions, or propose new features. To report bugs, please create an issue with this form: https://github.com/iqss-research/readme-software/issues/new
 
+Another version of this software can be found at https://github.com/iqss-research/ReadMeV1
+
 ## Installation
 
 The most recent version of `readme2` can be installed directly from the repository using the `devtools` package
