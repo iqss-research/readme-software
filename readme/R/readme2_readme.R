@@ -170,9 +170,9 @@ readme <- function(dfm ,
   # Initialize tensorflow
 
   #Winsorize
-  dfm_class = class(dfm)
-  if(dfm_class == "list"){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]}
-  if(dfm_class != "list"){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)}
+  dfm_class = class( dfm )
+  if("list" %in% dfm_class){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]}
+  if(! ("list" %in% dfm_class)){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)}
   nDim_full             = ncol(dfm_labeled)
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
   WinsMat = function(dfm_, values_){
