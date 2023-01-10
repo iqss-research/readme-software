@@ -119,12 +119,12 @@ readme <- function(dfm ,
   if(!is.null(tensorflowSeed)){set.seed(tensorflowSeed)}
   try(eval(parse(text="require('tensorflow',quietly=T)"),envir = globalenv()),T)
   if(!is.null(conda_env)){
-    eval(parse(text=sprintf("suppressWarnings(try(tensorflow::use_condaenv(condaenv='%s',required=F), T))",
+    eval(parse(text=sprintf("(try(tensorflow::use_condaenv(condaenv='%s',required = T), T))",
                           conda_env)),envir = globalenv())
   }
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
 
-  tensorflow::tf_config()
+  print( tensorflow::tf_config() )
   #set options
   op <- options(digits.secs = 6)
 
