@@ -123,8 +123,8 @@ readme <- function(dfm ,
                           conda_env)),envir = globalenv())
   }
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
-
   print( tensorflow::tf_config() )
+
   #set options
   op <- options(digits.secs = 6)
 
@@ -189,7 +189,7 @@ readme <- function(dfm ,
   if(is.null(numProjections) ){nProj <- as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
-  if(class(regraph_) == "try-error" | regraph_ == T){regraph_ <- T;try(rm(readme_graph),T)}
+  if(("try-error" %in% class(regraph_)) | regraph_ == T){regraph_ <- T;try(rm(readme_graph),T)}
   graphSource = graph_file_gen(nDim                    = nDim_full,
                                nProj                   = nProj,
                                NObsPerCat              = NObsPerCat,
@@ -288,10 +288,10 @@ readme <- function(dfm ,
     out_dfm_labeled = t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(dfm_labeled) - IL_mu_last_v) / (sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]]))
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
 
-    if(dfm_class == "list"){
+    if("list" %in% dfm_class){
       out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) /(sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]])),T)
     }
-    if(dfm_class != "list"){
+    if(!("list" %in% dfm_class)){
       out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_unlabeled, WinsValues)) - IL_mu_last_v) / (sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]])),T)
     }
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
@@ -391,7 +391,7 @@ readme <- function(dfm ,
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       test_ = try(transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n), T)
       test__ = try(transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n), T)
-      if(class(test__) == 'try-error' | class(test_) == "try-error"){browser()}
+      if(('try-error' %in% class(test__)) | ("try-error" %in% class(test_))){browser()}
       return(list(transformed_dfm=transformed_dfm))
     }
 
