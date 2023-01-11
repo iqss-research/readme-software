@@ -177,10 +177,24 @@ readme <- function(dfm ,
 
   #Winsorize
   dfm_class = class( dfm )
-  if("list" %in% dfm_class){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]}
-  if(! ("list" %in% dfm_class)){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)}
-  if(c("character","factor") %in% class(c(dfm_labeled))){
-    stop("Character or factor types seem to be present in the dfm input.")
+  if("list" %in% dfm_class){
+    dfm_labeled = try(as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1],T)
+    if("try-error" %in% class(dfm_labeled)){
+      stop("Probem using dfm as list.
+            Note that dfm$labeled_cmd should denote command line instructions for reading in labeled data features.
+            Likewise, dfm$unlabeled_cmd should denote command line instructions for reading in unlabeled data features.
+            For a less complex data analysis pipeline, consider inputing a numeric matrix as dfm,
+            where the rows correspond to the vector values in labeledIndicator and categoryVec.")
+    }
+  }
+  if(! ("list" %in% dfm_class)){
+    dfm <- as.matrix( dfm )
+    dfm_labeled = dfm[which(labeledIndicator==1),];
+    dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)
+    dfm_class = class( dfm )
+  }
+  if(any(c("character","factor") %in% class(c(dfm_labeled)))){
+    stop("Character or factor types detected in the dfm input. All input columns should be numeric.")
   }
   nDim_full             = ncol(dfm_labeled)
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
