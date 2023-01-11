@@ -125,6 +125,13 @@ readme <- function(dfm ,
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   print( tensorflow::tf_config() )
 
+  # coerce inputs into correct type
+  categoryVec <- c(categoryVec)
+  labeledIndicator <- c(labeledIndicator)
+  labeledIndicator <- c(labeledIndicator)
+  if(any(is.na(labeledIndicator))){stop("NAs in labeledIndicator")}
+  if(sd(labeledIndicator) == 0){stop("Inproper labeled/unlabeled split! (Must have some 0's and 1's)")}
+
   #set options
   op <- options(digits.secs = 6)
 
@@ -167,7 +174,6 @@ readme <- function(dfm ,
     cat("Initializing TensorFlow session\n")
     cat(paste("Number of feature projections: ", nProj, "\n", sep=""))
   }
-  # Initialize tensorflow
 
   #Winsorize
   dfm_class = class( dfm )
@@ -189,7 +195,9 @@ readme <- function(dfm ,
   if(is.null(numProjections) ){nProj <- as.integer(max( 20, nCat+1) )}; ## Number of projections
 
   regraph_ = try((ncol(IL_input) != ncol(dfm_labeled)), T)
-  if(("try-error" %in% class(regraph_)) | regraph_ == T){regraph_ <- T;try(rm(readme_graph),T)}
+  if(("try-error" %in% class(regraph_)) | regraph_ == T){regraph_ <- T;
+      try(suppressWarnings(rm(readme_graph)),T)
+  }
   graphSource = graph_file_gen(nDim                    = nDim_full,
                                nProj                   = nProj,
                                NObsPerCat              = NObsPerCat,
