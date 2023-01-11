@@ -189,9 +189,9 @@ readme <- function(dfm ,
   }
   if(! ("list" %in% dfm_class)){
     dfm <- as.matrix( dfm )
+    dfm_class = class( dfm )
     dfm_labeled = dfm[which(labeledIndicator==1),];
     dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)
-    dfm_class = class( dfm )
   }
   if(any(c("character","factor") %in% class(c(dfm_labeled)))){
     stop("Character or factor types detected in the dfm input. All input columns should be numeric.")
