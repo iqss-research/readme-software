@@ -124,6 +124,7 @@ readme <- function(dfm ,
   }
   eval(parse(text="suppressWarnings(try(tensorflow::use_compat(version='v1'), T))"),envir = globalenv())
   print( tensorflow::tf_config() )
+  f2n = function(.){as.numeric(as.character(.))}
 
   # coerce inputs into correct type
   categoryVec <- c(categoryVec)
@@ -179,12 +180,15 @@ readme <- function(dfm ,
   dfm_class = class( dfm )
   if("list" %in% dfm_class){ dfm_labeled = as.matrix(data.table::fread(cmd = dfm$labeled_cmd))[,-1]}
   if(! ("list" %in% dfm_class)){ dfm_labeled = dfm[which(labeledIndicator==1),]; dfm_unlabeled = dfm[which(labeledIndicator==0),];rm(dfm)}
+  if(c("character","factor") %in% class(c(dfm_labeled))){
+    stop("Character or factor types seem to be present in the dfm input.")
+  }
   nDim_full             = ncol(dfm_labeled)
   WinsValues = apply(dfm_labeled,2,Winsorize_values)
   WinsMat = function(dfm_, values_){
       sapply(1:ncol(dfm_),
              function(sa){
-               zap = dfm_[,sa]
+               zap = f2n(dfm_[,sa])
                bounds_ = values_[,sa]
                zap[zap < bounds_[1]] <- bounds_[1]
                zap[zap > bounds_[2]] <- bounds_[2]
@@ -395,7 +399,6 @@ readme <- function(dfm ,
     ## Get the transformed data
     if(justTransform==T){
       ### Calculate the transformed DFM
-      f2n = function(.){as.numeric(as.character(.))}
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
       test_ = try(transformed_dfm[which(labeledIndicator==1),] <- apply(out_dfm_labeled, 2, f2n), T)
       test__ = try(transformed_dfm[which(labeledIndicator==0),] <- apply(out_dfm_unlabeled, 2, f2n), T)
