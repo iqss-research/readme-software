@@ -127,8 +127,7 @@ readme <- function(dfm ,
   f2n = function(.){as.numeric(as.character(.))}
 
   # coerce inputs into correct type
-  categoryVec <- c(categoryVec)
-  labeledIndicator <- c(unlist(labeledIndicator))
+  categoryVec <- c(unlist(categoryVec))
   labeledIndicator <- c(unlist(labeledIndicator))
   if(any(is.na(labeledIndicator))){stop("NAs in labeledIndicator")}
   if(sd(labeledIndicator) == 0){stop("Inproper labeled/unlabeled split! (Must have some 0's and 1's)")}
