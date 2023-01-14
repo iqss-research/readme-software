@@ -73,8 +73,10 @@ textrpp_install()
 
 # In some cases,  you may need to specify the conda and Python to use. For example: 
 textrpp_install( rpp_version = c("torch", "transformers", "numpy", "nltk"),
-                         conda = "/Users/cjerzak/miniforge3/bin/conda", # replace with path to your conda (you may find yours by entering "which conda" in the terminal)
-                         python_path = "~/../../usr/local/bin/python3" ) # replace with your python path
+                 conda = "/Users/cjerzak/miniforge3/bin/conda", 
+                 python_path = "~/../../usr/local/bin/python3" ) 
+# conda and python_path with path to your desired conda/python.
+# You can find these by entering "which conda" and "which python"/"which python3" in your terminal
 ```
 After successfully installing the pre-trained transfer learning models via `textrpp_install()`, you can then use the `numericization_method = "transformer_based"` option: 
 ```
