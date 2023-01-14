@@ -5,8 +5,14 @@
 \title{readme0
 Internal}
 \usage{
-readme0(dtm, labeledIndicator, categoryVec, features = 15, nboot = 10,
-  probWt = 1)
+readme0(
+  dtm,
+  labeledIndicator,
+  categoryVec,
+  features = 15,
+  nboot = 10,
+  probWt = 1
+)
 }
 \description{
 readme0

@@ -4,10 +4,12 @@
 \alias{cleanme}
 \title{cleanme}
 \usage{
-cleanme(my_text)
+cleanme(my_text, finalEncoding = "ASCII")
 }
 \arguments{
 \item{my_text}{Vector of character strings containing the raw document texts.}
+
+\item{finalEncoding}{A character string indicating the desired encoding for the text vector (default = "ASCII")}
 }
 \value{
 A vector of character strings with the processed texts, each token is separated by a space.

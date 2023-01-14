@@ -4,9 +4,10 @@
 \alias{download_wordvecs}
 \title{download_wordvecs}
 \usage{
-
-  download_wordvecs(url = "http://gking-projects.iq.harvard.edu/files/glove.6B.200d.zip",
-  targetDir = NULL)
+download_wordvecs(
+  url = "http://gking-projects.iq.harvard.edu/files/glove.6B.200d.zip",
+  targetDir = NULL
+)
 }
 \arguments{
 \item{url}{URL of word vector file. Defaults to the pre-trained GloVe Wikipedia 200-dimensional vectors.}

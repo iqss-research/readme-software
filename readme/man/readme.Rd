@@ -4,20 +4,40 @@
 \alias{readme}
 \title{readme}
 \usage{
-readme(dfm, labeledIndicator, categoryVec, nBoot = 4, sgdIters = 1000,
-  ndim = NULL, numProjections = 20, batchSizePerCat = 10,
-  kMatch = 3, batchSizePerCat_match = 20, minMatch = 8,
-  nbootMatch = 50, justTransform = F, verbose = F, diagnostics = F,
-  nCores = 1L, nCores_OnJob = 1L)
+readme(
+  dfm,
+  labeledIndicator,
+  categoryVec,
+  nBoot = 15,
+  sgdIters = 500,
+  numProjections = NULL,
+  batchSizePerCat = 10,
+  kMatch = 3,
+  batchSizePerCat_match = 20,
+  minMatch = 8,
+  nbootMatch = 50,
+  justTransform = F,
+  verbose = F,
+  diagnostics = F,
+  nCores = 1L,
+  sigma_ep = 0,
+  nCores_OnJob = 1L,
+  regraph = F,
+  conda_env = NULL,
+  otherOption = NULL,
+  wt_catDistinctiveness = NULL,
+  wt_featDistinctiveness = NULL,
+  tensorflowSeed = NULL
+)
 }
 \arguments{
 \item{dfm}{'document-feature matrix'. A data frame where each row represents a document and each column a unique feature.}
 
-\item{labeledIndicator}{An indicator vector where each entry corresponds to a row in \code{dfm}. 
+\item{labeledIndicator}{An indicator vector where each entry corresponds to a row in \code{dfm}.
 \code{1} represents document membership in the labeled class. \code{0} represents document membership in the unlabeled class.}
 
-\item{categoryVec}{An factor vector where each entry corresponds to the document category. 
-The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL}, 
+\item{categoryVec}{An factor vector where each entry corresponds to the document category.
+The entires of this vector should correspond with the rows of \code{dtm}. If \code{wordVecs_corpus}, \code{wordVecs_corpusPointer}, and \code{dfm} are all \code{NULL},
 \code{readme} will download and use the \code{GloVe} 50-dimensional embeddings trained on Wikipedia.}
 
 \item{nBoot}{A scalar indicating the number of times the estimation procedure will be re-run (useful for reducing the variance of the final output).}
@@ -34,12 +54,10 @@ The entires of this vector should correspond with the rows of \code{dtm}. If \co
 
 \item{nbootMatch}{How many bootstrap samples should we aggregiate when doing the knn matching?}
 
-\item{justTransform}{A Boolean indicating whether the user wants to extract the quanficiation-optimized 
+\item{justTransform}{A Boolean indicating whether the user wants to extract the quanficiation-optimized
 features only.}
 
 \item{verbose}{Should progress updates be given? Input should be a Boolean.}
-
-\item{diagnostics}{Should diagnostics be returned? Input should be a Boolean.}
 
 \item{nCores}{How many CPU cores are available? Default is 1.}
 
@@ -48,63 +66,63 @@ features only.}
 \value{
 A list consiting of \itemize{
   \item estimated category proportions in the unlabeled set (\code{point_readme});
-  \item the transformed dfm optimized for quantification (\code{transformed_dfm}); 
-  \item (optional) a list of diagnostics (\code{diagnostics}); 
+  \item the transformed dfm optimized for quantification (\code{transformed_dfm});
+  \item (optional) a list of diagnostics (\code{diagnostics});
 }
 }
 \description{
 Implements the quantification algorithm described in Jerzak, King, and Strezhnev (2018) which is meant to improve on the ideas in Hopkins and King (2010).
-Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate. 
+Employs the Law of Total Expectation in a feature space that is tailoed to minimize the error of the resulting estimate.
 Automatic differentiation, stochastic gradient descent, and knn_adaptbatch re-normalization are used to carry out the optimization.
-Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership 
-(with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document. 
+Takes an inputs (a.) a vector holding the raw documents (1 entry = 1 document), (b.) a vector indicating category membership
+(with \code{NA}s for the unlabeled documents), and (c.) a vector indicating whether the labeled or unlabeled status of each document.
 Other options exist for users wanting more control over the pre-processing protocol (see \code{undergrad} and the \code{dfm} parameter).
 }
 \section{References}{
 
-\itemize{ 
-\item Hopkins, Daniel, and King, Gary (2010), 
+\itemize{
+\item Hopkins, Daniel, and King, Gary (2010),
 \emph{A Method of Automated Nonparametric Content Analysis for Social Science},
-\emph{American Journal of Political Science}, Vol. 54, No. 1, January 2010, p. 229-247. 
-\url{https://gking.harvard.edu/files/words.pdf} 
+\emph{American Journal of Political Science}, Vol. 54, No. 1, January 2010, p. 229-247.
+\url{https://gking.harvard.edu/files/words.pdf}
 
-\item Jerzak, Connor, King, Gary, and Strezhnev, Anton. Working Paper. 
-\emph{An Improved Method of Automated Nonparametric Content Analysis for Social Science}. 
-\url{https://gking.harvard.edu/words} 
+\item Jerzak, Connor, King, Gary, and Strezhnev, Anton. Working Paper.
+\emph{An Improved Method of Automated Nonparametric Content Analysis for Social Science}.
+\url{https://gking.harvard.edu/words}
 }
 }
 
 \examples{
-#set seed 
+#set seed
 set.seed(1)
 
-#Generate synthetic 25-d word vector corpus. 
+#Generate synthetic 25-d word vector corpus.
 my_wordVecs <- matrix(rnorm(11*25), ncol = 25)
 row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" , "fire", ".", "to", "own", "self", "be")
 
-#Generate 100 ``documents'' of 5-10 words each. 
-my_documentText <- replicate(100, 
-                             paste(sample(row.names(my_wordVecs), 
-                                          sample(5:10, 1), 
-                                          replace = T), 
-                                   collapse = " ") ) 
+#Generate 100 ``documents'' of 5-10 words each.
+my_documentText <- replicate(100,
+                             paste(sample(row.names(my_wordVecs),
+                                          sample(5:10, 1),
+                                          replace = T),
+                                   collapse = " ") )
 
-#Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled. 
+#Assign labeled/unlabeled sets. The first 50 will be labeled; the rest unlabeled.
 my_labeledIndicator <- rep(1, times = 100)
 my_labeledIndicator[51:100] <- 0
 
-#Assign category membership randomly 
+#Assign category membership randomly
 my_categoryVec <- sample(c("C1", "C2", "C3", "C4"), 100, replace = T)
 true_unlabeled_pd <- prop.table(table(my_categoryVec[my_labeledIndicator==0]))
 my_categoryVec[my_labeledIndicator == 0] <- NA
 
-#Get word vector summaries 
+#Get word vector summaries
 my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
 
 #perform estimation
-readme_results <- readme(dfm = my_dfm,  
-                         labeledIndicator = my_labeledIndicator, 
-                         categoryVec = my_categoryVec, 
+readme_results <- readme(dfm = my_dfm,
+                         labeledIndicator = my_labeledIndicator,
+                         categoryVec = my_categoryVec,
                          nBoot = 2, sgdIters = 500)
 print(readme_results$point_readme)
 

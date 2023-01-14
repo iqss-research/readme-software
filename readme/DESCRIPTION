@@ -9,4 +9,4 @@ Encoding: UTF-8
 LazyData: true
 Maintainer: 'Connor Jerzak' <connor.jerzak@gmail.com>
 Imports: tensorflow, limSolve, FNN
-RoxygenNote: 6.1.0
+RoxygenNote: 7.2.1

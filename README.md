@@ -65,6 +65,25 @@ The `undergrad()` function takes as input the raw document texts and the word ve
 wordVec_summaries = undergrad(documentText = cleanme(clinton$TEXT), wordVecs = NULL)
 ```
 
+In 2023, we added a new option to obtain document-level features using neural network transformer models. Users can now obtain such features from `GPT`, `BERT`, other such models. Under the hood, we're using the `text` package and in particular the `text::textEmbed` function. To use this functionality, you'd first want install the `text` package and set up the various Python packages used in the transfer learning setup: 
+```
+install.packages("text")
+library(   text   )
+textrpp_install()
+
+# In some cases,  you may need to specify the conda and Python to use. For example: 
+textrpp_install( rpp_version = c("torch", "transformers", "numpy", "nltk"),
+                         conda = "/Users/cjerzak/miniforge3/bin/conda", # replace with path to your conda (you may find yours by entering "which conda" in the terminal)
+                         python_path = "~/../../usr/local/bin/python3" ) # replace with your python path
+```
+After successfully installing the pre-trained transfer learning models via `textrpp_install()`, you can then use the `numericization_method = "transformer_based"` option: 
+```
+## Generate a word vector summary for the first twenty documents
+wordVec_summaries = undergrad(documentText = tolower(clinton$TEXT),
+                              numericization_method = "transformer_based")
+```
+We will obtain the transfer-learning-based features in batches of five and will report updates along the way about progress. This option as of writing may be considerably slower for large documents compared to the default (which is to use `numericization_method = "vector_summaries"`)
+
 ### Estimating topic proportions with `readme2`
 
 With the topic, training set labels and features we can start estimating the model.

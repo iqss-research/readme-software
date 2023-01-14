@@ -4,14 +4,22 @@
 \alias{undergrad}
 \title{undergrad}
 \usage{
-undergrad(documentText, wordVecs = NULL, word_quantiles = c(0.1, 0.5,
-  0.9), reattempt = T, reattempt_regex = list(c("\\\\#", ""),
-  c("#\\\\S+", "<hashtag>"), c("[[:punct:]]+", ""), c("ing\\\\b", ""),
-  c("s\\\\b", ""), c("ed\\\\b", ""), c("ies\\\\b", "y")),
-  unique_terms = T, verbose = T)
+undergrad(
+  documentText,
+  wordVecs = NULL,
+  word_quantiles = c(0.1, 0.5, 0.9),
+  reattempt = T,
+  reattempt_regex = list(c("\\\\#", ""), c("#\\\\S+", "<hashtag>"), c("[[:punct:]]+",
+    ""), c("ing\\\\b", ""), c("s\\\\b", ""), c("ed\\\\b", ""), c("ies\\\\b", "y")),
+  unique_terms = T,
+  verbose = T,
+  numericization_method = "vector_summaries",
+  textEmbed_control = list(tokenizer_parallelism = T, model = "bert-base-uncased", layers
+    = -2L)
+)
 }
 \arguments{
-\item{documentText}{A vector in which each entry corresponds to a ``clean'' document. 
+\item{documentText}{A vector in which each entry corresponds to a ``clean'' document.
 Note that the function will take as a ``word'' all whitespace-separated elements in each vector entry. For example,
 \code{"star."} would have to have an exact analogue in the vector corpus, otherwise
 it will be dropped in the calculations.}
@@ -28,35 +36,44 @@ to match with the wordVec corpus when terms initially cannot be matched. Order m
 \item{unique_terms}{If TRUE, removes duplicate terms from each document - each document is represented only by the presence or absence of a term.}
 
 \item{verbose}{If TRUE, prints updates as function runs}
+
+\item{numericization_method}{Determines whether word vector summaries are used for documents (faster, specified by
+`numericization_method = "vector_summaries"`), or whether transformer-based document features are used (slower, specified by `numericization_method = "transformer_based"`)}
+
+\item{textEmbed_control}{A list with elements denoting the parameters passed to `text::textEmbed` if `numericization_method = "transformer_based"`. Default is
+`list(tokenizer_parallelism = T,
+      model = "bert-base-uncased",
+      layers = -2L)`)}
 }
 \value{
 A data.frame consisting of the \code{word_quantiles} quantiles of the word vectors by document.
  Each row corresonds to a document, and the columns to a particular summary of a particular word vector dimension.
 }
 \description{
-Preprocessing for \code{readme} function - creates a document-feature matrix 
-(saved as a data frame in output) to be passed to \code{readme}. Users can either input word-specific vectors 
-using the \code{wordVecs_corpus} or \code{wordVecs_corpusPointer} parameters. Primarily intended for users 
-wanting control over the pre-processing protocol.
+Preprocessing for \code{readme} function - creates a document-feature matrix
+(saved as a data frame in output) to be passed to \code{readme}. Users can either input word-specific vectors
+using the \code{wordVecs_corpus} or \code{wordVecs_corpusPointer} parameters. Primarily intended for users
+wanting control over the pre-processing protocol. \code{numericization_method} controls whether word vector summaries
+(the default, \code{numericization_method = "vector_based"}) or transformer-based document features (if using \code{"transformer_based"}).
 }
 \examples{
-#set seed 
-set.seed(1) 
+#set seed
+set.seed(1)
 
-#Generate synthetic word vector corpus. 
+#Generate synthetic word vector corpus.
 my_wordVecs <- matrix(rnorm(11*50), ncol = 50)
 row.names(my_wordVecs) <- c("the","true", "thine", "stars", "are" ,
                               "fire", ".", "to", "own", "self", "be")
 
-#Setup ``documents'' 
+#Setup ``documents''
 my_documentText <- c(
-"the stars are fire .", #document 1 
-"to thine own self be true ", #document 2 
+"the stars are fire .", #document 1
+"to thine own self be true ", #document 2
 "true stars be true ." #document 3
 )
 
-#Get document-level word vector summaries. 
+#Get document-level word vector summaries.
 my_dfm <- undergrad(documentText = my_documentText, wordVecs = my_wordVecs)
-print( my_dfm ) 
+print( my_dfm )
 
 }
