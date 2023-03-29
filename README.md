@@ -104,7 +104,7 @@ table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(table((clinton$TRUTH[clinton$
 ```
 
 ## Future Development Plans
-In future releases, we will add more options to perform `readme` estimation using features derived from additional large language models and will work to speed up computation times via just-in-time compilation. 
+In future releases, we will add more options to perform `readme` estimation using numerical features derived from new large language models (LLMs) and will work to speed up computation times via just-in-time compilation.
 
 ## License
 
