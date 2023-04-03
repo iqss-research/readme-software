@@ -63,6 +63,7 @@ The `undergrad()` function takes as input the raw document texts and the word ve
 wordVec_summaries = undergrad(documentText = cleanme(clinton$TEXT), wordVecs = NULL)
 ```
 
+#### Numerical Text Features Using GPT and Other Transformer Models
 In 2023, we added a new option to obtain document-level features using neural network transformer models. Users can now obtain such features from `GPT`, `BERT`, other such models. Under the hood, we're using the `text` package and in particular the `text::textEmbed` function. To use this functionality, you'd first want install the `text` package and set up the various Python packages used in the transfer learning setup: 
 ```
 install.packages("text")
@@ -74,7 +75,7 @@ textrpp_install( rpp_version = c("torch", "transformers", "numpy", "nltk"),
                  conda = "/Users/cjerzak/miniforge3/bin/conda", 
                  python_path = "~/../../usr/local/bin/python3" ) 
 # Replace conda and python_path with the path to your desired conda/python.
-# You can find these by entering "which conda" and "which python"/"which python3" in your terminal
+# You can find these by entering "which conda" and "which python" or "which python3" in your terminal
 ```
 After successfully installing the pre-trained transfer learning models via `textrpp_install()`, you can then use the `numericization_method = "transformer_based"` option: 
 ```
