@@ -27,7 +27,7 @@
 #'
 #' @param textEmbed_control A list with elements denoting the parameters passed to `text::textEmbed` if `numericization_method = "transformer_based"`. Default is
 #' `list(tokenizer_parallelism = T,
-#'       model = "bert-base-uncased",
+#'       model = "bert-base-multilingual-uncased",
 #'       layers = -2L)`)
 #'
 #' @param verbose If TRUE, prints updates as function runs
@@ -67,7 +67,7 @@ undergrad <- function(documentText,
                       unique_terms = T, verbose=T,
                       numericization_method = "vector_summaries",
                       textEmbed_control = list(tokenizer_parallelism = T,
-                                               model = "bert-base-uncased",
+                                               model = "bert-base-multilingual-uncased",
                                                layers = -2L)){
     if(numericization_method == "transformer_based"){
 
@@ -85,7 +85,7 @@ undergrad <- function(documentText,
                 textEmbed_control[[zr]] )}),collapse=",")
         textEmbed_optionsText <- paste(",",textEmbed_optionsText,collapse="")
       }
-      textEmbed_batches <- cumsum((0:(length(documentText)-1) %% 5) == 0)
+      textEmbed_batches <- cumsum((0:(length(documentText)-1) %% 1000) == 0)
       #textEmbed_batches[] <- 1
       dfm <- tapply(1:length(textEmbed_batches),textEmbed_batches,function(in_){
         eval(parse(text = sprintf("dfm_ <- textEmbed(texts = documentText[in_],
