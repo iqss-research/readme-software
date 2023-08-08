@@ -119,7 +119,7 @@ Creative Commons Attribution-Noncommercial-No Derivative Works 4.0, for academic
 
 ## Acknowledgments
 
-Our thanks to Neal Beck, Aykut Firat, Ying Lu, and Jonathan Chiang for data and helpful comments.
+Our thanks to [Neal Beck](https://as.nyu.edu/faculty/nathaniel-l-beck.html), [Aykut Firat](https://dblp.org/pid/91/2900.html), [Ying Lu](https://steinhardt.nyu.edu/people/ying-lu), and Jonathan Chiang for data and helpful comments.
 
 ## References<a id="references"></a>
 Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated Nonparametric Content Analysis for Social Science. *Political Analysis,* 31(1): 42-58, 2023. [\[PDF\]](https://connorjerzak.com/wp-content/uploads/2020/02/word.pdf)
