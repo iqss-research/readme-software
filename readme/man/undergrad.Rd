@@ -14,8 +14,8 @@ undergrad(
   unique_terms = T,
   verbose = T,
   numericization_method = "vector_summaries",
-  textEmbed_control = list(tokenizer_parallelism = T, model = "bert-base-uncased", layers
-    = -2L)
+  textEmbed_control = list(tokenizer_parallelism = T, model =
+    "bert-base-multilingual-uncased", layers = -2L)
 )
 }
 \arguments{
@@ -42,7 +42,7 @@ to match with the wordVec corpus when terms initially cannot be matched. Order m
 
 \item{textEmbed_control}{A list with elements denoting the parameters passed to `text::textEmbed` if `numericization_method = "transformer_based"`. Default is
 `list(tokenizer_parallelism = T,
-      model = "bert-base-uncased",
+      model = "bert-base-multilingual-uncased",
       layers = -2L)`)}
 }
 \value{

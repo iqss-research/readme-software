@@ -3,9 +3,12 @@
 ##################################################
 
 # Generate documentation
-# setwd("~/Downloads/readme-software")
-# devtools::document("./readme/")
-# system("R CMD Rd2pdf readme")
+{
+ setwd("~/Documents/readme-software")
+ devtools::document("./readme/")
+ try(file.remove("./readme.pdf"),T)
+ system("R CMD Rd2pdf readme")
+}
 
 
 #Install package
