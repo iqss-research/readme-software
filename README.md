@@ -110,7 +110,7 @@ readme.estimates$point_readme
 table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(table((clinton$TRUTH[clinton$TRAININGSET == 0])))
 ```
 
-## Future Development Plans
+## Development Plans
 In future releases, we will add more options to perform `readme` estimation using numerical features derived from new large language models (LLMs) and will work to speed up computation times via just-in-time compilation.
 
 ## License
@@ -123,5 +123,15 @@ Our thanks to Neal Beck, Aykut Firat, Ying Lu, and Jonathan Chiang for data and 
 
 ## References<a id="references"></a>
 Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated Nonparametric Content Analysis for Social Science. *Political Analysis,* 31(1): 42-58, 2023. [\[PDF\]](https://connorjerzak.com/wp-content/uploads/2020/02/word.pdf)
-
+```
+@article{JSK-readme2,
+  title={An Improved Method of Automated Nonparametric Content Analysis for Social Science},
+  author={Jerzak, Connor T. and Gary King and Anton Strezhnev},
+  journal={Political Analysis},
+  year={2023},
+  volume={31},
+  number={1},
+  pages={42-58}
+}
+```
 
