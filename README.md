@@ -1,5 +1,11 @@
 # readme2
 
+[**What is readme2?**](#description)
+| [**Installation**](#installation)
+| [**Tutorial**](#tutorial)
+| [**References**](#references)
+
+## What is readme2?<a id="description"></a>
 An R package for estimating category proportions in an unlabeled set of documents given a labeled set, by implementing the method described in [Jerzak, King, and Strezhnev (2019)](http://GaryKing.org/words). This method is meant to improve on the ideas in Hopkins and King (2010), which introduced a quantification algorithm to estimate category proportions without directly classifying individual observations. This version of the software refines the original method by implementing a technique for selecitng optimal textual features in order to minimize the error of the estimated category proportions. Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization. Other pre-processing functions are available, as well as an interface to the earlier version of the algorithm for comparison. The package also provides users with the ability to extract the generated features for use in other tasks.
 
 (*Here's the abstract from our paper:*  Some scholars build models to classify documents into chosen categories. Others, especially social scientists who tend to focus on population characteristics, instead usually estimate the proportion of documents in each category -- using either parametric "classify-and-count" methods or "direct" nonparametric estimation of proportions without individual classification. Unfortunately, classify-and-count methods can be highly model dependent or generate more bias in the proportions even as the percent of documents correctly classified increases. Direct estimation avoids these problems, but can suffer when the meaning of language changes between training and test sets or is too similar across categories. We develop an improved direct estimation approach without these issues by including and optimizing continuous text features, along with a form of matching adapted from the causal inference literature. Our approach substantially improves performance in a diverse collection of 73 data sets. We also offer easy-to-use software software that implements all ideas discussed herein.)
@@ -8,7 +14,7 @@ Use the discussions feature, https://github.com/iqss-research/readme-software/di
 
 A related software package can be found at https://github.com/iqss-research/ReadMeV1
 
-## Installation
+## Installation<a id="installation"></a>
 
 The most recent version of `readme2` can be installed directly from the repository using the `devtools` package
 
@@ -35,7 +41,7 @@ install_tensorflow()
 
 `readme` uses pre-trained dictionaries of word vectors as part of the process of translating the words in documents to a numerical representation. We suggest a default dictionary that can be downloaded and installed to the `readme` install directory using the `download_wordvecs()` function. Be aware that it may be worthwhile to change these if you are using a different language than English or texts with very unique forms of language use.
 
-## Walkthrough
+## Tutorial<a id="tutorial"></a>
 
 In this section, we provide a step-by-step vignette illustrating how to use `readme2` to estimate category proportions in an unlabeled set of documents. To begin, we assume that the user has a set of *labeled* documents, with every document assigned a single, mutually exclusive category label (such as via manual coding). We observe an unlabeled set of documents and seek to estimate the proportion of documents with each category label. 
 
@@ -115,7 +121,7 @@ Creative Commons Attribution-Noncommercial-No Derivative Works 4.0, for academic
 
 Our thanks to Neal Beck, Aykut Firat, Ying Lu, and Jonathan Chiang for data and helpful comments.
 
-## References 
+## References<a id="references"></a>
 Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated Nonparametric Content Analysis for Social Science. *Political Analysis,* 31(1): 42-58, 2023. [\[PDF\]](https://connorjerzak.com/wp-content/uploads/2020/02/word.pdf)
 
 

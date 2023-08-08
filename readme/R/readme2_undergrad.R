@@ -76,7 +76,7 @@ undergrad <- function(documentText,
       textrpp_initialize()
 
       # get text embeddings, time series dimension modeled via transformer layers
-      print("Getting transformer-based features via text::textEmbed, batch size = 5")
+      print("Getting transformer-based features via text::textEmbed")
       print("Warning: Transformer-based vectorization can be slower than word2vec summaries, especially for long documents.")
       textEmbed_optionsText <- "";if(!is.null(textEmbed_control)){
         textEmbed_optionsText <- paste("",sapply(1:length(textEmbed_control),function(zr){
@@ -89,8 +89,8 @@ undergrad <- function(documentText,
       #textEmbed_batches[] <- 1
       dfm <- tapply(1:length(textEmbed_batches),textEmbed_batches,function(in_){
         eval(parse(text = sprintf("dfm_ <- textEmbed(texts = documentText[in_],
-                         keep_token_embeddings = F,
-                         logging_level = 'info' %s)$texts[[1]]", textEmbed_optionsText)))
+                         keep_token_embeddings = F
+                         %s)$texts[[1]]", textEmbed_optionsText)))
         print(sprintf("%.2f%% percent done getting transformer-based document embeddings",
                       100*(max(in_) / length(textEmbed_batches))))
         return( dfm_ )
