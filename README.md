@@ -4,6 +4,7 @@
 | [**Installation**](#installation)
 | [**Tutorial**](#tutorial)
 | [**References**](#references)
+| [**Documentation**](https://github.com/iqss-research/readme-software/blob/master/readme.pdf)
 
 ## What is readme2?<a id="description"></a>
 An R package for estimating category proportions in an unlabeled set of documents given a labeled set, by implementing the method described in [Jerzak, King, and Strezhnev (2019)](http://GaryKing.org/words). This method is meant to improve on the ideas in Hopkins and King (2010), which introduced a quantification algorithm to estimate category proportions without directly classifying individual observations. This version of the software refines the original method by implementing a technique for selecitng optimal textual features in order to minimize the error of the estimated category proportions. Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization. Other pre-processing functions are available, as well as an interface to the earlier version of the algorithm for comparison. The package also provides users with the ability to extract the generated features for use in other tasks.
