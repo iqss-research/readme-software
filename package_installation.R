@@ -10,6 +10,8 @@
  system("R CMD Rd2pdf readme")
 }
 
+# Check package to ensure it meets CRAN standards.
+devtools::check( "~/Documents/readme-software/readme" )
 
 #Install package
 devtools::install_github("iqss-research/readme-software/readme")

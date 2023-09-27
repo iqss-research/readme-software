@@ -80,7 +80,7 @@ undergrad <- function(documentText,
       print("Warning: Transformer-based vectorization can be slower than word2vec summaries, especially for long documents.")
       textEmbed_optionsText <- "";if(!is.null(textEmbed_control)){
         textEmbed_optionsText <- paste("",sapply(1:length(textEmbed_control),function(zr){
-          if(class(textEmbed_control[[zr]]) == "character"){textEmbed_control[[zr]] <- paste("'",textEmbed_control[[zr]],"'",sep="")}
+          if("character" %in% class(textEmbed_control[[zr]])){textEmbed_control[[zr]] <- paste("'",textEmbed_control[[zr]],"'",sep="")}
           paste(names(textEmbed_control)[[zr]],"=",
                 textEmbed_control[[zr]] )}),collapse=",")
         textEmbed_optionsText <- paste(",",textEmbed_optionsText,collapse="")
