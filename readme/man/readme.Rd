@@ -82,11 +82,11 @@ Other options exist for users wanting more control over the pre-processing proto
 
 \itemize{
 \item Hopkins, Daniel, and King, Gary (2010),
-\emph{A Method of Automated Nonparametric Content Analysis for Social Science},
+A Method of Automated Nonparametric Content Analysis for Social Science,
 \emph{American Journal of Political Science}, Vol. 54, No. 1, January 2010, p. 229-247.
 
 \item Jerzak, Connor, King, Gary, and Strezhnev, Anton. (2023),
-\emph{An Improved Method of Automated Nonparametric Content Analysis for Social Science},
+An Improved Method of Automated Nonparametric Content Analysis for Social Science,
 \emph{Political Analysis}, Vol. 31, No. 1, p. 42-58.
 \url{https://doi.org/10.1017/pan.2021.36}
 }
