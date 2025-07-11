@@ -125,7 +125,7 @@ Creative Commons Attribution-Noncommercial-No Derivative Works 4.0, for academic
 Our thanks to [Neal Beck](https://as.nyu.edu/faculty/nathaniel-l-beck.html), [Aykut Firat](https://dblp.org/pid/91/2900.html), [Ying Lu](https://steinhardt.nyu.edu/people/ying-lu), and Jonathan Chiang for data and helpful comments.
 
 ## References<a id="references"></a>
-Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated Nonparametric Content Analysis for Social Science. *Political Analysis,* 31(1): 42-58, 2023. [\[PDF\]](https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf) [\[Dataverse\]](https://doi.org/10.7910/DVN/AVNZR6)
+Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated Nonparametric Content Analysis for Social Science. *Political Analysis,* 31(1): 42-58, 2023. [\[PDF\]](https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf) [\[Dataverse\]](https://doi.org/10.7910/DVN/AVNZR6)  [\[Hugging Face\]](https://huggingface.co/datasets/cjerzak/TextQuantificationDatasets)
 ```
 @article{JSK-readme2,
   title={An Improved Method of Automated Nonparametric Content Analysis for Social Science},
