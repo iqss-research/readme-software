@@ -91,7 +91,7 @@ undergrad <- function(documentText,
       #textEmbed_batches[] <- 1
       dfm <- tapply(1:length(textEmbed_batches),textEmbed_batches,function(in_){
         eval(parse(text = sprintf("dfm_ <- textEmbed(texts = documentText[in_],
-                         keep_token_embeddings = F
+                         keep_token_embeddings = FALSE
                          %s)$texts[[1]]", textEmbed_optionsText)))
         print(sprintf("%.2f%% percent done getting transformer-based document embeddings",
                       100*(max(in_) / length(textEmbed_batches))))

@@ -38,7 +38,7 @@ readme0 <- function(dtm, labeledIndicator, categoryVec, features = 15, nboot = 1
 
   for(iter_i in 1:nboot){
     # get P(S) and P(S|D) matrices
-    sampled_features <- try(sample(colnames(dtm_labeled), features, replace=FALSE, prob=probWt), T)
+    sampled_features <- try(sample(colnames(dtm_labeled), features, replace=FALSE, prob=probWt), TRUE)
     labeled_profiles <- apply(dtm_labeled[,sampled_features], 1, function(x) paste(x, collapse = "") )
     unlabeled_profiles <- apply(dtm_unlabeled[,sampled_features], 1, function(x) paste(x, collapse = "") )
     my_loop_intersection <- intersect(unlabeled_profiles, labeled_profiles)
@@ -47,7 +47,7 @@ readme0 <- function(dtm, labeledIndicator, categoryVec, features = 15, nboot = 1
     y.use <- table(unlabeled_profiles)[ my_loop_intersection ]
 
     y.use <- y.use / sum( y.use )
-    x.use <- try(apply(x.use, 2, function(x) x / sum( x ) ) , T)
+    x.use <- try(apply(x.use, 2, function(x) x / sum( x ) ) , TRUE)
 
     # Do the regression
     est_readme <- readme_est_fxn(X = x.use, Y=y.use)
@@ -61,6 +61,6 @@ readme0 <- function(dtm, labeledIndicator, categoryVec, features = 15, nboot = 1
   }
 
   boot_readme[apply(boot_readme, 1, function(x) any(x < 0)),] <- NA
-  point_readme <- colMeans( boot_readme, na.rm = T )
+  point_readme <- colMeans( boot_readme, na.rm = TRUE )
   return(list(point_readme=point_readme))
 }

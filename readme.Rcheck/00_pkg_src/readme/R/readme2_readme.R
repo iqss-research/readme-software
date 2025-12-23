@@ -276,9 +276,9 @@ readme <- function(dfm ,
                     device_count=list('GPU'=0L, 'CPU' = as.integer(1)),
                     inter_op_parallelism_threads = as.integer(1),
                     intra_op_parallelism_threads = as.integer(1),
-                    allow_soft_placement = T) )"),envir = globalenv())
+                    allow_soft_placement = TRUE) )"),envir = globalenv())
     for(iter_i in 1:nBoot){
-                      if (verbose == T & iter_i %% 10 == 0){
+                      if (verbose == TRUE & iter_i %% 10 == 0){
                         ## Print iteration count
                         cat(paste("Bootstrap iteration: ", iter_i, "\n"))
                       }
@@ -345,10 +345,10 @@ readme <- function(dfm ,
     out_dfm_labeled = out_dfm_labeled/(1+abs(out_dfm_labeled))
 
     if("list" %in% dfm_class){
-      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) /(sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]])),T)
+      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(as.matrix(data.table::fread(cmd = dfm$unlabeled_cmd))[,-1], WinsValues)) - IL_mu_last_v) /(sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]])), TRUE)
     }
     if(!("list" %in% dfm_class)){
-      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_unlabeled, WinsValues)) - IL_mu_last_v) / (sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]])),T)
+      out_dfm_unlabeled = try(t( t(FinalParams_LIST[[iter_i]][[1]]) %*% ((t(WinsMat(dfm_unlabeled, WinsValues)) - IL_mu_last_v) / (sigma_ep+IL_sigma_last_v)) + c(FinalParams_LIST[[iter_i]][[2]])), TRUE)
     }
     out_dfm_unlabeled = out_dfm_unlabeled/(1+abs(out_dfm_unlabeled))
 
@@ -390,7 +390,7 @@ readme <- function(dfm ,
             ESGivenD_sampled[rowMeans(ESGivenD_sampled>0) %in% c(0,1),] <- 0
             Y_ = rep(0, times = nrow(ESGivenD_sampled))
             ED_sampled                   = try(readme_est_fxn(X         = ESGivenD_sampled,
-                                                              Y         = Y_)[names(labeled_pd)],T)
+                                                              Y         = Y_)[names(labeled_pd)], TRUE)
             return( list(ED_sampled      = ED_sampled,
                          ESGivenD_Match  = ESGivenD_sampled ) )
           } ), TRUE)
@@ -434,8 +434,8 @@ readme <- function(dfm ,
       })
 
       ### Get the bootstrapped estimates
-      est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=T)
-      est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=T)
+      est_readme2 <- rowMeans(do.call(cbind,BOOTSTRAP_EST[1,]),na.rm=TRUE)
+      est_readme2_NoMatching <- rowMeans(do.call(cbind,BOOTSTRAP_EST[2,]),na.rm=TRUE)
 
       try(rm(BOOTSTRAP_EST,indices_list), TRUE)
     }
@@ -457,7 +457,7 @@ readme <- function(dfm ,
 
       ### Calculate the transformed DFM
       transformed_dfm <- matrix(NA, nrow =  length(labeledIndicator), ncol = nProj)
-      transformed_dfm[which(labeledIndicator==1),] <- try(apply(tf_est_results$transformed_labeled_dfm, 2, f2n),T)
+      transformed_dfm[which(labeledIndicator==1),] <- try(apply(tf_est_results$transformed_labeled_dfm, 2, f2n), TRUE)
       transformed_dfm[which(labeledIndicator==0),] <- apply(tf_est_results$transformed_unlabeled_dfm, 2, f2n)
       transformed_dfm = apply(transformed_dfm, 2, f2n)
     }
@@ -500,7 +500,7 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
   }
 
   eval_text = sprintf('
-  tf$reset_default_graph()
+  tf$keras$backend$clear_session()
   readme_graph = tf$Graph()
   with(readme_graph$as_default(), {
     #Set seed
@@ -523,8 +523,8 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
     IL_input             = tf$placeholder(tf$float32,list(NULL, nDim))
 
     # Placeholder settings - to be filled when executing TF operations
-    clip_tf            = tf$Variable(10000., dtype = tf$float32, trainable = F )
-    inverse_learn_rate = tf$Variable(1., dtype = tf$float32, trainable = F)
+    clip_tf            = tf$Variable(10000., dtype = tf$float32, trainable = FALSE )
+    inverse_learn_rate = tf$Variable(1., dtype = tf$float32, trainable = FALSE)
     sgd_learn_rate     = tf$placeholder(tf$float32)
 
     IL_m                = tf$nn$moments(IL_input, axes = 0L)
@@ -538,8 +538,8 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
       beta__[dropout__==1]  <- 0
       beta__[dropout__==0]  <- beta__[dropout__==0] / (1 - dropout_rate)
       sum(beta__) }))
-    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = T)
-    BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = T, dtype = tf$float32)
+    WtsMat               = tf$Variable(initializer_reweighting*tf$random_uniform(list(nDim,nProj),-1/sqrt(nDim), 1/sqrt(nDim), dtype = tf$float32),dtype = tf$float32, trainable = TRUE)
+    BiasVec              = tf$Variable(as.vector(rep(0,times = nProj)), trainable = TRUE, dtype = tf$float32)
 
     ### Drop-out transformation
     ulim1                = -0.5 * (1-dropout_rate) / ( (1-dropout_rate)-1)
@@ -572,7 +572,7 @@ graph_file_gen <- function(nDim,nProj=20,NObsPerCat=10,
 
     ### Initialize an optimizer using stochastic gradient descent w/ momentum
     Optimizer_tf             = tf$train$MomentumOptimizer(learning_rate = sgd_learn_rate,
-                                                          momentum      = 0.90, use_nesterov  = T)
+                                                          momentum      = 0.90, use_nesterov  = TRUE)
 
     ### Calculates the gradients from myOpt_tf
     Gradients_unclipped  = Optimizer_tf$compute_gradients( Loss_tf )

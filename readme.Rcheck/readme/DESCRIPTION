@@ -13,5 +13,5 @@ Suggests: testthat (>= 3.0.0), text
 Config/testthat/edition: 3
 RoxygenNote: 7.3.3
 NeedsCompilation: no
-Packaged: 2025-12-23 23:28:57 UTC; cjerzak
-Built: R 4.5.2; ; 2025-12-23 23:29:29 UTC; unix
+Packaged: 2025-12-23 23:47:57 UTC; cjerzak
+Built: R 4.5.2; ; 2025-12-23 23:48:15 UTC; unix
