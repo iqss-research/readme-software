@@ -140,4 +140,21 @@ Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated No
 }
 ```
 
-[<img src="https://i0.wp.com/connorjerzak.com/wp-content/uploads/2023/07/fig.png?w=1008&ssl=1" width="420" height="400">](https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf) 
+<a href="https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf/#gh-light-mode-only">
+  <img src="https://connorjerzak.com/wp-content/uploads/2025/12/readme2_light.webp#gh-light-mode-only" alt="Figure – light" width="600">
+</a>
+
+<a href="https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf#gh-dark-mode-only">
+  <img src="https://connorjerzak.com/wp-content/uploads/2025/12/readme2_light.webp#gh-dark-mode-only" alt="Figure – dark" width="600">
+</a>
+
+```
+██████╗ ███████╗ █████╗ ██████╗ ███╗   ███╗███████╗██████╗ 
+██╔══██╗██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔════╝╚════██╗
+██████╔╝█████╗  ███████║██║  ██║██╔████╔██║█████╗   █████╔╝
+██╔══██╗██╔══╝  ██╔══██║██║  ██║██║╚██╔╝██║██╔══╝  ██╔═══╝ 
+██║  ██║███████╗██║  ██║██████╔╝██║ ╚═╝ ██║███████╗███████╗
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝
+                                                           
+      Automated Nonparametric Content Analysis
+```
