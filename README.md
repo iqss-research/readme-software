@@ -34,23 +34,39 @@ A related software package can be found at https://github.com/iqss-research/Read
 
 The most recent version of `readme2` can be installed directly from the repository using the `devtools` package
 
-```
+```r
 devtools::install_github("iqss-research/readme-software/readme")
 ```
 
-`readme2` depends on the `tools`, `data.table`, `limSolve` and `FNN` packages which can be installed directly from CRAN
+`readme2` depends on the `tools`, `data.table`, `limSolve`, `FNN`, and `reticulate` packages which can be installed directly from CRAN.
 
-It also utilizes `tensorflow`, the R interface to the TensorFlow API -- an open source machine learning library. To install `tensorflow` follow the instructions available at the [RStudio page on R and TensorFlow](https://tensorflow.rstudio.com/tensorflow/).
+### TensorFlow Backend Setup
 
-First, install the R package via github
+`readme2` uses TensorFlow for optimization. We provide convenient functions to set up the TensorFlow backend:
 
+```r
+library(readme)
+
+# One-time setup: Create a conda environment with TensorFlow
+build_backend()
+
+# Initialize TensorFlow before using readme()
+initialize_tensorflow()
 ```
+
+The `build_backend()` function creates a conda environment called `readme_env` with TensorFlow installed. You only need to run this once. The `initialize_tensorflow()` function loads the environment and should be called at the start of each R session before using `readme()`.
+
+You can check if TensorFlow is available using:
+```r
+tensorflow_available()  # Returns TRUE if TensorFlow is ready
+```
+
+#### Alternative: Manual TensorFlow Installation
+
+If you prefer to manage TensorFlow yourself, you can install it manually following the instructions at the [RStudio page on R and TensorFlow](https://tensorflow.rstudio.com/tensorflow/):
+
+```r
 devtools::install_github("rstudio/tensorflow")
-```
-
-Then, install TensorFlow itself via the R function `install_tensorflow()`.
-
-```
 library(tensorflow)
 install_tensorflow()
 ```
@@ -65,12 +81,17 @@ The central intuition of the original `readme` is that for any individual featur
 
 There are many possible features _S_ that can be extracted from the text. The main contribution of `readme2` is to develop a way for selecting optimal sets of features from a large space of potential document summaries, morphing the space in which the readme regression is run to yield the best possible estimates of the category proportions. We begin by converting each document into a vector of summaries based on the word vector representations of each term in the document.
 
-### Processing the text documents 
+### Processing the text documents
 
 We illustrate the method using the provided `clinton` dataset of a subset of handcoded blogposts from the original Hopkins and King (2010) paper. This dataset is comprised of 1,676 documents coded into 6 mutually exclusive categories (`TRUTH`).
 
-```
+```r
 library(readme)
+
+# Initialize TensorFlow backend (run build_backend() first if not done)
+initialize_tensorflow()
+
+# Load the data
 data(clinton, package="readme")
 ```
 
@@ -80,27 +101,27 @@ Prior to using `undergrad()` it is necessary to obtain a word vector dictionary 
 
 The `undergrad()` function takes as input the raw document texts and the word vector dictionary and returns a set of feature summaries for each document in the dataset. `cleanme()` pre-processes the text. Setting `wordVecs` to `NULL` will cause the function to search for the default word vector file called `glove.6B.200d.txt` in the `readme` installation directory (which is the default file downloaded by `download_wordvecs()`). If this file is found, it will read it directly and use it as the word vector dictionary.
 
-```
+```r
 ## Generate a word vector summary for each document
 wordVec_summaries = undergrad(documentText = cleanme(clinton$TEXT), wordVecs = NULL)
 ```
 
 #### Numerical Text Features Using GPT and Other Transformer Models
-In 2023, we added a new option to obtain document-level features using neural network transformer models. Users can now obtain such features from `GPT`, `BERT`, other such models. Under the hood, we're using the `text` package and in particular the `text::textEmbed` function. To use this functionality, you'd first want install the `text` package and set up the various Python packages used in the transfer learning setup: 
-```
+In 2023, we added a new option to obtain document-level features using neural network transformer models. Users can now obtain such features from `GPT`, `BERT`, other such models. Under the hood, we're using the `text` package and in particular the `text::textEmbed` function. To use this functionality, you'd first want install the `text` package and set up the various Python packages used in the transfer learning setup:
+```r
 install.packages("text")
-library(   text   )
+library(text)
 textrpp_install()
 
-# In some cases,  you may need to specify the conda and Python to use. For example: 
-textrpp_install( rpp_version = c("torch", "transformers", "numpy", "nltk"),
-                 conda = "/Users/cjerzak/miniforge3/bin/conda", 
-                 python_path = "~/../../usr/local/bin/python3" ) 
+# In some cases, you may need to specify the conda and Python to use. For example:
+textrpp_install(rpp_version = c("torch", "transformers", "numpy", "nltk"),
+                conda = "/Users/cjerzak/miniforge3/bin/conda",
+                python_path = "~/../../usr/local/bin/python3")
 # Replace conda and python_path with the path to your desired conda/python.
 # You can find these by entering "which conda" and "which python" or "which python3" in your terminal
 ```
-After successfully installing the pre-trained transfer learning models via `textrpp_install()`, you can then use the `numericization_method = "transformer_based"` option: 
-```
+After successfully installing the pre-trained transfer learning models via `textrpp_install()`, you can then use the `numericization_method = "transformer_based"` option:
+```r
 ## Generate a word vector summary for the first twenty documents
 wordVec_summaries = undergrad(documentText = tolower(clinton$TEXT),
                               numericization_method = "transformer_based")
@@ -111,17 +132,18 @@ We will obtain the transfer-learning-based features in batches of five and will 
 
 With the topic, training set labels and features we can start estimating the model.
 
-```
+```r
 # Estimate category proportions
 set.seed(2138) # Set a seed if you choose
-readme.estimates <- readme(dfm = wordVec_summaries , labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
+readme.estimates <- readme(dfm = wordVec_summaries, labeledIndicator = clinton$TRAININGSET, categoryVec = clinton$TRUTH)
 ```
 
 We can compare the output with the true category codings
 
-```
+```r
 # Output proportions estimate
 readme.estimates$point_readme
+
 # Compare to the truth
 table(clinton$TRUTH[clinton$TRAININGSET == 0])/sum(table((clinton$TRUTH[clinton$TRAININGSET == 0])))
 ```

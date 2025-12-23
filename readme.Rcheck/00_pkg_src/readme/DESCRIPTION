@@ -1,0 +1,16 @@
+Package: readme
+Title: An Algorithm for Text Quantification
+Version: 2.0
+Author: 'Gary King <king@harvard.edu> [aut], Anton Strezhnev <astrezhn@law.upenn.edu> [aut, cre], Connor Jerzak <cjerzak@g.harvard.edu> [aut, cre]'
+Description: An R package for estimating category proportions in an unlabeled set of documents given a labeled set, by implementing the method described in Jerzak, King, and Strezhnev (2023, copy at <http://GaryKing.org/words>). This method is meant to improve on the ideas in Hopkins and King (2010, AJPS), which introduced a quantification algorithm that harnesses the Law of Total Expectation. We apply this law in a feature space we craft to minimize the error of the resulting estimate. Automatic differentiation, stochastic gradient descent, and batch re-normalization are used to carry out the optimization. Other pre-processing functions are available, as well as an interface to the earlier version of the algorithm for comparison. The package also provides users with the ability to extract the generated features for use in other tasks.
+Depends: R (>= 3.5.0)
+License: CC BY-NC-ND 4.0 + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Maintainer: 'Connor Jerzak' <connor.jerzak@gmail.com>
+Imports: tensorflow, limSolve, FNN, data.table, tokenizers, reticulate
+Suggests: testthat (>= 3.0.0), text
+Config/testthat/edition: 3
+RoxygenNote: 7.3.3
+NeedsCompilation: no
+Packaged: 2025-12-23 23:28:57 UTC; cjerzak

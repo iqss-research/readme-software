@@ -1,0 +1,119 @@
+
+R version 4.5.2 (2025-10-31) -- "[Not] Part in a Rumble"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # This file is part of the standard testthat test infrastructure
+> library(testthat)
+> library(readme)
+> 
+> test_check("readme")
+/Users/cjerzak/miniconda3/envs/readme_env/lib/python3.11/site-packages/keras/src/export/tf2onnx_lib.py:8: FutureWarning: In the future `np.object` will be defined as the corresponding NumPy scalar.
+  if not hasattr(np, "object"):
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Performance warning: Rebuilding tensorflow graph..."
+[1] "Building master readme graph..."
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1766532597.371388 13232519 mlir_graph_optimization_pass.cc:437] MLIR V1 optimization pass is not enabled
+[1] "Done with this round of training in 0 minutes!"
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+[1] "Done with this round of training in 0 minutes!"
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
+Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
+[1] "Done with this round of training in 0 minutes!"
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 202 ]
+> 
+> proc.time()
+   user  system elapsed 
+ 37.323   1.436  38.615 
