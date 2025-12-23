@@ -1,10 +1,11 @@
 devtools::install_github("iqss-research/readme-software/readme")
 library(readme)
-numericize_text     = T
-compute_readme2     = T
-compute_splits      = T
-compute_classifiers = T
-use_RCE = F
+initialize_tensorflow()
+numericize_text     = TRUE
+compute_readme2     = TRUE
+compute_splits      = TRUE
+compute_classifiers = TRUE
+use_RCE = FALSE
 labeled_sz_ <- 300; unlabeled_sz_ <- 300;  nboot <- 2; my_seed = 1 
 
 support_files <- list.files("./support/")
@@ -21,13 +22,13 @@ eval_discrete <- 'try( DiscreteTest(
 dtm=as.matrix(data.table::fread(cmd = dtm_pastein )[,-1])[,colMeans(data.table::fread(cmd = dtm_pastein )[,-1])>0.01], 
 labeledIndicator=iter_labeledIndicator, 
 categoryVec=iter_categoryVec,
-compareQuantifiers = T), T)'
+compareQuantifiers = TRUE), TRUE)'
 
 eval_continuous <- 'try( ContinuousTest(
 dfm=as.matrix(data.table::fread(cmd = dfm_pastein )[,-1]), 
 labeledIndicator=iter_labeledIndicator, 
 categoryVec=iter_categoryVec, 
-nboot = nboot), T)'
+nboot = nboot), TRUE)'
 
 ### List all of the Crimson Hexagon CSVs
 csv_names <- list.files("./validationdata/HandcodedCSVs")
@@ -43,23 +44,23 @@ filename_saved_results = "results"
 filename_support = "support"
 
 
-csv_keys <- grep(list.files("./data/"), pattern = "\\.csv", value = T)
+csv_keys <- grep(list.files("./data/"), pattern = "\\.csv", value = TRUE)
 csv_keys <- sample(csv_keys)
 counter_ <- 0 
 global_iter_seq <- 1:length(csv_keys)
 for(ijack in global_iter_seq){
     counter_ <- counter_ +1 
-    print( sprintf("Dataset %s - %s", c(counter_),gsub(csv_keys[ijack], pattern = "\\.csv", replace = "")  ) )
+    print( sprintf("Dataset %s - %s", c(counter_),gsub(csv_keys[ijack], pattern = "\\.csv", replacement = "")  ) )
     
     ### Initialize placeholder for storing the errors
     errors <- data.frame()
     indices_list <- list()
 
     ### Accounting 
-    out_file <- gsub(csv_keys[ijack], pattern = "\\.csv", replace = "_results.csv")
-    #csv_name <- gsub(csv_keys[ijack], pattern = "\\.csv", replace = "")
+    out_file <- gsub(csv_keys[ijack], pattern = "\\.csv", replacement = "_results.csv")
+    #csv_name <- gsub(csv_keys[ijack], pattern = "\\.csv", replacement = "")
     csv_name = csv_keys[ijack]
-    in_file <- cbind(read.csv(sprintf("./data/%s", csv_keys[ijack]), header = T), 1)
+    in_file <- cbind(read.csv(sprintf("./data/%s", csv_keys[ijack]), header = TRUE), 1)
     colnames(in_file)[3] <- "LABELEDSET"
     in_file[,2] <- enc2utf8(as.character(in_file[,2]))
     
@@ -71,11 +72,11 @@ for(ijack in global_iter_seq){
       dfm_loc  = paste(sprintf("%s/DFM_",filename_saved_results), csv_name, sep = "")
       cats_loc = paste(sprintf("%s/CATS_",filename_saved_results), csv_name, sep = "")
       
-      if(numericize_text == F){ 
-        corpus_categoryVec <- try(c(as.character(read.csv(file = cats_loc)[,-1])), T)
+      if(numericize_text == FALSE){ 
+        corpus_categoryVec <- try(c(as.character(read.csv(file = cats_loc)[,-1])), TRUE)
       }
       
-      if(numericize_text == T){ 
+      if(numericize_text == TRUE){ 
         {
           #creat DTM and DFM 
           my_text = cleanme(in_file[,2])
@@ -84,11 +85,11 @@ for(ijack in global_iter_seq){
           
           docSummaries <- FastScale( undergrad(my_text,  wordVecs = wordVecs_corpus))
           rm(my_text);
-          if(use_RCE == T){rm(wordVecs_corpus)}
+          if(use_RCE == TRUE){rm(wordVecs_corpus)}
           
           ## Make "CATEGORY" coding a factor variable
-          corpus_categoryVec <- gsub(as.character(corpus_categoryVec), pattern = "[[:punct:]]", replace = "_")
-          corpus_categoryVec <- gsub(corpus_categoryVec, pattern = "[[:space:]]", replace = "_")
+          corpus_categoryVec <- gsub(as.character(corpus_categoryVec), pattern = "[[:punct:]]", replacement = "_")
+          corpus_categoryVec <- gsub(corpus_categoryVec, pattern = "[[:space:]]", replacement = "_")
           corpus_categoryVec <- as.factor(corpus_categoryVec)
           
           #save for precomputations 
@@ -103,27 +104,27 @@ for(ijack in global_iter_seq){
       
       compute_classifiers_ = compute_classifiers
       compute_splits_ = compute_splits 
-      if(compute_splits == T & compute_classifiers == F){ 
+      if(compute_splits == TRUE & compute_classifiers == FALSE){ 
         #If we allowed this, then errors would no longer correspond to the same data split. 
         stop("INCONSISTENT SIMULATION SPECIFICATIONS")  
       }
-      if(compute_splits == F){ 
+      if(compute_splits == FALSE){ 
         try_splits = try(load(sprintf(paste("./", filename_saved_data, "/SPLITS_%s.RData",sep = ""),
-                                      gsub(csv_name, pattern = ".csv", replace = ""))), T)
-        if(class(try_splits) == "try-error"){ 
-          compute_splits_ <- T
+                                      gsub(csv_name, pattern = ".csv", replacement = ""))), TRUE)
+        if(class(try_splits) == "try-error"){
+          compute_splits_ <- TRUE
         }
-        if(class(try_splits) != "try-error"){ 
-          if(length(indices_list) == iterations){ 
-            compute_splits_ <- F
+        if(class(try_splits) != "try-error"){
+          if(length(indices_list) == iterations){
+            compute_splits_ <- FALSE
           }
-          if(length(indices_list) != iterations){ 
-            compute_classifiers_ <- compute_splits_ <- T 
+          if(length(indices_list) != iterations){
+            compute_classifiers_ <- compute_splits_ <- TRUE 
           }
         }
       }
       
-      if(compute_splits == T){
+      if(compute_splits == TRUE){
         samp_fxns_added <- ls(); for(support_file in support_files_samp){source(sprintf("./%s/%s",filename_support, support_file)) }
         samp_fxns_added <- ls()[!ls() %in% samp_fxns_added]
         csv_error <- rep(NA, length=iterations)
@@ -145,7 +146,7 @@ for(ijack in global_iter_seq){
                                    labeledIndicator = iter_labeledIndicator, 
                                    categoryVec = iter_corpus_categoryVec, 
                                    nCores = nCores, 
-                                   nBoot = 1, justTransform = T)$transformed_dfm
+                                   nBoot = 1, justTransform = TRUE)$transformed_dfm
         }
         indices_list <- list()
         for(it in 1:iterations){ 
@@ -173,24 +174,24 @@ for(ijack in global_iter_seq){
             labeled_sz_checked = round(labeled_sz_ * frac_seq[which.min(abs(cand_sz - length(corpus_categoryVec) + 3))][1])
             unlabeled_sz_checked = round(unlabeled_sz_ * frac_seq[which.min(abs(cand_sz - length(corpus_categoryVec) + 3))][1])
           }
-          while_ok <- F; while_ok_counter = 0
-          while(while_ok == F){ 
+          while_ok <- FALSE; while_ok_counter = 0
+          while(while_ok == FALSE){ 
             if(while_ok_counter > 0){print(sprintf("BAD: %s", while_ok_counter))}
             while_ok_counter = while_ok_counter + 1
             INDICES_LIST = try(GetLabeledUnlabeledIndices( csv_category = as.factor(corpus_categoryVec),
                                                            sampling_scheme = sampling_scheme, 
                                                            labeled_sz = labeled_sz_checked, unlabeled_sz = unlabeled_sz_checked,
-                                                           ProjectionsMat_input = ProjectionsMat ), T)  
-            if(length(unique(corpus_categoryVec[INDICES_LIST[[1]]])) > 1){while_ok = T}
-            if(while_ok_counter > 10){while_ok = F; INDICES_LIST <- try("a"+ 2, T)}
+                                                           ProjectionsMat_input = ProjectionsMat ), TRUE)  
+            if(length(unique(corpus_categoryVec[INDICES_LIST[[1]]])) > 1){while_ok = TRUE}
+            if(while_ok_counter > 10){while_ok = FALSE; INDICES_LIST <- try("a"+ 2, TRUE)}
             
           } 
           if(class(INDICES_LIST) == "try-error"){ 
-            if(use_RCE == F){print("SAMPLING ERROR, DEFAULTING TO HISTORICAL");browser()}
+            if(use_RCE == FALSE){print("SAMPLING ERROR, DEFAULTING TO HISTORICAL");browser()}
             INDICES_LIST = try(GetLabeledUnlabeledIndices( csv_category = corpus_categoryVec,
                                                            sampling_scheme = "Historical", 
                                                            labeled_sz = labeled_sz_checked, unlabeled_sz = unlabeled_sz_checked, 
-                                                           ProjectionsMat_input = ProjectionsMat), T)  
+                                                           ProjectionsMat_input = ProjectionsMat), TRUE)  
           }
           labeled_indices <- INDICES_LIST$labeled_indices
           unlabeled_indices <- INDICES_LIST$unlabeled_indices
@@ -205,28 +206,28 @@ for(ijack in global_iter_seq){
           sampling_scheme <- sampling_scheme_old
         }
         indices_list <- indices_list[unlist(lapply(indices_list, function(as){ 
-          x_ = try(min(length(as[[1]]), length(as[[2]])), T)
+          x_ = try(min(length(as[[1]]), length(as[[2]])), TRUE)
           if(class(x_) == "try-error"){x_ <- 0}
           return( x_ ) })) > 0]
         names(indices_list) <- sampling_scheme_used
         save(indices_list, file = sprintf("./%s/SPLITS_%s.RData",filename_saved_data ,
-                                          gsub(csv_name, pattern = ".csv", replace = "")))
+                                          gsub(csv_name, pattern = ".csv", replacement = "")))
         rm(ProjectionsMat,indices_list)
       } 
       
       #first do classifier + quantifier analysis 
       try(load(sprintf("./%s/SPLITS_%s.RData",filename_saved_data ,
-                       gsub(csv_name, pattern = ".csv", replace = ""))), T)
-      if(compute_classifiers == F){ 
-        test_ = try(sum(is.na(as.data.frame(data.table::fread(sprintf("./%s/%s", filename_saved_results, out_file) ))[,-1]["continuousSVM_error"] )) > 0, T) 
-        if(class(test_) == "try-error"){ compute_classifiers_ <- T } 
+                       gsub(csv_name, pattern = ".csv", replacement = ""))), TRUE)
+      if(compute_classifiers == FALSE){
+        test_ = try(sum(is.na(as.data.frame(data.table::fread(sprintf("./%s/%s", filename_saved_results, out_file) ))[,-1]["continuousSVM_error"] )) > 0, TRUE)
+        if(class(test_) == "try-error"){ compute_classifiers_ <- TRUE } 
         if(class(test_) != "try-error"){ 
-          try( if(test_ == 0){  compute_classifiers_ <- F } , T)  
-          if(test_ != 0){  compute_classifiers_ <- T }
+          try( if(test_ == 0){  compute_classifiers_ <- FALSE } , TRUE)  
+          if(test_ != 0){  compute_classifiers_ <- TRUE }
         }
       } 
       
-      if(compute_classifiers_ == T){ 
+      if(compute_classifiers_ == TRUE){ 
         class_fxns_added <- ls(); for(support_file in support_files_class){source(sprintf("./%s/%s", filename_support,support_file)) }
         class_fxns_added <- ls()[!ls() %in% class_fxns_added]
         
@@ -249,8 +250,8 @@ for(ijack in global_iter_seq){
                                 "p' ",dfm_loc, collapse = "" )
           print("Starting Classifier + Quantifier Analysis")
           
-          discreteResults <- try( eval(parse(text = eval_discrete ) ), T)
-          continuousResults <- try( eval(parse(text = eval_continuous ) ), T)
+          discreteResults <- try( eval(parse(text = eval_discrete ) ), TRUE)
+          continuousResults <- try( eval(parse(text = eval_continuous ) ), TRUE)
           outer_start_time=proc.time()[3]
           if(class(discreteResults) == "try-error"){print(discreteResults)}
           if(class(continuousResults) == "try-error"){print(continuousResults)}
@@ -311,7 +312,7 @@ for(ijack in global_iter_seq){
                                        nCat = length( unique(corpus_categoryVec[ labeled_indices ] ) ), 
                                        iteration = it, corpus_numb = counter_, nboot = nboot, 
                                        n_labeled = sum(iter_labeledIndicator==1),  n_unlabeled = sum(iter_labeledIndicator==0), 
-                                       sampling_scheme = names(indices_list)[it]), T)
+                                       sampling_scheme = names(indices_list)[it]), TRUE)
           row.names(new_error) <- NULL ; errors <- rbind(errors,new_error);rm(new_error)
           write.csv(errors, sprintf("./%s/%s", filename_saved_results, out_file) ) 
           
@@ -319,7 +320,7 @@ for(ijack in global_iter_seq){
         rm(errors); 
       } 
       
-      if(compute_readme2 == T){ 
+      if(compute_readme2 == TRUE){ 
         for (it in 1:iterations){
           print(it)
           labeled_indices <- indices_list[[it]]$labeled_indices
@@ -343,9 +344,9 @@ for(ijack in global_iter_seq){
           readme2Results <- try(readme(dfm = list(labeled_cmd   = dfm_pastein_labeled,
                                                   unlabeled_cmd = dfm_pastein_unlabeled),
                                        labeledIndicator = iter_labeledIndicator,
-                                       categoryVec = iter_categoryVec, nBoot = nboot),T)
+                                       categoryVec = iter_categoryVec, nBoot = nboot), TRUE)
           if(class(readme2Results) == "try-error"){print( readme2Results )}
-          tf$keras$backend$clear_session(); tf$reset_default_graph()
+          tf$keras$backend$clear_session()
           mem_at_iter = pryr::mem_used()
           print(mem_at_iter)
           readme2Results = list(error_readme2 = sum(abs(readme2Results$point_readme[names(unlabeled_pd)] - unlabeled_pd)))
@@ -372,9 +373,9 @@ for(ijack in global_iter_seq){
 
 }      
 #Spitout results 
-if(T == T){
+if(TRUE == TRUE){
   global_results <- c() 
   my_csvs <- list.files("./results/")
-  for(my_csv in my_csvs){ df_i <- try(read.csv(sprintf("./results/%s", my_csv  ))[,-1], T) ; global_results <- rbind(global_results, df_i)}
+  for(my_csv in my_csvs){ df_i <- try(read.csv(sprintf("./results/%s", my_csv  ))[,-1], TRUE) ; global_results <- rbind(global_results, df_i)}
 }
  
