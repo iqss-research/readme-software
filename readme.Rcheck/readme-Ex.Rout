@@ -410,7 +410,7 @@ Computing word vector summaries for each document...
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  1.167 0.054 1.225 0 0 
+Time elapsed:  1.092 0.049 1.141 0 0 
 > grDevices::dev.off()
 null device 
           1 

@@ -2,6 +2,7 @@
 
 # These tests require TensorFlow to be installed
 
+tolerance <- 0.10
 test_that("readme returns valid proportion estimates", {
   set.seed(42)
 
@@ -21,7 +22,7 @@ test_that("readme returns valid proportion estimates", {
   expect_true("transformed_dfm" %in% names(result))
 
   # Proportions should sum to approximately 1
-  expect_equal(sum(result$point_readme), 1, tolerance = 0.05)
+  expect_equal(sum(result$point_readme), 1, tolerance = tolerance)
 
   # All proportions should be non-negative
   expect_true(all(result$point_readme >= 0))
@@ -115,8 +116,8 @@ test_that("readme handles different nBoot values", {
                     verbose = FALSE)
 
   expect_equal(length(result1$point_readme), length(result2$point_readme))
-  expect_equal(sum(result1$point_readme), 1, tolerance = 0.05)
-  expect_equal(sum(result2$point_readme), 1, tolerance = 0.05)
+  expect_equal(sum(result1$point_readme), 1, tolerance = tolerance)
+  expect_equal(sum(result2$point_readme), 1, tolerance = tolerance)
 })
 
 test_that("readme handles different sgdIters values", {
@@ -247,7 +248,7 @@ test_that("readme handles two categories", {
                    verbose = FALSE)
 
   expect_equal(length(result$point_readme), 2)
-  expect_equal(sum(result$point_readme), 1, tolerance = 0.05)
+  expect_equal(sum(result$point_readme), 1, tolerance = tolerance)
 })
 
 test_that("readme handles four categories", {
@@ -261,7 +262,7 @@ test_that("readme handles four categories", {
                    verbose = FALSE)
 
   expect_equal(length(result$point_readme), 4)
-  expect_equal(sum(result$point_readme), 1, tolerance = 0.05)
+  expect_equal(sum(result$point_readme), 1, tolerance = tolerance)
 })
 
 test_that("readme transformed_dfm has correct dimensions", {

@@ -27,7 +27,7 @@ Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
 [1] "Performance warning: Rebuilding tensorflow graph..."
 [1] "Building master readme graph..."
 WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-I0000 00:00:1766533725.246589 13274811 mlir_graph_optimization_pass.cc:437] MLIR V1 optimization pass is not enabled
+I0000 00:00:1766535223.052883 13324069 mlir_graph_optimization_pass.cc:437] MLIR V1 optimization pass is not enabled
 [1] "Done with this round of training in 0 minutes!"
 [1] "Done with this round of training in 0 minutes!"
 TensorFlow v2.20.0 (~/miniconda3/envs/readme_env/lib/python3.11/site-packages/tensorflow)
@@ -116,4 +116,4 @@ Python v3.11 (~/miniconda3/envs/readme_env/bin/python)
 > 
 > proc.time()
    user  system elapsed 
- 39.571   1.598  41.552 
+ 39.397   1.426  40.708 
