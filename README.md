@@ -173,10 +173,10 @@ Connor T. Jerzak, Gary King, Anton Strezhnev. An Improved Method of Automated No
 }
 ```
 
-<a href="https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf/#gh-light-mode-only">
+<a href="https://neuristemic.ai/wp-content/uploads/2026/05/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf/#gh-light-mode-only">
   <img src="https://connorjerzak.com/wp-content/uploads/2025/12/readme2_light.webp#gh-light-mode-only" alt="Figure – light" width="600">
 </a>
 
-<a href="https://gking.harvard.edu/sites/scholar.harvard.edu/files/gking/files/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf#gh-dark-mode-only">
+<a href="https://neuristemic.ai/wp-content/uploads/2026/05/div-class-title-an-improved-method-of-automated-nonparametric-content-analysis-for-social-science-div.pdf/#gh-dark-mode-only">
   <img src="https://connorjerzak.com/wp-content/uploads/2025/12/readme2_dark.webp#gh-dark-mode-only" alt="Figure – dark" width="600">
 </a>
