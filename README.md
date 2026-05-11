@@ -63,7 +63,7 @@ tensorflow_available()  # Returns TRUE if TensorFlow is ready
 
 #### Alternative: Manual TensorFlow Installation
 
-If you prefer to manage TensorFlow yourself, you can install it manually following the instructions at the [RStudio page on R and TensorFlow](https://tensorflow.rstudio.com/tensorflow/):
+If you prefer to manage TensorFlow yourself, you can install it manually following the instructions at the [RStudio page on R and TensorFlow](https://tensorflow.rstudio.com/):
 
 ```r
 devtools::install_github("rstudio/tensorflow")
