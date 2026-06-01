@@ -216,3 +216,19 @@ CLAUDE.md
 /tmp/
 /reports/
 AGENTS.md
+
+# R / RStudio local state
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# R package build/check artifacts
+*.Rcheck/
+*.Rout
+*.Rout.save
+*.Rout.fail
+/*.tar.gz
+
+# Local AI/editor state
+.claude/
