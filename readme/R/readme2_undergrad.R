@@ -107,7 +107,7 @@ undergrad <- function(documentText,
     if(is.null(wordVecs)){
       cat("NOTE: No word vector matrix specified in 'wordVecs' - Searching for default wordvecs in install directory\n
 Searching for: 'glove.6B.200d.txt'\n")
-      targetDir = find.package("readme")
+      targetDir = base::find.package("readme")
       if (file.exists(file.path(targetDir, "glove.6B.200d.txt"))){
         wordVecs_corpus <- data.table::fread(file.path(targetDir, "glove.6B.200d.txt"))
         wordVecs_keys <- wordVecs_corpus[[1]]## first row is the name of the term
@@ -220,24 +220,24 @@ Searching for: 'glove.6B.200d.txt'\n")
                                     c(apply(x, 2, function(x_col){
                                       quantile(x_col, c(word_quantiles), na.rm = TRUE)
                                   }))}))
-    dfm = apply(dfm, 2, function(x){
-      x[is.na(x)] <- mean(x,na.rm = TRUE)
-      return( x )
-    })
+    for (col_indx in seq_len(ncol(dfm))) {
+      dfm[is.na(dfm[, col_indx]), col_indx] <- mean(dfm[, col_indx], na.rm = TRUE)
+    }
     colnames(dfm) <- c(sapply(colnames(wordVecs),
                               function(z){ paste(z, "_", round(100*word_quantiles), "th_Quantile", sep = "") }))
     }
 
     ### Are any columns zero-variance?
     column_sds <- apply(dfm, 2, sd)
+    zero_variance_cols <- !is.na(column_sds) & column_sds == 0
 
     ###
-    if (length(which(column_sds == 0)) > 0){
+    if (length(which(zero_variance_cols)) > 0){
 
       if (verbose == TRUE){
-        cat(paste("WARNING: Feature matrix ", colnames(dfm)[which(column_sds == 0)], " has zero variance, dropping from analysis...\n", collapse = "", sep = ""))
+        cat(paste("WARNING: Feature matrix ", colnames(dfm)[which(zero_variance_cols)], " has zero variance, dropping from analysis...\n", collapse = "", sep = ""))
       }
     }
 
-    return(dfm[,column_sds != 0])
+    return(dfm[, !zero_variance_cols, drop = FALSE])
 }

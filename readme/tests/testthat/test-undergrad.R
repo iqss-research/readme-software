@@ -146,7 +146,11 @@ test_that("undergrad removes zero-variance columns", {
   docs <- c("the a is are was were have has this that with from",
             "they we you it be to of and the a is are")
 
-  result <- undergrad(documentText = docs, wordVecs = wordVecs, verbose = FALSE)
+  result <- NULL
+  expect_output(
+    result <- undergrad(documentText = docs, wordVecs = wordVecs, verbose = TRUE),
+    "zero variance"
+  )
 
   # Zero-variance columns should be removed
   expect_true(ncol(result) > 0)
@@ -195,9 +199,6 @@ test_that("undergrad produces numeric output", {
 })
 
 test_that("undergrad handles single document with matrix output", {
-  # NOTE: There's a bug in undergrad() where a single document produces a vector
-  # instead of a matrix. This test documents the expected behavior when fixed.
-  # For now, we test with multiple documents to ensure matrix output.
   set.seed(42)
   wordVecs <- matrix(rnorm(20 * 10), ncol = 10)
   rownames(wordVecs) <- c("the", "a", "is", "are", "was", "were", "have", "has",
@@ -205,14 +206,91 @@ test_that("undergrad handles single document with matrix output", {
                           "it", "be", "to", "of", "and")
   colnames(wordVecs) <- paste0("V", 1:10)
 
-  # Use 2 documents to get matrix output
-  docs <- c("the a is are was were have has this that with from",
-            "they we you it be to of and the a is are")
+  docs <- "the a is are was were have has this that with from"
 
   result <- undergrad(documentText = docs, wordVecs = wordVecs, verbose = FALSE)
 
-  expect_equal(nrow(result), 2)
+  expect_equal(nrow(result), 1)
   expect_true(is.matrix(result))
+  expect_equal(ncol(result), 10 * 3)
+})
+
+test_that("undergrad reports documents with no terms", {
+  set.seed(42)
+  wordVecs <- matrix(rnorm(20 * 10), ncol = 10)
+  rownames(wordVecs) <- c("the", "a", "is", "are", "was", "were", "have", "has",
+                          "this", "that", "with", "from", "they", "we", "you",
+                          "it", "be", "to", "of", "and")
+  colnames(wordVecs) <- paste0("V", 1:10)
+
+  docs <- c("", "the a is are was were have has this that")
+
+  result <- NULL
+  expect_output(
+    result <- undergrad(documentText = docs, wordVecs = wordVecs, verbose = FALSE),
+    "WARNING: Document 1 has no terms"
+  )
+
+  expect_equal(nrow(result), 2)
+  expect_false(any(is.na(result)))
+})
+
+test_that("undergrad errors when default word vectors are missing", {
+  expect_error(
+    capture.output(
+      undergrad(documentText = "the a is", wordVecs = NULL, verbose = FALSE)
+    ),
+    "Could not find default word vector summaries"
+  )
+})
+
+test_that("undergrad loads default word vectors from package directory", {
+  package_dir <- file.path(tempdir(), paste0("readme_wordvecs_", Sys.getpid()))
+  dir.create(package_dir, showWarnings = FALSE)
+  on.exit(unlink(package_dir, recursive = TRUE), add = TRUE)
+
+  writeLines(
+    c(
+      "term V1 V2",
+      "the 1 10",
+      "a 2 20",
+      "is 3 30",
+      "are 4 40"
+    ),
+    file.path(package_dir, "glove.6B.200d.txt")
+  )
+
+  original_find_package <- base::find.package
+  testthat::local_mocked_bindings(
+    find.package = function(package = NULL, lib.loc = NULL, quiet = FALSE,
+                            verbose = getOption("verbose")) {
+      if (identical(package, "readme")) {
+        return(package_dir)
+      }
+      original_find_package(
+        package = package,
+        lib.loc = lib.loc,
+        quiet = quiet,
+        verbose = verbose
+      )
+    },
+    .package = "base"
+  )
+
+  result <- NULL
+  capture.output(
+    result <- undergrad(
+      documentText = c("the a", "is are"),
+      wordVecs = NULL,
+      word_quantiles = 0.5,
+      verbose = FALSE
+    )
+  )
+
+  expect_true(is.matrix(result))
+  expect_equal(nrow(result), 2)
+  expect_equal(ncol(result), 2)
+  expect_equal(colnames(result), c("V1_50th_Quantile", "V2_50th_Quantile"))
 })
 
 test_that("undergrad handles many documents", {
